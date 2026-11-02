@@ -1,1527 +1,1015 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
-<meta name="theme-color" content="#0b1020">
-<title>CoinNova • Admin Panel</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
+<meta name="theme-color" content="#090d19">
+<title>CoinNova • Admin</title>
+
 <style>
-:root{
-  --bg:#0b1020;
-  --bg2:#10182d;
-  --card:#151f38;
-  --card2:#1c2947;
-  --gold:#ffd166;
-  --gold2:#ffb703;
-  --green:#43e6a0;
-  --blue:#65a9ff;
-  --red:#ff6376;
-  --text:#f4f7ff;
-  --muted:#99a8ca;
-  --border:rgba(255,255,255,.09);
-  --radius:18px;
-}
+:root{--bg:#080b15;--panel:#11182a;--panel2:#172139;--gold:#ffd66b;--cyan:#45e8ff;--green:#51f5b7;--text:#f5f7ff;--muted:#9aa7c2;--line:#283651;--red:#ff6584}
 *{box-sizing:border-box}
-body{
-  margin:0;background:
-  radial-gradient(ellipse at 10% 0%,#5044a01e,transparent 35%),
-  radial-gradient(ellipse at 100% 30%,#008cff0c,transparent 35%),var(--bg);
-  color:var(--text);font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
-  min-height:100vh;font-size:13px
-}
-button,input,textarea,select{font:inherit}
-button{cursor:pointer}
-button:disabled{opacity:.5;cursor:not-allowed}
-input,textarea,select{outline:none}
+body{margin:0;background:radial-gradient(circle at 70% 0,#253256,transparent 35%),var(--bg);color:var(--text);font-family:Inter,system-ui,sans-serif}
+button,input,select{font:inherit}
+.wrap{max-width:1250px;margin:auto;padding:24px 18px 60px}
+.head{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.brand{font-size:22px;font-weight:950;letter-spacing:1px}
+.brand span{color:var(--gold)}
+.muted{color:var(--muted);font-size:12px}
+.card{background:linear-gradient(135deg,#151f34,#101727);border:1px solid var(--line);border-radius:18px;padding:18px;margin:14px 0;box-shadow:0 12px 35px #0003}
+.login{max-width:420px;margin:12vh auto}
+.grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.metric{background:#0b1220;border:1px solid var(--line);border-radius:14px;padding:14px}
+.metric small{color:var(--muted);display:block}
+.metric strong{font-size:25px;color:var(--gold);overflow-wrap:anywhere}
+.tabs{display:flex;gap:8px;overflow:auto;padding:5px 0 12px}
+.tabs button,.btn{background:#202e49;border:1px solid #34435e;color:var(--text);padding:10px 13px;border-radius:11px;font-weight:750;white-space:nowrap;cursor:pointer}
+.tabs button.active,.btn.gold{background:linear-gradient(120deg,#ffe9a0,#f3a42a);color:#3c270a;border:0}
+.btn.red{background:#4a1c2c;border-color:#703148;color:#ffdbe3}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.field{width:100%;background:#080e1b;border:1px solid #34415b;color:var(--text);padding:11px;border-radius:10px;margin:5px 0 12px;outline:none;min-width:0}
+.field:focus{border-color:var(--cyan)}
+label{display:block;color:var(--muted);font-size:12px;margin-top:5px}
+.row{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.section{display:none}
+.section.active{display:block}
+.table-wrap{overflow:auto}
+table{width:100%;border-collapse:collapse;min-width:720px}
+th,td{text-align:left;padding:11px;border-bottom:1px solid var(--line);font-size:12px;vertical-align:top}
+th{color:var(--gold);font-size:11px;text-transform:uppercase;letter-spacing:.8px}
+td small{color:var(--muted)}
+.status{padding:5px 8px;border-radius:8px;background:#29334a;font-size:10px}
+.status.pending{color:#ffd66b}
+.status.paid,.status.approved{color:var(--green)}
+.status.rejected{color:var(--red)}
+.check{display:flex;align-items:center;gap:9px;margin:8px 0;color:var(--text);font-size:13px}
+.check input{accent-color:#ffd66b;width:17px;height:17px}
+.hint{background:#292719;color:#ffe5a0;border:1px solid #554726;border-radius:12px;padding:12px;font-size:12px;line-height:1.5}
 .hidden{display:none!important}
-.app{max-width:1200px;margin:auto;padding:0 16px 45px}
-.topbar{
-  min-height:76px;display:flex;align-items:center;justify-content:space-between;
-  gap:12px;border-bottom:1px solid var(--border);margin-bottom:20px
+.actions{display:flex;gap:6px;flex-wrap:wrap}
+.task-row{border:1px solid var(--line);border-radius:13px;padding:13px;margin:8px 0;overflow-wrap:anywhere}
+.task-row strong{display:block}
+.method-row{display:grid;grid-template-columns:1fr 1fr 1fr auto;gap:8px;align-items:center;padding:8px 0;border-bottom:1px solid var(--line)}
+#toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);padding:12px 17px;border-radius:12px;background:#202e49;border:1px solid #455777;display:none;max-width:90%;z-index:100;text-align:center}
+@media(max-width:700px){
+ .grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .row{grid-template-columns:1fr}
+ .wrap{padding:16px 11px 40px}
+ .method-row{grid-template-columns:1fr 1fr}
+ .brand{font-size:19px}
+ .card{padding:13px}
+ .metric strong{font-size:21px}
 }
-.brand{display:flex;align-items:center;gap:11px}
-.brand-logo{
-  width:45px;height:45px;border-radius:15px;display:grid;place-items:center;
-  font-size:25px;font-weight:1000;color:#332400;
-  background:linear-gradient(145deg,#fff0a6,#ffb703);
-  box-shadow:0 5px 22px #ffbf2930
-}
-.brand-title{font-size:18px;font-weight:950;letter-spacing:.2px}
-.brand-sub{font-size:10px;color:var(--muted);letter-spacing:1.7px;margin-top:4px}
-.top-actions{display:flex;align-items:center;gap:8px}
-.status-pill{display:flex;align-items:center;gap:7px;border:1px solid #43e6a02a;background:#43e6a010;color:var(--green);border-radius:30px;padding:9px 11px;font-size:10px;font-weight:900}
-.dot{width:7px;height:7px;border-radius:50%;background:var(--green)}
-.btn{
-  border:1px solid var(--border);background:#ffffff08;color:var(--text);
-  border-radius:12px;padding:11px 14px;font-weight:850;font-size:11px;
-  transition:.15s
-}
-.btn:hover{border-color:#ffd16666}
-.btn-gold{border:0;color:#342500;background:linear-gradient(135deg,#ffe49a,#ffb703)}
-.btn-green{border:0;color:#062e20;background:linear-gradient(135deg,#8bffca,#43e6a0)}
-.btn-red{border:1px solid #ff637636;background:#ff637614;color:#ff8b99}
-.btn-blue{border:1px solid #65a9ff44;background:#65a9ff13;color:#91c3ff}
-.btn-sm{padding:8px 10px;font-size:10px;border-radius:9px}
-.login-wrap{max-width:410px;margin:65px auto}
-.login-card,.panel-card{
-  background:linear-gradient(145deg,#192440,#11192d);
-  border:1px solid var(--border);border-radius:22px;padding:21px;
-  box-shadow:0 14px 50px #0002
-}
-.login-logo{
-  width:65px;height:65px;border-radius:21px;margin:0 auto 15px;
-  display:grid;place-items:center;font-size:35px;color:#342500;
-  background:linear-gradient(145deg,#fff0a6,#ffb703)
-}
-.login-title{text-align:center;font-size:23px;font-weight:950}
-.login-sub{text-align:center;color:var(--muted);font-size:11px;line-height:1.7;margin:8px 0 20px}
-.label{display:block;color:#c4cde3;font-size:11px;font-weight:850;margin:14px 0 7px}
-.input,.select,.textarea{
-  width:100%;background:#0d1528;color:var(--text);
-  border:1px solid #ffffff15;border-radius:12px;padding:12px 13px;font-size:12px
-}
-.input:focus,.select:focus,.textarea:focus{border-color:#ffd16699;box-shadow:0 0 0 3px #ffd16610}
-.input::placeholder,.textarea::placeholder{color:#7382a4}
-.textarea{min-height:88px;resize:vertical;line-height:1.6}
-.login-card .btn{width:100%;margin-top:18px;padding:13px}
-.login-error{color:#ff8795;font-size:11px;margin-top:12px;line-height:1.6}
-.layout{display:grid;grid-template-columns:225px minmax(0,1fr);gap:19px;align-items:start}
-.sidebar{
-  background:#111a2e;border:1px solid var(--border);border-radius:20px;
-  padding:12px;position:sticky;top:15px
-}
-.admin-profile{display:flex;align-items:center;gap:10px;padding:10px 7px 16px;border-bottom:1px solid var(--border);margin-bottom:10px}
-.admin-avatar{width:38px;height:38px;border-radius:13px;background:linear-gradient(135deg,#8270ff,#48b8ff);display:grid;place-items:center;font-size:18px}
-.admin-name{font-size:12px;font-weight:900}
-.admin-role{font-size:10px;color:var(--muted);margin-top:4px}
-.nav-title{font-size:9px;color:#7584a6;letter-spacing:1.5px;font-weight:900;padding:12px 8px 7px}
-.nav-btn{
-  width:100%;display:flex;align-items:center;gap:10px;text-align:left;
-  padding:12px 10px;border:1px solid transparent;border-radius:12px;
-  background:transparent;color:#aebbd7;font-size:11px;font-weight:850;margin:3px 0
-}
-.nav-btn .ico{font-size:17px;width:23px;text-align:center}
-.nav-btn.active{background:#ffd16613;color:var(--gold);border-color:#ffd16620}
-.nav-btn:hover{background:#ffffff07}
-.sidebar-bottom{border-top:1px solid var(--border);margin-top:12px;padding-top:12px}
-.content{min-width:0}
-.page{display:none}
-.page.active{display:block}
-.page-head{display:flex;justify-content:space-between;align-items:center;gap:12px;margin:2px 0 19px}
-.page-title{font-size:23px;font-weight:950;letter-spacing:-.4px}
-.page-sub{color:var(--muted);font-size:11px;line-height:1.6;margin-top:6px}
-.page-actions{display:flex;gap:8px;flex-wrap:wrap}
-.stats-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:11px;margin-bottom:17px}
-.stat{
-  min-width:0;background:linear-gradient(145deg,#1a2643,#121a2e);
-  border:1px solid var(--border);border-radius:17px;padding:16px
-}
-.stat-top{display:flex;align-items:center;justify-content:space-between;gap:8px}
-.stat-icon{font-size:22px}
-.stat-tag{font-size:9px;color:var(--green);font-weight:900}
-.stat-label{font-size:10px;color:var(--muted);margin-top:12px}
-.stat-value{font-size:23px;font-weight:950;margin-top:6px;overflow-wrap:anywhere}
-.stat-note{font-size:9px;color:#7d8bad;margin-top:6px;line-height:1.5}
-.grid-2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
-.panel-card{padding:18px;min-width:0}
-.card-head{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:15px}
-.card-title{font-size:14px;font-weight:950}
-.card-sub{font-size:10px;color:var(--muted);margin-top:5px;line-height:1.6}
-.divider{height:1px;background:var(--border);margin:16px 0}
-.form-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0 13px}
-.field-full{grid-column:1/-1}
-.check-row{
-  display:flex;align-items:center;justify-content:space-between;gap:12px;
-  border:1px solid #ffffff10;border-radius:13px;background:#ffffff04;
-  padding:12px;margin-top:10px
-}
-.check-copy{min-width:0}
-.check-title{font-size:11px;font-weight:900}
-.check-desc{font-size:10px;color:var(--muted);margin-top:4px;line-height:1.5}
-.switch{position:relative;width:42px;height:24px;flex-shrink:0}
-.switch input{opacity:0;width:0;height:0}
-.slider{position:absolute;inset:0;border-radius:30px;background:#37425b;transition:.2s}
-.slider:before{content:"";position:absolute;width:18px;height:18px;left:3px;top:3px;border-radius:50%;background:white;transition:.2s}
-.switch input:checked+.slider{background:#28bd80}
-.switch input:checked+.slider:before{transform:translateX(18px)}
-.help{font-size:10px;color:var(--muted);line-height:1.65;margin-top:8px}
-.notice{padding:12px;border:1px solid #ffd16624;background:#ffd16609;color:#d9dff0;border-radius:13px;font-size:10px;line-height:1.7;margin-top:13px}
-.notice strong{color:var(--gold)}
-.table-wrap{overflow:auto;border:1px solid var(--border);border-radius:14px}
-table{width:100%;border-collapse:collapse;min-width:620px}
-th,td{padding:12px;text-align:left;border-bottom:1px solid #ffffff0a;font-size:10px;vertical-align:middle}
-th{background:#ffffff05;color:#91a1c5;font-size:9px;letter-spacing:.8px;text-transform:uppercase;white-space:nowrap}
-td{color:#dce4f7}
-tr:last-child td{border-bottom:0}
-tbody tr:hover{background:#ffffff03}
-.badge{display:inline-flex;align-items:center;justify-content:center;padding:5px 8px;border-radius:20px;font-size:9px;font-weight:900;white-space:nowrap}
-.badge-green{background:#43e6a015;color:var(--green);border:1px solid #43e6a026}
-.badge-yellow{background:#ffd16612;color:var(--gold);border:1px solid #ffd16625}
-.badge-red{background:#ff637615;color:#ff8795;border:1px solid #ff637626}
-.badge-blue{background:#65a9ff14;color:#91c3ff;border:1px solid #65a9ff28}
-.toolbar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:13px}
-.toolbar .input,.toolbar .select{width:auto;min-width:150px;flex:1}
-.empty{padding:26px 12px;text-align:center;border:1px dashed #ffffff18;border-radius:14px;color:var(--muted);font-size:11px;line-height:1.7}
-.task-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:12px;align-items:center;padding:13px 0;border-bottom:1px solid #ffffff0b}
-.task-row:last-child{border-bottom:0}
-.task-name{font-weight:900;font-size:12px;overflow-wrap:anywhere}
-.task-description{color:var(--muted);font-size:10px;line-height:1.5;margin-top:5px}
-.task-actions{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
-.wallet-stack{display:grid;gap:14px}
-.wallet-card{background:linear-gradient(145deg,#192440,#11192d);border:1px solid var(--border);border-radius:19px;overflow:hidden}
-.wallet-card-head{padding:15px;display:flex;align-items:center;gap:12px;border-bottom:1px solid var(--border)}
-.wallet-logo-preview{width:48px;height:48px;border-radius:15px;background:#0d1528;border:1px solid #ffffff12;display:grid;place-items:center;overflow:hidden;flex-shrink:0;font-size:22px}
-.wallet-logo-preview img{width:100%;height:100%;object-fit:contain;padding:5px}
-.wallet-heading{flex:1;min-width:0}
-.wallet-heading strong{display:block;font-size:14px}
-.wallet-heading small{display:block;color:var(--muted);font-size:10px;margin-top:5px}
-.wallet-card-body{padding:0 15px 15px}
-.network-box{padding:14px;border-radius:15px;background:#0d1528;border:1px solid #ffffff0e;margin-top:14px}
-.network-box-head{display:flex;align-items:center;justify-content:space-between;gap:8px}
-.network-title{font-size:12px;font-weight:950}
-.network-tag{font-size:9px;color:var(--gold);font-weight:900}
-.inline-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
-.logo-input-row{display:grid;grid-template-columns:minmax(0,1fr) 55px;gap:8px;align-items:center}
-.mini-preview{width:55px;height:43px;border-radius:10px;background:#0d1528;border:1px solid #ffffff12;display:grid;place-items:center;overflow:hidden;font-size:20px}
-.mini-preview img{width:100%;height:100%;object-fit:contain;padding:5px}
-.modal{
-  position:fixed;inset:0;z-index:50;background:#030712cf;backdrop-filter:blur(7px);
-  display:none;align-items:center;justify-content:center;padding:15px
-}
-.modal.show{display:flex}
-.modal-box{width:min(520px,100%);max-height:88vh;overflow:auto;background:#151f38;border:1px solid var(--border);border-radius:22px;padding:20px;box-shadow:0 25px 100px #0009}
-.modal-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:15px}
-.modal-title{font-size:17px;font-weight:950}
-.close-btn{width:34px;height:34px;border-radius:11px;background:#ffffff08;color:var(--text);border:1px solid var(--border);font-size:18px}
-.modal-actions{display:flex;gap:8px;margin-top:18px}
-.modal-actions .btn{flex:1}
-.toast{
-  position:fixed;z-index:100;bottom:25px;left:50%;transform:translate(-50%,15px);
-  opacity:0;pointer-events:none;background:#202c46;border:1px solid #ffffff18;
-  padding:12px 16px;border-radius:13px;font-size:11px;font-weight:850;
-  max-width:calc(100% - 30px);text-align:center;transition:.22s;box-shadow:0 10px 35px #0006
-}
-.toast.show{opacity:1;transform:translate(-50%,0)}
-.loading{opacity:.6;pointer-events:none}
-.footer{text-align:center;color:#667696;font-size:9px;padding:25px 0 0;line-height:1.7}
-@media(max-width:900px){
-  .layout{grid-template-columns:1fr}
-  .sidebar{position:static;padding:9px}
-  .admin-profile{display:none}
-  .nav-title,.sidebar-bottom{display:none}
-  .nav-list{display:flex;overflow-x:auto;gap:5px}
-  .nav-btn{width:auto;white-space:nowrap;flex-shrink:0;margin:0;padding:11px 12px}
-  .nav-btn .ico{width:auto}
-  .stats-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
-}
-@media(max-width:580px){
-  .app{padding:0 11px 30px}
-  .topbar{min-height:68px;margin-bottom:14px}
-  .brand-logo{width:39px;height:39px;border-radius:13px}
-  .brand-title{font-size:16px}
-  .brand-sub{font-size:9px}
-  .status-pill{padding:8px;font-size:9px}
-  .top-actions .btn{padding:9px;font-size:10px}
-  .page-head{align-items:flex-start;flex-direction:column}
-  .page-title{font-size:21px}
-  .grid-2{grid-template-columns:1fr}
-  .panel-card{padding:15px}
-  .form-grid{grid-template-columns:1fr}
-  .field-full{grid-column:auto}
-  .stat{padding:13px}
-  .stat-value{font-size:21px}
-  .nav-btn{font-size:10px;padding:10px}
-  .wallet-card-head{padding:12px}
-  .wallet-card-body{padding:0 12px 13px}
-  .modal-box{padding:16px}
-}
-/* ===== MOBILE COMPACT FIX — ADD BEFORE </style> ===== */
-
-/* Prevent oversized elements and horizontal overflow */
-html {
-  -webkit-text-size-adjust: 100%;
-  text-size-adjust: 100%;
-}
-
-body {
-  overflow-x: hidden;
-  font-size: 13px;
-}
-
-.app {
-  width: 100%;
-  max-width: 1200px;
-  padding-left: 10px;
-  padding-right: 10px;
-}
-
-/* Compact cards */
-.panel-card {
-  padding: 14px;
-  border-radius: 16px;
-}
-
-.login-card {
-  padding: 18px;
-}
-
-.stat {
-  padding: 12px;
-  border-radius: 14px;
-}
-
-.stat-value {
-  font-size: 20px;
-  line-height: 1.25;
-}
-
-/* Compact inputs and controls */
-.input,
-.select,
-.textarea {
-  width: 100%;
-  max-width: 100%;
-  min-width: 0;
-  padding: 10px 11px;
-  border-radius: 10px;
-  font-size: 13px;
-}
-
-.textarea {
-  min-height: 72px;
-}
-
-.label {
-  margin: 11px 0 6px;
-  font-size: 11px;
-}
-
-.btn {
-  padding: 10px 12px;
-  font-size: 11px;
-  border-radius: 10px;
-}
-
-.btn-sm {
-  padding: 7px 9px;
-  font-size: 10px;
-}
-
-/* Compact section headings */
-.page-head {
-  gap: 9px;
-  margin-bottom: 13px;
-}
-
-.page-title {
-  font-size: 20px;
-  line-height: 1.3;
-}
-
-.page-sub {
-  font-size: 11px;
-  line-height: 1.5;
-}
-
-/* Compact wallet management */
-.wallet-stack {
-  gap: 10px;
-}
-
-.wallet-card {
-  border-radius: 15px;
-}
-
-.wallet-card-head {
-  padding: 10px;
-  gap: 9px;
-}
-
-.wallet-logo-preview {
-  width: 38px;
-  height: 38px;
-  border-radius: 11px;
-  font-size: 19px;
-}
-
-.wallet-heading strong {
-  font-size: 12px;
-  overflow-wrap: anywhere;
-}
-
-.wallet-heading small {
-  font-size: 10px;
-  line-height: 1.4;
-}
-
-.wallet-card-body {
-  padding: 0 10px 12px;
-}
-
-.network-box {
-  padding: 10px;
-  margin-top: 10px;
-  border-radius: 12px;
-}
-
-.network-title {
-  font-size: 11px;
-}
-
-.form-grid {
-  gap: 0 9px;
-}
-
-/* Compact switches */
-.check-row {
-  padding: 9px;
-  gap: 8px;
-  border-radius: 11px;
-}
-
-.check-title {
-  font-size: 11px;
-}
-
-.check-desc {
-  font-size: 10px;
-}
-
-/* Keep navigation compact and horizontally scrollable */
-.sidebar {
-  padding: 7px;
-  border-radius: 14px;
-}
-
-.nav-list {
-  display: flex;
-  gap: 5px;
-  overflow-x: auto;
-  overscroll-behavior-x: contain;
-  scrollbar-width: thin;
-  padding-bottom: 2px;
-}
-
-.nav-btn {
-  flex: 0 0 auto;
-  width: auto;
-  margin: 0;
-  padding: 9px 10px;
-  font-size: 10px;
-  border-radius: 9px;
-}
-
-.nav-btn .ico {
-  font-size: 13px;
-}
-
-/* Keep tables inside their own scroll area */
-.table-wrap {
-  width: 100%;
-  max-width: 100%;
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
-}
-
-table {
-  min-width: 580px;
-}
-
-th,
-td {
-  padding: 9px;
-  font-size: 10px;
-}
-
-/* Smaller popups */
-.modal {
-  padding: 10px;
-}
-
-.modal-box {
-  width: 100%;
-  max-width: 460px;
-  max-height: 85dvh;
-  overflow-y: auto;
-  padding: 14px;
-  border-radius: 16px;
-}
-
-.modal-title {
-  font-size: 15px;
-}
-
-.close-btn {
-  width: 30px;
-  height: 30px;
-  flex-shrink: 0;
-}
-
-.modal-actions {
-  gap: 7px;
-}
-
-.modal-actions .btn {
-  min-width: 0;
-}
-
-/* Small mobile phones */
-@media (max-width: 380px) {
-  .app {
-    padding-left: 7px;
-    padding-right: 7px;
-  }
-
-  .topbar {
-    gap: 6px;
-    min-height: 60px;
-  }
-
-  .brand {
-    gap: 7px;
-  }
-
-  .brand-logo {
-    width: 32px;
-    height: 32px;
-    font-size: 19px;
-    border-radius: 10px;
-  }
-
-  .brand-title {
-    font-size: 13px;
-  }
-
-  .brand-sub {
-    font-size: 8px;
-    letter-spacing: 1px;
-  }
-
-  .top-actions {
-    gap: 4px;
-  }
-
-  .top-actions .btn {
-    padding: 7px;
-    font-size: 9px;
-  }
-
-  .status-pill {
-    padding: 6px;
-    font-size: 8px;
-  }
-
-  .stats-grid {
-    gap: 7px;
-  }
-
-  .stat {
-    padding: 9px;
-  }
-
-  .stat-value {
-    font-size: 17px;
-  }
-
-  .panel-card {
-    padding: 10px;
-  }
-
-  .page-title {
-    font-size: 18px;
-  }
-
-  .nav-btn {
-    padding: 8px;
-    font-size: 9px;
-  }
-
-  .input,
-  .select,
-  .textarea {
-    padding: 9px;
-    font-size: 13px;
-  }
-}
-
-/* Two-column fields only on wider mobile screens */
-@media (min-width: 420px) and (max-width: 580px) {
-  .form-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  .form-grid .field-full {
-    grid-column: 1 / -1;
-  }
-}
-
-/* ===== END MOBILE COMPACT FIX ===== */
 </style>
 </head>
-<body>
 
-<div class="app">
-  <header class="topbar">
-    <div class="brand">
-      <div class="brand-logo">₡</div>
-      <div>
-        <div class="brand-title">CoinNova <span style="color:var(--gold)">ADMIN</span></div>
-        <div class="brand-sub">CONTROL CENTER • V1.0</div>
+<body>
+<div class="wrap">
+
+<div class="head">
+  <div>
+    <div class="brand">COIN<span>NOVA</span> <small style="font-size:11px;color:#9aa7c2">ADMIN CONSOLE</small></div>
+    <div class="muted">Manage mining, tasks, users, payment methods and withdrawal requests.</div>
+  </div>
+  <div class="actions">
+    <a class="btn" href="/" style="text-decoration:none">Open User App ↗</a>
+    <button class="btn" id="logout" type="button">Logout</button>
+  </div>
+</div>
+
+<div id="loginView" class="card login">
+  <h2>Admin sign in</h2>
+  <p class="muted">Use the ADMIN_PASSWORD environment variable configured on your server.</p>
+  <form id="loginForm">
+    <label>Admin password</label>
+    <input class="field" id="password" type="password" autocomplete="current-password" required>
+    <button class="btn gold" style="width:100%">SECURE LOGIN</button>
+    <p id="loginError" class="muted"></p>
+  </form>
+</div>
+
+<div id="adminView" class="hidden">
+
+  <div class="grid" id="metrics"></div>
+
+  <div class="tabs" id="tabs">
+    <button class="active" data-section="settings">⚙️ Settings</button>
+    <button data-section="tasks">🎯 Tasks</button>
+    <button data-section="withdrawals">💸 Withdrawals</button>
+    <button data-section="users">👥 Users</button>
+  </div>
+
+  <!-- SETTINGS -->
+  <section class="section active" id="settings">
+
+    <div class="card">
+      <h2>App & mining settings</h2>
+
+      <form id="settingsForm">
+        <div class="row">
+
+          <div>
+            <label>App name</label>
+            <input class="field" id="appName" maxlength="80" required>
+          </div>
+
+          <div>
+            <label>Tagline</label>
+            <input class="field" id="tagline" maxlength="80">
+          </div>
+
+          <div>
+            <label>Coins per tap</label>
+            <input class="field" id="tapReward" type="number" min="0" required>
+          </div>
+
+          <div>
+            <label>Maximum energy</label>
+            <input class="field" id="maxEnergy" type="number" min="1" required>
+          </div>
+
+          <div>
+            <label>Energy regenerated per second</label>
+            <input class="field" id="energyPerSecond" type="number" min="0" step="0.1" required>
+          </div>
+
+          <div>
+            <label>Daily bonus coins</label>
+            <input class="field" id="dailyBonus" type="number" min="0" required>
+          </div>
+
+          <div>
+            <label>Minimum withdrawal (CNV)</label>
+            <input class="field" id="minWithdraw" type="number" min="0" required>
+          </div>
+
+          <div>
+            <label>Qualified referrals required to withdraw</label>
+            <select class="field" id="referralRequired">
+              <option value="0">0 — none</option>
+              <option value="1">1 referral</option>
+              <option value="2">2 referrals</option>
+            </select>
+          </div>
+
+          <div>
+            <label>Referral bonus (CNV)</label>
+            <input class="field" id="referralBonus" type="number" min="0" required>
+          </div>
+
+          <div>
+            <label>Qualified referrals per Spin</label>
+            <input class="field" id="referralsPerSpin" type="number" min="1" max="1000" required>
+          </div>
+
+          <div>
+            <label>Spin prize list (CNV, comma-separated)</label>
+            <input class="field" id="spinRewards" placeholder="10,20,30,50,100,200" required>
+          </div>
+
+        </div>
+
+        <label class="check">
+          <input id="spinEnabled" type="checkbox">
+          Enable Lucky Spin
+        </label>
+
+        <div class="card" style="margin:14px 0;background:#0d1526">
+          <h3 style="margin-top:0">6-Level Daily Commission</h3>
+          <p class="muted">Each percentage applies to eligible recorded earnings of members at that team level. Payout timing must be implemented on the server.</p>
+
+          <label class="check">
+            <input id="commissionEnabled" type="checkbox">
+            Enable daily commission payout
+          </label>
+
+          <div class="row">
+            <div><label>Level 1 (%)</label><input class="field" id="commissionRate1" type="number" min="0" max="100" step="0.1" required></div>
+            <div><label>Level 2 (%)</label><input class="field" id="commissionRate2" type="number" min="0" max="100" step="0.1" required></div>
+            <div><label>Level 3 (%)</label><input class="field" id="commissionRate3" type="number" min="0" max="100" step="0.1" required></div>
+            <div><label>Level 4 (%)</label><input class="field" id="commissionRate4" type="number" min="0" max="100" step="0.1" required></div>
+            <div><label>Level 5 (%)</label><input class="field" id="commissionRate5" type="number" min="0" max="100" step="0.1" required></div>
+            <div><label>Level 6 (%)</label><input class="field" id="commissionRate6" type="number" min="0" max="100" step="0.1" required></div>
+          </div>
+        </div>
+
+        <label class="check">
+          <input id="maintenance" type="checkbox">
+          Maintenance mode (disable mining)
+        </label>
+
+        <label class="check">
+          <input id="sound" type="checkbox">
+          Enable tap sound
+        </label>
+
+        <button class="btn gold" type="submit">SAVE APP SETTINGS</button>
+      </form>
+    </div>
+
+    <div class="card">
+      <h2>Payment methods</h2>
+      <p class="muted">Enable or disable payment methods and adjust their visible name and logo URL. Payments are manual unless a verified payment-provider integration is installed.</p>
+
+      <div id="methods"></div>
+
+      <div class="actions">
+        <button class="btn" id="addMethod" type="button">+ Add payment method</button>
+        <button class="btn gold" id="saveMethods" type="button">SAVE PAYMENT METHODS</button>
       </div>
     </div>
-    <div class="top-actions">
-      <div class="status-pill"><span class="dot"></span><span id="topStatus">SYSTEM</span></div>
-      <button class="btn" id="refreshBtn">↻ Refresh</button>
-    </div>
-  </header>
 
-  <section id="loginScreen" class="login-wrap">
-    <div class="login-card">
-      <div class="login-logo">₡</div>
-      <div class="login-title">Admin Access</div>
-      <div class="login-sub">Sign in to manage your CoinNova mining platform, wallets, users and withdrawal requests.</div>
-      <form id="loginForm">
-        <label class="label" for="adminPassword">Admin Password</label>
-        <input class="input" id="adminPassword" type="password" autocomplete="current-password" placeholder="Enter your admin password" required>
-        <button class="btn btn-gold" id="loginSubmit" type="submit">SECURE LOGIN →</button>
-      </form>
-      <div class="login-error" id="loginError"></div>
-      <div class="notice">🔒 Admin authentication is handled by the server. Keep your admin password private.</div>
+    <div class="hint">
+      ⚠️ This panel can manage withdrawal requests and track their status. It does not automatically send bKash, Nagad, Rocket or cryptocurrency payments. Never ask users for wallet seed phrases or private keys.
     </div>
   </section>
 
-  <div id="adminApp" class="layout hidden">
-    <aside class="sidebar">
-      <div class="admin-profile">
-        <div class="admin-avatar">👑</div>
-        <div><div class="admin-name">CoinNova Admin</div><div class="admin-role">Platform Administrator</div></div>
+  <!-- TASKS -->
+  <section class="section" id="tasks">
+
+    <div class="card">
+      <h2>Create a task</h2>
+
+      <form id="taskForm">
+        <div class="row">
+
+          <div>
+            <label>Task title</label>
+            <input class="field" id="taskTitle" required maxlength="100">
+          </div>
+
+          <div>
+            <label>Platform label</label>
+            <input class="field" id="taskPlatform" placeholder="Telegram, YouTube..." required maxlength="40">
+          </div>
+
+          <div>
+            <label>Destination URL</label>
+            <input class="field" id="taskUrl" type="url" placeholder="https://" required>
+          </div>
+
+          <div>
+            <label>Reward (CNV)</label>
+            <input class="field" id="taskReward" type="number" min="0" value="100" required>
+          </div>
+
+        </div>
+
+        <button class="btn gold" type="submit">ADD TASK</button>
+      </form>
+    </div>
+
+    <div class="card">
+      <h2>Task list</h2>
+      <div id="taskList"></div>
+    </div>
+
+    <div class="hint">
+      Social tasks are not independently verified by social platform APIs in this version. Add real verification before giving high-value rewards.
+    </div>
+  </section>
+
+  <!-- WITHDRAWALS -->
+  <section class="section" id="withdrawals">
+    <div class="card">
+      <h2>Withdrawal requests</h2>
+      <p class="muted">Review requests, mark paid only after sending funds, or reject a request.</p>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>ID / User</th>
+              <th>Method & destination</th>
+              <th>Amount</th>
+              <th>Status</th>
+              <th>Transaction ID / note</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="withdrawTable"></tbody>
+        </table>
       </div>
-      <div class="nav-title">MAIN MENU</div>
-      <div class="nav-list">
-        <button class="nav-btn active" data-page="dashboard"><span class="ico">▦</span>Dashboard</button>
-        <button class="nav-btn" data-page="settings"><span class="ico">⚙</span>App Settings</button>
-        <button class="nav-btn" data-page="wallets"><span class="ico">◈</span>Wallet Management</button>
-        <button class="nav-btn" data-page="withdrawals"><span class="ico">⇄</span>Withdrawals</button>
-        <button class="nav-btn" data-page="users"><span class="ico">♙</span>Users</button>
-        <button class="nav-btn" data-page="tasks"><span class="ico">✦</span>Tasks</button>
+    </div>
+  </section>
+
+  <!-- USERS -->
+  <section class="section" id="users">
+    <div class="card">
+      <h2>Users</h2>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>ID / Telegram ID</th>
+              <th>Name</th>
+              <th>Balance</th>
+              <th>Taps</th>
+              <th>Created</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="userTable"></tbody>
+        </table>
       </div>
-      <div class="sidebar-bottom">
-        <button class="nav-btn" id="logoutBtn"><span class="ico">↪</span>Secure Logout</button>
-      </div>
-    </aside>
+    </div>
+  </section>
 
-    <main class="content">
-      <!-- DASHBOARD -->
-      <section class="page active" id="page-dashboard">
-        <div class="page-head">
-          <div><div class="page-title">Dashboard Overview</div><div class="page-sub">Your platform activity at a glance.</div></div>
-          <div class="page-actions"><button class="btn btn-gold" id="dashboardRefresh">↻ Update Overview</button></div>
-        </div>
-        <div class="stats-grid">
-          <div class="stat"><div class="stat-top"><span class="stat-icon">👥</span><span class="stat-tag">USERS</span></div><div class="stat-label">Total Users</div><div class="stat-value" id="statUsers">—</div><div class="stat-note">Registered accounts</div></div>
-          <div class="stat"><div class="stat-top"><span class="stat-icon">💰</span><span class="stat-tag">BALANCE</span></div><div class="stat-label">Total User Balance</div><div class="stat-value" id="statBalance">—</div><div class="stat-note">Coin balance overview</div></div>
-          <div class="stat"><div class="stat-top"><span class="stat-icon">⇄</span><span class="stat-tag" style="color:var(--gold)">REVIEW</span></div><div class="stat-label">Pending Withdrawals</div><div class="stat-value" id="statPending">—</div><div class="stat-note">Requests awaiting review</div></div>
-          <div class="stat"><div class="stat-top"><span class="stat-icon">🎯</span><span class="stat-tag">TASKS</span></div><div class="stat-label">Available Tasks</div><div class="stat-value" id="statTasks">—</div><div class="stat-note">Task count</div></div>
-        </div>
-        <div class="grid-2">
-          <div class="panel-card">
-            <div class="card-head"><div><div class="card-title">⚡ Quick Management</div><div class="card-sub">Jump directly to the controls you need.</div></div></div>
-            <div style="display:grid;gap:9px">
-              <button class="btn" data-go="wallets" style="text-align:left">◈ Configure Withdrawal Wallets <span style="float:right">→</span></button>
-              <button class="btn" data-go="withdrawals" style="text-align:left">⇄ Review Withdrawal Requests <span style="float:right">→</span></button>
-              <button class="btn" data-go="settings" style="text-align:left">⚙ Update Mining & App Settings <span style="float:right">→</span></button>
-              <button class="btn" data-go="tasks" style="text-align:left">✦ Manage Reward Tasks <span style="float:right">→</span></button>
-            </div>
-          </div>
-          <div class="panel-card">
-            <div class="card-head"><div><div class="card-title">🛡️ System Status</div><div class="card-sub">API and application information.</div></div><span class="badge badge-green" id="apiBadge">CHECKING</span></div>
-            <div class="check-row"><div class="check-copy"><div class="check-title">API Connection</div><div class="check-desc" id="apiStatusText">Checking server status…</div></div><span class="badge badge-yellow" id="apiStatusBadge">WAIT</span></div>
-            <div class="check-row"><div class="check-copy"><div class="check-title">Mining System</div><div class="check-desc">Controlled by app settings.</div></div><span class="badge badge-green" id="miningStatusBadge">ENABLED</span></div>
-            <div class="check-row"><div class="check-copy"><div class="check-title">Withdrawal System</div><div class="check-desc">Requests are validated by the server.</div></div><span class="badge badge-green" id="withdrawStatusBadge">ENABLED</span></div>
-            <div class="notice"><strong>Security:</strong> Approving a request changes its status; actual transfers require a separately integrated payment provider or blockchain transaction system.</div>
-          </div>
-        </div>
-        <div class="panel-card" style="margin-top:14px">
-          <div class="card-head"><div><div class="card-title">🧾 Recent Withdrawal Requests</div><div class="card-sub">Latest requests returned by the server.</div></div><button class="btn btn-sm" data-go="withdrawals">View All →</button></div>
-          <div class="table-wrap"><table><thead><tr><th>ID</th><th>User</th><th>Method</th><th>Amount</th><th>Status</th><th>Date</th></tr></thead><tbody id="recentWithdrawalRows"><tr><td colspan="6">Loading…</td></tr></tbody></table></div>
-        </div>
-      </section>
-
-      <!-- APP SETTINGS -->
-      <section class="page" id="page-settings">
-        <div class="page-head"><div><div class="page-title">App Settings</div><div class="page-sub">Configure app branding, rewards and system availability.</div></div><button class="btn btn-gold" id="saveSettingsBtn">✓ Save Settings</button></div>
-        <div class="grid-2">
-          <div class="panel-card">
-            <div class="card-head"><div><div class="card-title">🎨 App Branding</div><div class="card-sub">Customize the public-facing app information.</div></div></div>
-            <label class="label" for="settingAppName">App Name</label><input class="input" id="settingAppName" placeholder="CoinNova">
-            <label class="label" for="settingWelcome">Welcome Message</label><textarea class="textarea" id="settingWelcome" placeholder="Welcome to CoinNova..."></textarea>
-            <label class="label" for="settingSupport">Support URL</label><input class="input" id="settingSupport" placeholder="https://t.me/your_support">
-            <label class="label" for="settingTelegram">Telegram URL</label><input class="input" id="settingTelegram" placeholder="https://t.me/your_channel">
-          </div>
-          <div class="panel-card">
-            <div class="card-head"><div><div class="card-title">💰 Rewards & Limits</div><div class="card-sub">Rewards and withdrawal thresholds configured on the server.</div></div></div>
-            <label class="label" for="settingMiningReward">Mining Reward</label><input class="input" id="settingMiningReward" type="number" min="0" step="any" placeholder="10">
-            <label class="label" for="settingDailyReward">Daily Reward</label><input class="input" id="settingDailyReward" type="number" min="0" step="any" placeholder="25">
-            <label class="label" for="settingReferralReward">Referral Reward</label><input class="input" id="settingReferralReward" type="number" min="0" step="any" placeholder="50">
-            <label class="label" for="settingMinimumWithdrawal">Minimum Withdrawal (coins)</label><input class="input" id="settingMinimumWithdrawal" type="number" min="0" step="any" placeholder="100">
-            <label class="label" for="settingReferralRequirement">Referral Requirement</label><input class="input" id="settingReferralRequirement" type="number" min="0" step="1" placeholder="0">
-          </div>
-        </div>
-        <div class="panel-card" style="margin-top:14px">
-          <div class="card-head"><div><div class="card-title">⚙️ System Controls</div><div class="card-sub">Switch app features on or off.</div></div></div>
-          <div class="grid-2">
-            <div>
-              <div class="check-row"><div class="check-copy"><div class="check-title">Mining Enabled</div><div class="check-desc">Allow users to start mining sessions.</div></div><label class="switch"><input id="settingMiningEnabled" type="checkbox" checked><span class="slider"></span></label></div>
-              <div class="check-row"><div class="check-copy"><div class="check-title">Registration Enabled</div><div class="check-desc">Allow new accounts to register.</div></div><label class="switch"><input id="settingRegistrationEnabled" type="checkbox" checked><span class="slider"></span></label></div>
-            </div>
-            <div>
-              <div class="check-row"><div class="check-copy"><div class="check-title">Withdrawals Enabled</div><div class="check-desc">Allow new withdrawal requests.</div></div><label class="switch"><input id="settingWithdrawalEnabled" type="checkbox" checked><span class="slider"></span></label></div>
-              <div class="check-row"><div class="check-copy"><div class="check-title">Maintenance Mode</div><div class="check-desc">Indicate that the app is under maintenance.</div></div><label class="switch"><input id="settingMaintenanceMode" type="checkbox"><span class="slider"></span></label></div>
-            </div>
-          </div>
-          <div class="inline-actions"><button class="btn btn-gold" id="saveSettingsBtn2">✓ Save All Settings</button><button class="btn" id="reloadSettingsBtn">↻ Reload From Server</button></div>
-          <div class="notice">The server remains authoritative. Hiding a feature in the UI is not a security control; the server must also enforce the corresponding setting.</div>
-        </div>
-      </section>
-
-      <!-- WALLETS -->
-      <section class="page" id="page-wallets">
-        <div class="page-head">
-          <div><div class="page-title">Wallet Management</div><div class="page-sub">Configure wallet names, logos, networks, fees and minimum withdrawal amounts.</div></div>
-          <div class="page-actions"><button class="btn" id="reloadWalletsBtn">↻ Reload</button><button class="btn btn-gold" id="saveWalletsBtn">✓ Save Wallets</button></div>
-        </div>
-        <div class="notice" style="margin:0 0 15px"><strong>Important:</strong> These settings define what users see and what the app requests. The server must independently validate enabled methods, fees, networks and minimums before accepting a withdrawal.</div>
-        <div class="wallet-stack" id="walletEditor"></div>
-        <div class="panel-card" style="margin-top:14px">
-          <div class="card-head"><div><div class="card-title">🔎 Configuration Preview</div><div class="card-sub">Current configured withdrawal methods.</div></div></div>
-          <div class="table-wrap"><table><thead><tr><th>Method</th><th>Enabled</th><th>Minimum</th><th>Fee</th><th>Networks</th></tr></thead><tbody id="walletPreviewRows"></tbody></table></div>
-        </div>
-      </section>
-
-      <!-- WITHDRAWALS -->
-      <section class="page" id="page-withdrawals">
-        <div class="page-head"><div><div class="page-title">Withdrawal Requests</div><div class="page-sub">Review and update the status of user requests.</div></div><button class="btn btn-gold" id="loadWithdrawalsBtn">↻ Refresh Requests</button></div>
-        <div class="stats-grid">
-          <div class="stat"><div class="stat-icon">📋</div><div class="stat-label">Total Requests</div><div class="stat-value" id="wdTotal">—</div></div>
-          <div class="stat"><div class="stat-icon">⏳</div><div class="stat-label">Pending</div><div class="stat-value" id="wdPending">—</div></div>
-          <div class="stat"><div class="stat-icon">✓</div><div class="stat-label">Approved / Completed</div><div class="stat-value" id="wdApproved">—</div></div>
-          <div class="stat"><div class="stat-icon">✕</div><div class="stat-label">Rejected</div><div class="stat-value" id="wdRejected">—</div></div>
-        </div>
-        <div class="panel-card">
-          <div class="toolbar">
-            <input class="input" id="withdrawalSearch" placeholder="Search ID, user, wallet…" aria-label="Search withdrawals">
-            <select class="select" id="withdrawalStatusFilter"><option value="">All statuses</option><option value="pending">Pending</option><option value="approved">Approved</option><option value="completed">Completed</option><option value="rejected">Rejected</option></select>
-            <select class="select" id="withdrawalMethodFilter"><option value="">All methods</option><option>USDT</option><option>bKash</option><option>Nagad</option><option>Rocket</option></select>
-          </div>
-          <div class="table-wrap"><table><thead><tr><th>ID</th><th>User</th><th>Method / Network</th><th>Address / Account</th><th>Amount</th><th>Status</th><th>Created</th><th>Action</th></tr></thead><tbody id="withdrawalRows"><tr><td colspan="8">Loading requests…</td></tr></tbody></table></div>
-          <div class="help">Status updates call the server API. They do not themselves execute an external payment or blockchain transfer.</div>
-        </div>
-      </section>
-
-      <!-- USERS -->
-      <section class="page" id="page-users">
-        <div class="page-head"><div><div class="page-title">User Management</div><div class="page-sub">View registered users and their account balances.</div></div><button class="btn btn-gold" id="loadUsersBtn">↻ Refresh Users</button></div>
-        <div class="panel-card">
-          <div class="toolbar"><input class="input" id="userSearch" placeholder="Search user ID, name or username…"></div>
-          <div class="table-wrap"><table><thead><tr><th>ID</th><th>Telegram ID</th><th>Name / Username</th><th>Balance</th><th>Total Earned</th><th>Referrals</th><th>Joined</th></tr></thead><tbody id="userRows"><tr><td colspan="7">Loading users…</td></tr></tbody></table></div>
-        </div>
-      </section>
-
-      <!-- TASKS -->
-      <section class="page" id="page-tasks">
-        <div class="page-head"><div><div class="page-title">Task Management</div><div class="page-sub">Create, edit and delete tasks available in the User Panel.</div></div><button class="btn btn-gold" id="newTaskBtn">＋ Create Task</button></div>
-        <div class="panel-card">
-          <div class="card-head"><div><div class="card-title">📋 Published Tasks</div><div class="card-sub">Task changes are saved through the server API.</div></div><button class="btn btn-sm" id="reloadTasksBtn">↻ Reload</button></div>
-          <div id="taskList"><div class="empty">Loading tasks…</div></div>
-        </div>
-      </section>
-
-      <div class="footer">CoinNova Admin • Secure platform management<br>Never share your admin password, bot token, session secret or private wallet keys.</div>
-    </main>
-  </div>
+</div>
 </div>
 
-<!-- TASK MODAL -->
-<div class="modal" id="taskModal">
-  <div class="modal-box">
-    <div class="modal-head"><div class="modal-title" id="taskModalTitle">Create Task</div><button class="close-btn" data-close="taskModal">×</button></div>
-    <form id="taskForm">
-      <input type="hidden" id="taskId">
-      <label class="label" for="taskTitle">Task Title</label><input class="input" id="taskTitle" required maxlength="120" placeholder="Join our Telegram channel">
-      <label class="label" for="taskDescription">Description</label><textarea class="textarea" id="taskDescription" maxlength="1000" placeholder="Describe what the user needs to do"></textarea>
-      <label class="label" for="taskReward">Reward (coins)</label><input class="input" id="taskReward" type="number" min="0" step="any" required placeholder="10">
-      <label class="label" for="taskUrl">Task URL (optional)</label><input class="input" id="taskUrl" type="url" placeholder="https://t.me/your_channel">
-      <div class="modal-actions"><button type="button" class="btn" data-close="taskModal">Cancel</button><button class="btn btn-gold" id="saveTaskBtn" type="submit">Save Task</button></div>
-    </form>
-  </div>
-</div>
-
-<!-- WITHDRAWAL DETAIL MODAL -->
-<div class="modal" id="withdrawalModal">
-  <div class="modal-box">
-    <div class="modal-head"><div class="modal-title">Withdrawal Details</div><button class="close-btn" data-close="withdrawalModal">×</button></div>
-    <div id="withdrawalDetail"></div>
-    <label class="label" for="withdrawalNewStatus">Update Status</label>
-    <select class="select" id="withdrawalNewStatus"><option value="pending">Pending</option><option value="approved">Approved</option><option value="completed">Completed</option><option value="rejected">Rejected</option></select>
-    <div class="modal-actions"><button class="btn" data-close="withdrawalModal">Cancel</button><button class="btn btn-gold" id="updateWithdrawalStatus">Update Status</button></div>
-    <div class="notice">Only update to completed after you have independently verified that any required payment has actually been sent.</div>
-  </div>
-</div>
-
-<div class="toast" id="toast"></div>
+<div id="toast" role="status" aria-live="polite"></div>
 
 <script>
-(function(){
-'use strict';
+"use strict";
 
-const $=id=>document.getElementById(id);
-const state={
-  authenticated:false,
-  settings:{},
-  wallets:{},
-  users:[],
-  tasks:[],
-  withdrawals:[],
-  selectedWithdrawal:null,
-  editingTaskId:null,
-  busy:false
-};
+const $ = id => document.getElementById(id);
+let data = null;
+let busy = false;
 
-const DEFAULT_WALLETS={
-  USDT:{
-    enabled:true,name:'Binance • USDT',logoUrl:'',minimum:10,feePercent:10,feeLabel:'10% fee',
-    networks:[
-      {id:'TRX',name:'TRX (TRC20)',description:'Tron network wallet',minimum:10,feePercent:10,feeLabel:'10% fee'},
-      {id:'TON',name:'TON',description:'TON network wallet',minimum:3,feePercent:10,feeLabel:'10% fee'}
-    ]
-  },
-  bKash:{enabled:true,name:'bKash',logoUrl:'',minimum:100,feePercent:0,feeLabel:'No fee'},
-  Nagad:{enabled:true,name:'Nagad',logoUrl:'',minimum:100,feePercent:0,feeLabel:'No fee'},
-  Rocket:{enabled:true,name:'Rocket',logoUrl:'',minimum:100,feePercent:0,feeLabel:'No fee'}
-};
-const WALLET_META={
-  USDT:{icon:'◆',description:'Crypto asset • Binance-style withdrawal flow'},
-  bKash:{icon:'💗',description:'Bangladesh mobile financial wallet'},
-  Nagad:{icon:'🟠',description:'Bangladesh mobile financial wallet'},
-  Rocket:{icon:'🟣',description:'Bangladesh mobile financial wallet'}
-};
+async function api(url, opts = {}) {
+  const response = await fetch(url, {
+    credentials: "same-origin",
+    headers: {
+      "Content-Type": "application/json",
+      ...(opts.headers || {})
+    },
+    ...opts
+  });
 
-function esc(v){
-  return String(v==null?'':v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-}
-function num(v){
-  const n=Number(v);
-  return Number.isFinite(n)?n:0;
-}
-function fmt(v,d=4){
-  return num(v).toLocaleString('en-US',{maximumFractionDigits:d});
-}
-function toast(msg){
-  const el=$('toast');
-  el.textContent=String(msg||'Something went wrong');
-  el.classList.add('show');
-  clearTimeout(toast.timer);
-  toast.timer=setTimeout(()=>el.classList.remove('show'),2800);
-}
-function openModal(id){$(id).classList.add('show');}
-function closeModal(id){$(id).classList.remove('show');}
-function normalizeSettings(data){
-  return data&&(data.settings||data.data||data)||{};
-}
-function normalizeArray(data,key){
-  if(Array.isArray(data))return data;
-  if(data&&Array.isArray(data[key]))return data[key];
-  if(data&&Array.isArray(data.items))return data.items;
-  if(data&&Array.isArray(data.data))return data.data;
-  return [];
-}
-async function api(path,options={}){
-  const config={
-    method:options.method||'GET',
-    credentials:'same-origin',
-    headers:{'Content-Type':'application/json'},
-    ...options
-  };
-  if(options.body&&typeof options.body!=='string')config.body=JSON.stringify(options.body);
-  const response=await fetch(path,config);
-  let data={};
-  try{data=await response.json();}catch(e){}
-  if(!response.ok)throw new Error(data.error||data.message||('Request failed ('+response.status+')'));
-  return data;
-}
-function setLoading(el,on){
-  if(!el)return;
-  el.disabled=!!on;
-  el.classList.toggle('loading',!!on);
-}
-function normalizeWallets(){
-  const source=state.settings.wallets||state.settings.withdrawalMethods||state.settings.paymentMethods||{};
-  const result={};
-  Object.keys(DEFAULT_WALLETS).forEach(key=>{
-    const saved=source[key]||source[key.toLowerCase()]||{};
-    const base=DEFAULT_WALLETS[key];
-    result[key]={...base,...saved};
-    if(key==='USDT'){
-      result[key].networks=Array.isArray(saved.networks)&&saved.networks.length
-        ?saved.networks.map((n,i)=>({...((base.networks||[]).find(x=>x.id===n.id)||{}),...n}))
-        :JSON.parse(JSON.stringify(base.networks));
-    }
-    if(result[key].enabled===undefined)result[key].enabled=true;
-  });
-  Object.keys(source).forEach(key=>{
-    if(!result[key]&&source[key]&&typeof source[key]==='object')result[key]={...source[key]};
-  });
-  state.wallets=result;
-}
-function showLogin(){
-  $('loginScreen').classList.remove('hidden');
-  $('adminApp').classList.add('hidden');
-}
-function showAdmin(){
-  $('loginScreen').classList.add('hidden');
-  $('adminApp').classList.remove('hidden');
-}
-async function login(password){
-  const data=await api('/api/admin/login',{method:'POST',body:{password}});
-  state.authenticated=true;
-  showAdmin();
-  $('loginError').textContent='';
-  $('adminPassword').value='';
-  await loadEverything();
-  toast(data.message||'Admin login successful');
-}
-async function logout(){
-  try{await api('/api/admin/logout',{method:'POST',body:{}});}catch(e){}
-  state.authenticated=false;
-  showLogin();
-  toast('Logged out securely');
-}
-async function checkSession(){
-  try{
-    const data=await api('/api/admin/overview');
-    state.authenticated=true;
-    showAdmin();
-    await loadEverything(data);
-  }catch(e){
-    state.authenticated=false;
-    showLogin();
+  let result = {};
+
+  try {
+    result = await response.json();
+  } catch {}
+
+  if (!response.ok) {
+    throw new Error(result.error || `Request failed (${response.status})`);
   }
+
+  return result;
 }
-function navigate(page){
-  const target=$('page-'+page);
-  if(!target)return;
-  document.querySelectorAll('.page').forEach(el=>el.classList.remove('active'));
-  target.classList.add('active');
-  document.querySelectorAll('.nav-btn[data-page]').forEach(el=>el.classList.toggle('active',el.dataset.page===page));
-  if(page==='withdrawals')loadWithdrawals();
-  if(page==='users')loadUsers();
-  if(page==='tasks')loadTasks();
-  if(page==='wallets')renderWalletEditor();
-  window.scrollTo({top:0,behavior:'smooth'});
+
+function toast(message) {
+  const element = $("toast");
+  element.textContent = String(message || "");
+  element.style.display = "block";
+
+  clearTimeout(element._timer);
+
+  element._timer = setTimeout(() => {
+    element.style.display = "none";
+  }, 2800);
 }
-async function loadEverything(overviewData){
-  await Promise.allSettled([
-    loadSettings(),
-    loadWalletSettings(),
-    loadOverview(overviewData),
-    loadWithdrawals(),
-    loadUsers(),
-    loadTasks(),
-    checkApiHealth()
-  ]);
-  updateSystemBadges();
+
+function esc(value) {
+  return String(value ?? "").replace(/[&<>"']/g, character => ({
+    "&": "&amp;",
+    "<": "&lt;",
+    ">": "&gt;",
+    '"': "&quot;",
+    "'": "&#39;"
+  })[character]);
 }
-async function checkApiHealth(){
-  try{
-    const data=await api('/api/health');
-    $('apiBadge').textContent='CONNECTED';
-    $('apiBadge').className='badge badge-green';
-    $('apiStatusBadge').textContent='ONLINE';
-    $('apiStatusBadge').className='badge badge-green';
-    $('apiStatusText').textContent=data.message||'Server health endpoint responded successfully.';
-    $('topStatus').textContent='ONLINE';
-  }catch(e){
-    $('apiBadge').textContent='UNAVAILABLE';
-    $('apiBadge').className='badge badge-red';
-    $('apiStatusBadge').textContent='ERROR';
-    $('apiStatusBadge').className='badge badge-red';
-    $('apiStatusText').textContent='Health endpoint unavailable: '+e.message;
-    $('topStatus').textContent='CHECK';
-  }
+
+function numberValue(id, fallback = 0) {
+  const value = Number($(id).value);
+  return Number.isFinite(value) ? value : fallback;
 }
-async function loadSettings(){
-  const data=await api('/api/settings');
-  state.settings=normalizeSettings(data);
-  fillSettingsForm();
-  normalizeWallets();
-  renderWalletEditor();
-  updateSystemBadges();
+
+function money(value) {
+  return Number(value || 0).toLocaleString("en-US");
 }
-async function loadWalletSettings(){
-  // Wallet settings are part of the shared settings response in this implementation.
-  normalizeWallets();
-  renderWalletEditor();
-}
-function fillSettingsForm(){
-  const s=state.settings;
-  $('settingAppName').value=s.appName??'CoinNova';
-  $('settingWelcome').value=s.welcomeText??'Welcome to CoinNova. Start mining and explore available rewards.';
-  $('settingSupport').value=s.supportUrl??'';
-  $('settingTelegram').value=s.telegramUrl??'';
-  $('settingMiningReward').value=s.miningReward??0;
-  $('settingDailyReward').value=s.dailyReward??0;
-  $('settingReferralReward').value=s.referralReward??0;
-  $('settingMinimumWithdrawal').value=s.minimumWithdrawal??0;
-  $('settingReferralRequirement').value=s.referralRequirement??0;
-  $('settingMiningEnabled').checked=s.miningEnabled!==false&&String(s.miningEnabled)!=='false';
-  $('settingRegistrationEnabled').checked=s.registrationEnabled!==false&&String(s.registrationEnabled)!=='false';
-  $('settingWithdrawalEnabled').checked=s.withdrawalEnabled!==false&&String(s.withdrawalEnabled)!=='false';
-  $('settingMaintenanceMode').checked=s.maintenanceMode===true||String(s.maintenanceMode)==='true';
-}
-function readSettingsForm(){
-  return {
-    appName:$('settingAppName').value.trim()||'CoinNova',
-    welcomeText:$('settingWelcome').value.trim(),
-    supportUrl:$('settingSupport').value.trim(),
-    telegramUrl:$('settingTelegram').value.trim(),
-    miningReward:num($('settingMiningReward').value),
-    dailyReward:num($('settingDailyReward').value),
-    referralReward:num($('settingReferralReward').value),
-    minimumWithdrawal:num($('settingMinimumWithdrawal').value),
-    referralRequirement:Math.max(0,Math.floor(num($('settingReferralRequirement').value))),
-    miningEnabled:$('settingMiningEnabled').checked,
-    registrationEnabled:$('settingRegistrationEnabled').checked,
-    withdrawalEnabled:$('settingWithdrawalEnabled').checked,
-    maintenanceMode:$('settingMaintenanceMode').checked
-  };
-}
-async function saveSettings(){
-  const button=$('saveSettingsBtn');
-  setLoading(button,true);
-  try{
-    const values=readSettingsForm();
-    const data=await api('/api/admin/settings',{method:'PUT',body:values});
-    state.settings={...state.settings,...values,...(data.settings||{})};
-    fillSettingsForm();
-    updateSystemBadges();
-    toast(data.message||'App settings saved');
-  }catch(e){
-    toast('Could not save settings: '+e.message);
-  }finally{setLoading(button,false);}
-}
-function updateSystemBadges(){
-  const s=state.settings;
-  setBadge('miningStatusBadge',s.miningEnabled===false||String(s.miningEnabled)==='false'?'DISABLED':'ENABLED',s.miningEnabled===false||String(s.miningEnabled)==='false'?'badge-red':'badge-green');
-  setBadge('withdrawStatusBadge',s.withdrawalEnabled===false||String(s.withdrawalEnabled)==='false'?'DISABLED':'ENABLED',s.withdrawalEnabled===false||String(s.withdrawalEnabled)==='false'?'badge-red':'badge-green');
-}
-function setBadge(id,text,className){
-  const el=$(id);
-  if(!el)return;
-  el.textContent=text;
-  el.className='badge '+className;
-}
-async function loadOverview(existing){
-  let data=existing;
-  try{
-    if(!data)data=await api('/api/admin/overview');
-    const o=data.overview||data.stats||data;
-    $('statUsers').textContent=fmt(o.totalUsers??o.usersCount??o.users??0,0);
-    $('statBalance').textContent=fmt(o.totalBalance??o.balance??0,2);
-    $('statPending').textContent=fmt(o.pendingWithdrawals??o.pending??0,0);
-    $('statTasks').textContent=fmt(o.totalTasks??o.tasksCount??o.tasks??state.tasks.length??0,0);
-  }catch(e){
-    $('statUsers').textContent=state.users.length?fmt(state.users.length,0):'—';
-    $('statPending').textContent=fmt(state.withdrawals.filter(w=>String(w.status||'pending').toLowerCase()==='pending').length,0);
-    $('statTasks').textContent=fmt(state.tasks.length,0);
-    $('statBalance').textContent='—';
-  }
-}
-function walletIconHtml(key,config){
-  if(config.logoUrl){
-    return '<img src="'+esc(config.logoUrl)+'" alt="" onerror="this.style.display=\'none\'">';
-  }
-  return esc((WALLET_META[key]&&WALLET_META[key].icon)||'💳');
-}
-function renderWalletEditor(){
-  normalizeWallets();
-  const box=$('walletEditor');
-  box.innerHTML='';
-  Object.keys(state.wallets).forEach(key=>{
-    const w=state.wallets[key];
-    const meta=WALLET_META[key]||{icon:'💳',description:'Custom withdrawal method'};
-    const card=document.createElement('div');
-    card.className='wallet-card';
-    card.innerHTML=`
-      <div class="wallet-card-head">
-        <div class="wallet-logo-preview" id="logoPreview-${esc(key)}">${walletIconHtml(key,w)}</div>
-        <div class="wallet-heading"><strong>${esc(w.name||key)}</strong><small>${esc(meta.description)}</small></div>
-        <label class="switch" title="Enable or disable wallet"><input type="checkbox" data-wallet="${esc(key)}" data-field="enabled" ${w.enabled!==false?'checked':''}><span class="slider"></span></label>
-      </div>
-      <div class="wallet-card-body">
-        <div class="form-grid">
-          <div class="field-full">
-            <label class="label">Wallet Display Name</label>
-            <input class="input" data-wallet="${esc(key)}" data-field="name" value="${esc(w.name||key)}" placeholder="Wallet name">
-          </div>
-          <div class="field-full">
-            <label class="label">Logo Image URL</label>
-            <div class="logo-input-row">
-              <input class="input" data-wallet="${esc(key)}" data-field="logoUrl" value="${esc(w.logoUrl||'')}" placeholder="https://example.com/logo.png">
-              <div class="mini-preview" id="miniLogo-${esc(key)}">${walletIconHtml(key,w)}</div>
-            </div>
-          </div>
-          <div>
-            <label class="label">Minimum Withdrawal</label>
-            <input class="input" data-wallet="${esc(key)}" data-field="minimum" type="number" min="0" step="any" value="${esc(w.minimum??0)}">
-          </div>
-          <div>
-            <label class="label">Fee (%)</label>
-            <input class="input" data-wallet="${esc(key)}" data-field="feePercent" type="number" min="0" max="100" step="any" value="${esc(w.feePercent??0)}">
-          </div>
-          <div class="field-full">
-            <label class="label">Fee Display Text</label>
-            <input class="input" data-wallet="${esc(key)}" data-field="feeLabel" value="${esc(w.feeLabel||'')}" placeholder="e.g. 10% fee or No fee">
-          </div>
-        </div>
-        ${key==='USDT'?renderNetworkEditor(w):''}
-        <div class="inline-actions">
-          <button class="btn btn-sm" type="button" data-preview-wallet="${esc(key)}">↻ Update Preview</button>
-        </div>
-      </div>`;
-    box.appendChild(card);
-  });
-  box.querySelectorAll('[data-wallet]').forEach(el=>{
-    el.addEventListener('change',()=>{
-      const key=el.dataset.wallet;
-      const field=el.dataset.field;
-      if(!state.wallets[key])return;
-      let value;
-      if(el.type==='checkbox')value=el.checked;
-      else if(field==='minimum'||field==='feePercent')value=num(el.value);
-      else value=el.value;
-      state.wallets[key][field]=value;
-      if(field==='name'){
-        const heading=el.closest('.wallet-card').querySelector('.wallet-heading strong');
-        if(heading)heading.textContent=value||key;
-      }
-      if(field==='logoUrl')updateWalletLogoPreview(key,value);
-      renderWalletPreview();
+
+/* LOGIN */
+
+$("loginForm").addEventListener("submit", async event => {
+  event.preventDefault();
+
+  if (busy) return;
+  busy = true;
+
+  $("loginError").textContent = "";
+
+  try {
+    await api("/api/auth/admin", {
+      method: "POST",
+      body: JSON.stringify({
+        password: $("password").value
+      })
     });
-    if(el.dataset.field==='logoUrl'){
-      el.addEventListener('input',()=>{
-        state.wallets[el.dataset.wallet].logoUrl=el.value.trim();
-        updateWalletLogoPreview(el.dataset.wallet,el.value.trim());
-      });
+
+    $("password").value = "";
+    await load();
+  } catch (error) {
+    $("loginError").textContent = error.message;
+  } finally {
+    busy = false;
+  }
+});
+
+$("logout").addEventListener("click", async () => {
+  try {
+    await api("/api/logout", {
+      method: "POST",
+      body: "{}"
+    });
+  } catch (error) {
+    toast(error.message);
+  }
+
+  location.reload();
+});
+
+/* TABS */
+
+document.querySelectorAll("[data-section]").forEach(button => {
+  button.addEventListener("click", () => {
+    document.querySelectorAll("[data-section]").forEach(item => {
+      item.classList.toggle("active", item === button);
+    });
+
+    document.querySelectorAll(".section").forEach(section => {
+      section.classList.toggle(
+        "active",
+        section.id === button.dataset.section
+      );
+    });
+  });
+});
+
+/* LOAD ADMIN DATA */
+
+async function load() {
+  try {
+    data = await api("/api/admin/overview");
+
+    $("loginView").classList.add("hidden");
+    $("adminView").classList.remove("hidden");
+
+    render();
+  } catch (error) {
+    $("loginView").classList.remove("hidden");
+    $("adminView").classList.add("hidden");
+
+    if ($("password").value) {
+      $("loginError").textContent = error.message;
+    }
+  }
+}
+
+/* RENDER */
+
+function render() {
+  if (!data) return;
+
+  const counts = data.counts || {};
+
+  const metrics = [
+    ["Users", counts.users],
+    ["Pending withdrawals", counts.withdrawPending],
+    ["Coins in user balances", money(counts.coins)],
+    ["Total taps", money(counts.taps)],
+    ["Blocked users", counts.banned],
+    ["All withdrawal requests (CNV)", money(counts.withdrawTotal)]
+  ];
+
+  $("metrics").innerHTML = metrics.map(([title, value]) => `
+    <div class="metric">
+      <small>${esc(title)}</small>
+      <strong>${esc(value ?? 0)}</strong>
+    </div>
+  `).join("");
+
+  const settings = data.settings || {};
+
+  [
+    "appName",
+    "tagline",
+    "tapReward",
+    "maxEnergy",
+    "energyPerSecond",
+    "dailyBonus",
+    "minWithdraw",
+    "referralRequired",
+    "referralBonus",
+    "referralsPerSpin"
+  ].forEach(key => {
+    if ($(key)) {
+      $(key).value = settings[key] ?? (
+        key === "referralsPerSpin" ? 1 : ""
+      );
     }
   });
-  box.querySelectorAll('[data-preview-wallet]').forEach(btn=>{
-    btn.addEventListener('click',()=>{
-      const key=btn.dataset.previewWallet;
-      updateWalletLogoPreview(key,state.wallets[key].logoUrl||'');
-      renderWalletPreview();
-      toast('Preview updated');
+
+  $("spinRewards").value = (
+    settings.spinRewards || [10, 20, 30, 50, 100, 200]
+  ).join(",");
+
+  const rates = settings.commissionRates || [10, 5, 3, 2, 1, 1];
+
+  for (let level = 1; level <= 6; level++) {
+    $("commissionRate" + level).value = rates[level - 1] ?? 0;
+  }
+
+  $("spinEnabled").checked = settings.spinEnabled !== false;
+  $("commissionEnabled").checked = settings.commissionEnabled !== false;
+  $("maintenance").checked = !!settings.maintenance;
+  $("sound").checked = !!settings.sound;
+
+  renderMethods();
+  renderTasks();
+  renderWithdrawals();
+  renderUsers();
+}
+
+/* PAYMENT METHODS */
+
+function renderMethods() {
+  const settings = data.settings || {};
+  const methods = settings.paymentMethods || [];
+
+  $("methods").innerHTML = methods.map((method, index) => `
+    <div class="method-row" data-method="${index}">
+      <input class="field m-name"
+        maxlength="60"
+        value="${esc(method.name)}"
+        placeholder="Method name">
+
+      <input class="field m-logo"
+        value="${esc(method.logo)}"
+        placeholder="Logo URL">
+
+      <label class="check">
+        <input class="m-enabled" type="checkbox"
+          ${method.enabled ? "checked" : ""}>
+        Enabled
+      </label>
+
+      <button type="button" class="btn red"
+        data-remove-method="${index}">
+        Remove
+      </button>
+    </div>
+  `).join("") || `<p class="muted">No payment methods configured.</p>`;
+
+  $("methods").querySelectorAll("[data-remove-method]").forEach(button => {
+    button.addEventListener("click", () => {
+      const index = Number(button.dataset.removeMethod);
+
+      settings.paymentMethods.splice(index, 1);
+      renderMethods();
     });
   });
-  box.querySelectorAll('[data-network-field]').forEach(el=>{
-    el.addEventListener('change',()=>{
-      const i=Number(el.dataset.networkIndex);
-      const field=el.dataset.networkField;
-      const network=state.wallets.USDT.networks[i];
-      if(!network)return;
-      if(field==='minimum'||field==='feePercent')network[field]=num(el.value);
-      else network[field]=el.value;
-      renderWalletPreview();
+}
+
+$("addMethod").addEventListener("click", () => {
+  if (!data) return;
+
+  if (!Array.isArray(data.settings.paymentMethods)) {
+    data.settings.paymentMethods = [];
+  }
+
+  data.settings.paymentMethods.push({
+    id: "custom_" + Date.now(),
+    name: "New method",
+    type: "mobile",
+    enabled: false,
+    logo: ""
+  });
+
+  renderMethods();
+});
+
+$("saveMethods").addEventListener("click", async () => {
+  if (!data) return;
+
+  const rows = [...document.querySelectorAll(".method-row")];
+
+  const methods = rows.map((row, index) => {
+    const original = data.settings.paymentMethods[index] || {};
+
+    return {
+      ...original,
+      name: row.querySelector(".m-name").value.trim(),
+      logo: row.querySelector(".m-logo").value.trim(),
+      enabled: row.querySelector(".m-enabled").checked
+    };
+  });
+
+  try {
+    await api("/api/admin/settings", {
+      method: "PUT",
+      body: JSON.stringify({
+        ...data.settings,
+        paymentMethods: methods
+      })
     });
-  });
-  renderWalletPreview();
-}
-function renderNetworkEditor(w){
-  const networks=Array.isArray(w.networks)?w.networks:[];
-  return `<div class="divider"></div>
-    <div class="card-head"><div><div class="card-title">🌐 USDT Networks</div><div class="card-sub">TRX (TRC20), TON and additional supported network configurations.</div></div><button type="button" class="btn btn-sm" id="addNetworkBtn">＋ Add Network</button></div>
-    <div id="networkEditorList">
-    ${networks.map((n,i)=>`
-      <div class="network-box">
-        <div class="network-box-head"><div class="network-title">Network ${i+1}</div><span class="network-tag">${esc(n.id||n.code||'NETWORK')}</span></div>
-        <div class="form-grid">
-          <div><label class="label">Network ID / Code</label><input class="input" data-network-index="${i}" data-network-field="id" value="${esc(n.id||n.code||'')}" placeholder="TRX"></div>
-          <div><label class="label">Display Name</label><input class="input" data-network-index="${i}" data-network-field="name" value="${esc(n.name||'')}" placeholder="TRX (TRC20)"></div>
-          <div class="field-full"><label class="label">Description</label><input class="input" data-network-index="${i}" data-network-field="description" value="${esc(n.description||'')}" placeholder="Tron network wallet"></div>
-          <div><label class="label">Minimum USDT</label><input class="input" type="number" min="0" step="any" data-network-index="${i}" data-network-field="minimum" value="${esc(n.minimum??n.minWithdrawal??0)}"></div>
-          <div><label class="label">Fee (%)</label><input class="input" type="number" min="0" max="100" step="any" data-network-index="${i}" data-network-field="feePercent" value="${esc(n.feePercent??0)}"></div>
-          <div class="field-full"><label class="label">Fee Display Text</label><input class="input" data-network-index="${i}" data-network-field="feeLabel" value="${esc(n.feeLabel||'')}" placeholder="10% fee"></div>
-        </div>
-        <div class="inline-actions"><button type="button" class="btn btn-sm btn-red" data-remove-network="${i}">Remove Network</button></div>
-      </div>`).join('')}
-    </div>`;
-}
-function updateWalletLogoPreview(key,url){
-  const w=state.wallets[key]||{};
-  const fallback=esc((WALLET_META[key]&&WALLET_META[key].icon)||'💳');
-  const html=url?'<img src="'+esc(url)+'" alt="" onerror="this.style.display=\'none\'">':fallback;
-  const large=$('logoPreview-'+key);
-  const mini=$('miniLogo-'+key);
-  if(large)large.innerHTML=html;
-  if(mini)mini.innerHTML=html;
-}
-function renderWalletPreview(){
-  const body=$('walletPreviewRows');
-  if(!body)return;
-  body.innerHTML='';
-  Object.keys(state.wallets).forEach(key=>{
-    const w=state.wallets[key];
-    const networks=key==='USDT'?(w.networks||[]).map(n=>n.name||n.id).join(', '):'—';
-    const tr=document.createElement('tr');
-    tr.innerHTML='<td>'+esc(w.name||key)+'</td>'+
-      '<td><span class="badge '+(w.enabled!==false?'badge-green':'badge-red')+'">'+(w.enabled!==false?'ENABLED':'DISABLED')+'</span></td>'+
-      '<td>'+esc(fmt(w.minimum||0))+'</td>'+
-      '<td>'+esc(w.feeLabel||((num(w.feePercent)>0)?fmt(w.feePercent,2)+'%':'No fee'))+'</td>'+
-      '<td>'+esc(networks||'—')+'</td>';
-    body.appendChild(tr);
-  });
-}
-function readWalletInputs(){
-  document.querySelectorAll('#walletEditor [data-wallet]').forEach(el=>{
-    const key=el.dataset.wallet,field=el.dataset.field;
-    if(!state.wallets[key])return;
-    if(el.type==='checkbox')state.wallets[key][field]=el.checked;
-    else if(field==='minimum'||field==='feePercent')state.wallets[key][field]=num(el.value);
-    else state.wallets[key][field]=el.value.trim();
-  });
-  document.querySelectorAll('#walletEditor [data-network-field]').forEach(el=>{
-    const i=Number(el.dataset.networkIndex),field=el.dataset.networkField;
-    const n=state.wallets.USDT&&state.wallets.USDT.networks[i];
-    if(!n)return;
-    if(field==='minimum'||field==='feePercent')n[field]=num(el.value);
-    else n[field]=el.value.trim();
-  });
-}
-function validateWallets(){
-  for(const [key,w] of Object.entries(state.wallets)){
-    if(!String(w.name||'').trim())return key+' needs a wallet display name.';
-    if(num(w.minimum)<0)return key+' minimum cannot be negative.';
-    if(num(w.feePercent)<0||num(w.feePercent)>100)return key+' fee must be between 0 and 100%.';
+
+    await load();
+    toast("Payment methods saved.");
+  } catch (error) {
+    toast(error.message);
   }
-  const ids=new Set();
-  for(const n of state.wallets.USDT.networks||[]){
-    if(!String(n.id||'').trim())return 'Each USDT network needs an ID.';
-    if(ids.has(String(n.id).toUpperCase()))return 'Network IDs must be unique.';
-    ids.add(String(n.id).toUpperCase());
-    if(num(n.minimum)<0)return 'Network minimum cannot be negative.';
-    if(num(n.feePercent)<0||num(n.feePercent)>100)return 'Network fee must be between 0 and 100%.';
-  }
-  return '';
-}
-async function saveWallets(){
-  readWalletInputs();
-  const error=validateWallets();
-  if(error){toast(error);return;}
-  const button=$('saveWalletsBtn');
-  setLoading(button,true);
-  try{
-    // Existing settings API is used to persist the wallet configuration alongside app settings.
-    const payload={...state.wallets};
-    const data=await api('/api/admin/settings',{method:'PUT',body:{wallets:payload}});
-    state.settings={...state.settings,wallets:payload,...(data.settings||{})};
-    normalizeWallets();
-    renderWalletEditor();
-    renderWalletPreview();
-    toast(data.message||'Wallet settings saved');
-  }catch(e){
-    toast('Wallet settings could not be saved: '+e.message);
-  }finally{setLoading(button,false);}
-}
-function addNetwork(){
-  readWalletInputs();
-  if(!Array.isArray(state.wallets.USDT.networks))state.wallets.USDT.networks=[];
-  state.wallets.USDT.networks.push({
-    id:'NETWORK'+(state.wallets.USDT.networks.length+1),
-    name:'New Network',
-    description:'Crypto network wallet',
-    minimum:0,
-    feePercent:0,
-    feeLabel:'No fee'
-  });
-  renderWalletEditor();
-}
-function removeNetwork(index){
-  readWalletInputs();
-  const network=state.wallets.USDT.networks[index];
-  if(!network)return;
-  if(!confirm('Remove network '+(network.name||network.id)+'?'))return;
-  state.wallets.USDT.networks.splice(index,1);
-  renderWalletEditor();
-}
-async function loadWithdrawals(){
-  try{
-    const data=await api('/api/admin/withdrawals');
-    state.withdrawals=normalizeArray(data,'withdrawals');
-    renderWithdrawals();
-    renderRecentWithdrawals();
-    updateWithdrawalStats();
-  }catch(e){
-    $('withdrawalRows').innerHTML='<tr><td colspan="8">Could not load withdrawals: '+esc(e.message)+'</td></tr>';
-    $('recentWithdrawalRows').innerHTML='<tr><td colspan="6">Could not load recent requests.</td></tr>';
-  }
-}
-function statusClass(status){
-  status=String(status||'pending').toLowerCase();
-  if(status==='approved'||status==='completed')return 'badge-green';
-  if(status==='rejected'||status==='failed')return 'badge-red';
-  return 'badge-yellow';
-}
-function getWithdrawalUser(w){
-  return w.username||w.user_name||w.name||w.telegram_id||w.userId||w.user_id||'—';
-}
-function withdrawalMethod(w){
-  return w.method||w.wallet||w.asset||'—';
-}
-function withdrawalAddress(w){
-  return w.address||w.account||w.wallet_address||'—';
-}
-function renderWithdrawals(){
-  const tbody=$('withdrawalRows');
-  const q=$('withdrawalSearch').value.trim().toLowerCase();
-  const status=$('withdrawalStatusFilter').value.toLowerCase();
-  const method=$('withdrawalMethodFilter').value.toLowerCase();
-  const list=state.withdrawals.filter(w=>{
-    const searchable=[w.id,getWithdrawalUser(w),withdrawalMethod(w),withdrawalAddress(w),w.network,w.telegram_id].join(' ').toLowerCase();
-    return (!q||searchable.includes(q))&&(!status||String(w.status||'pending').toLowerCase()===status)&&(!method||withdrawalMethod(w).toLowerCase().includes(method));
-  });
-  if(!list.length){
-    tbody.innerHTML='<tr><td colspan="8">No matching withdrawal requests.</td></tr>';
+});
+
+/* SAVE SETTINGS */
+
+$("settingsForm").addEventListener("submit", async event => {
+  event.preventDefault();
+
+  if (busy) return;
+
+  const appName = $("appName").value.trim();
+  const tagline = $("tagline").value.trim();
+
+  if (!appName) {
+    toast("Enter an app name.");
     return;
   }
-  tbody.innerHTML=list.map(w=>{
-    const statusValue=String(w.status||'pending').toLowerCase();
-    return '<tr>'+
-      '<td>#'+esc(w.id??'—')+'</td>'+
-      '<td>'+esc(getWithdrawalUser(w))+'</td>'+
-      '<td>'+esc(withdrawalMethod(w))+(w.network?'<br><span style="color:var(--muted)">'+esc(w.network)+'</span>':'')+'</td>'+
-      '<td style="max-width:190px;overflow-wrap:anywhere">'+esc(withdrawalAddress(w))+'</td>'+
-      '<td>'+esc(fmt(w.amount,6))+'</td>'+
-      '<td><span class="badge '+statusClass(statusValue)+'">'+esc(statusValue.toUpperCase())+'</span></td>'+
-      '<td>'+esc(formatDate(w.created_at||w.createdAt||w.created||''))+'</td>'+
-      '<td><button class="btn btn-sm" data-view-withdrawal="'+esc(w.id)+'">Manage</button></td>'+
-      '</tr>';
-  }).join('');
-  tbody.querySelectorAll('[data-view-withdrawal]').forEach(btn=>{
-    btn.addEventListener('click',()=>openWithdrawalDetails(btn.dataset.viewWithdrawal));
-  });
-}
-function renderRecentWithdrawals(){
-  const tbody=$('recentWithdrawalRows');
-  const list=state.withdrawals.slice(0,6);
-  if(!list.length){tbody.innerHTML='<tr><td colspan="6">No withdrawal requests found.</td></tr>';return;}
-  tbody.innerHTML=list.map(w=>'<tr>'+
-    '<td>#'+esc(w.id??'—')+'</td><td>'+esc(getWithdrawalUser(w))+'</td>'+
-    '<td>'+esc(withdrawalMethod(w))+'</td><td>'+esc(fmt(w.amount,6))+'</td>'+
-    '<td><span class="badge '+statusClass(w.status)+'">'+esc(String(w.status||'pending').toUpperCase())+'</span></td>'+
-    '<td>'+esc(formatDate(w.created_at||w.createdAt||w.created||''))+'</td></tr>').join('');
-}
-function updateWithdrawalStats(){
-  const list=state.withdrawals;
-  $('wdTotal').textContent=fmt(list.length,0);
-  $('wdPending').textContent=fmt(list.filter(w=>String(w.status||'pending').toLowerCase()==='pending').length,0);
-  $('wdApproved').textContent=fmt(list.filter(w=>['approved','completed'].includes(String(w.status||'').toLowerCase())).length,0);
-  $('wdRejected').textContent=fmt(list.filter(w=>String(w.status||'').toLowerCase()==='rejected').length,0);
-  $('statPending').textContent=$('wdPending').textContent;
-}
-function formatDate(v){
-  if(!v)return '—';
-  const d=new Date(v);
-  if(Number.isNaN(d.getTime()))return String(v);
-  return d.toLocaleString();
-}
-function openWithdrawalDetails(id){
-  const w=state.withdrawals.find(x=>String(x.id)===String(id));
-  if(!w){toast('Withdrawal request not found');return;}
-  state.selectedWithdrawal=w;
-  $('withdrawalNewStatus').value=String(w.status||'pending').toLowerCase();
-  const rows=[
-    ['Request ID','#'+(w.id??'—')],
-    ['User',getWithdrawalUser(w)],
-    ['Telegram ID',w.telegram_id||w.telegramId||w.user_id||'—'],
-    ['Method',withdrawalMethod(w)],
-    ['Network',w.network||'—'],
-    ['Address / Account',withdrawalAddress(w)],
-    ['Amount',fmt(w.amount,8)],
-    ['Status',String(w.status||'pending').toUpperCase()],
-    ['Created',formatDate(w.created_at||w.createdAt||w.created||'')]
-  ];
-  $('withdrawalDetail').innerHTML='<div class="summary-box">'+rows.map(r=>'<div class="check-row" style="margin-top:7px"><div class="check-copy"><div class="check-desc">'+esc(r[0])+'</div><div class="check-title" style="margin-top:5px;overflow-wrap:anywhere">'+esc(r[1])+'</div></div></div>').join('')+'</div>';
-  openModal('withdrawalModal');
-}
-async function updateWithdrawalStatus(){
-  const w=state.selectedWithdrawal;
-  if(!w)return;
-  const status=$('withdrawalNewStatus').value;
-  if(!confirm('Update withdrawal #'+w.id+' status to '+status.toUpperCase()+'?'))return;
-  const button=$('updateWithdrawalStatus');
-  setLoading(button,true);
-  try{
-    const data=await api('/api/admin/withdrawals/'+encodeURIComponent(w.id)+'/status',{
-      method:'PATCH',body:{status}
-    });
-    toast(data.message||'Withdrawal status updated');
-    closeModal('withdrawalModal');
-    await loadWithdrawals();
-    await loadOverview();
-  }catch(e){
-    toast('Could not update status: '+e.message);
-  }finally{setLoading(button,false);}
-}
-async function loadUsers(){
-  try{
-    const data=await api('/api/admin/users');
-    state.users=normalizeArray(data,'users');
-    renderUsers();
-  }catch(e){
-    $('userRows').innerHTML='<tr><td colspan="7">Could not load users: '+esc(e.message)+'</td></tr>';
+
+  const spinRewards = $("spinRewards").value
+    .split(",")
+    .map(value => Number(value.trim()));
+
+  if (
+    !spinRewards.length ||
+    spinRewards.some(value => !Number.isFinite(value) || value < 0)
+  ) {
+    toast("Enter valid spin prizes separated by commas.");
+    return;
   }
-}
-function renderUsers(){
-  const tbody=$('userRows');
-  const q=$('userSearch').value.trim().toLowerCase();
-  const list=state.users.filter(u=>{
-    const s=[u.id,u.telegram_id,u.telegramId,u.username,u.first_name,u.firstName,u.name].join(' ').toLowerCase();
-    return !q||s.includes(q);
-  });
-  if(!list.length){tbody.innerHTML='<tr><td colspan="7">No users found.</td></tr>';return;}
-  tbody.innerHTML=list.map(u=>{
-    const name=[u.first_name||u.firstName||u.name,u.last_name||u.lastName].filter(Boolean).join(' ')||u.username||'—';
-    return '<tr><td>'+esc(u.id??'—')+'</td><td>'+esc(u.telegram_id??u.telegramId??'—')+'</td>'+
-      '<td>'+esc(name)+(u.username?'<br><span style="color:var(--muted)">@'+esc(u.username)+'</span>':'')+'</td>'+
-      '<td>'+esc(fmt(u.balance??u.coins??0,6))+'</td>'+
-      '<td>'+esc(fmt(u.total_earned??u.totalEarned??u.earned??0,6))+'</td>'+
-      '<td>'+esc(fmt(u.referral_count??u.referralCount??u.referrals_count??0,0))+'</td>'+
-      '<td>'+esc(formatDate(u.created_at||u.createdAt||u.joined_at||''))+'</td></tr>';
-  }).join('');
-}
-async function loadTasks(){
-  try{
-    const data=await api('/api/admin/tasks');
-    state.tasks=normalizeArray(data,'tasks');
-    renderTasks();
-    $('statTasks').textContent=fmt(state.tasks.length,0);
-  }catch(e){
-    $('taskList').innerHTML='<div class="empty">Could not load tasks: '+esc(e.message)+'</div>';
+
+  const commissionRates = Array.from(
+    { length: 6 },
+    (_, index) => numberValue("commissionRate" + (index + 1), 0)
+  );
+
+  if (commissionRates.some(rate => rate < 0 || rate > 100)) {
+    toast("Each commission rate must be between 0 and 100.");
+    return;
   }
-}
-function renderTasks(){
-  const box=$('taskList');
-  if(!state.tasks.length){box.innerHTML='<div class="empty">No tasks yet. Create your first task.</div>';return;}
-  box.innerHTML=state.tasks.map(t=>{
-    const title=t.title||t.name||'Untitled Task';
-    const reward=t.reward??t.amount??0;
-    return '<div class="task-row"><div><div class="task-name">'+esc(title)+'</div>'+
-      '<div class="task-description">'+esc(t.description||'No description')+'</div>'+
-      '<div class="task-description" style="color:var(--gold)">Reward: '+esc(fmt(reward,6))+' coins'+(t.url?' • '+esc(t.url):'')+'</div></div>'+
-      '<div class="task-actions"><button class="btn btn-sm" data-edit-task="'+esc(t.id)+'">Edit</button><button class="btn btn-sm btn-red" data-delete-task="'+esc(t.id)+'">Delete</button></div></div>';
-  }).join('');
-  box.querySelectorAll('[data-edit-task]').forEach(btn=>btn.addEventListener('click',()=>editTask(btn.dataset.editTask)));
-  box.querySelectorAll('[data-delete-task]').forEach(btn=>btn.addEventListener('click',()=>deleteTask(btn.dataset.deleteTask)));
-}
-function openTaskModal(task){
-  state.editingTaskId=task?task.id:null;
-  $('taskModalTitle').textContent=task?'Edit Task':'Create Task';
-  $('taskId').value=task?task.id:'';
-  $('taskTitle').value=task?(task.title||task.name||''):'';
-  $('taskDescription').value=task?(task.description||''):'';
-  $('taskReward').value=task?(task.reward??task.amount??0):0;
-  $('taskUrl').value=task?(task.url||''):'';
-  openModal('taskModal');
-}
-function editTask(id){
-  const task=state.tasks.find(t=>String(t.id)===String(id));
-  if(!task){toast('Task not found');return;}
-  openTaskModal(task);
-}
-async function saveTask(event){
-  event.preventDefault();
-  const id=$('taskId').value;
-  const payload={
-    title:$('taskTitle').value.trim(),
-    description:$('taskDescription').value.trim(),
-    reward:num($('taskReward').value),
-    url:$('taskUrl').value.trim()
+
+  const settings = {
+    appName,
+    tagline,
+    tapReward: numberValue("tapReward"),
+    maxEnergy: numberValue("maxEnergy"),
+    energyPerSecond: numberValue("energyPerSecond"),
+    dailyBonus: numberValue("dailyBonus"),
+    minWithdraw: numberValue("minWithdraw"),
+    referralRequired: numberValue("referralRequired"),
+    referralBonus: numberValue("referralBonus"),
+    referralsPerSpin: numberValue("referralsPerSpin", 1),
+    spinRewards,
+    commissionRates,
+    spinEnabled: $("spinEnabled").checked,
+    commissionEnabled: $("commissionEnabled").checked,
+    maintenance: $("maintenance").checked,
+    sound: $("sound").checked
   };
-  if(!payload.title){toast('Enter a task title');return;}
-  if(payload.reward<0){toast('Reward cannot be negative');return;}
-  const button=$('saveTaskBtn');
-  setLoading(button,true);
-  try{
-    const data=id
-      ?await api('/api/admin/tasks/'+encodeURIComponent(id),{method:'PUT',body:payload})
-      :await api('/api/admin/tasks',{method:'POST',body:payload});
-    toast(data.message||(id?'Task updated':'Task created'));
-    closeModal('taskModal');
-    await loadTasks();
-    await loadOverview();
-  }catch(e){
-    toast('Could not save task: '+e.message);
-  }finally{setLoading(button,false);}
-}
-async function deleteTask(id){
-  const task=state.tasks.find(t=>String(t.id)===String(id));
-  if(!confirm('Delete task "'+(task?(task.title||task.name):id)+'"?'))return;
-  try{
-    const data=await api('/api/admin/tasks/'+encodeURIComponent(id),{method:'DELETE'});
-    toast(data.message||'Task deleted');
-    await loadTasks();
-    await loadOverview();
-  }catch(e){toast('Could not delete task: '+e.message);}
-}
 
-$('loginForm').addEventListener('submit',async e=>{
-  e.preventDefault();
-  const button=$('loginSubmit');
-  $('loginError').textContent='';
-  setLoading(button,true);
-  try{await login($('adminPassword').value);}
-  catch(err){$('loginError').textContent=err.message||'Login failed. Check your password.';}
-  finally{setLoading(button,false);}
-});
-$('logoutBtn').addEventListener('click',logout);
-$('refreshBtn').addEventListener('click',async()=>{
-  if(!state.authenticated){await checkSession();return;}
-  await loadEverything();
-  toast('Dashboard refreshed');
-});
-$('dashboardRefresh').addEventListener('click',async()=>{await loadEverything();toast('Overview updated');});
-$('saveSettingsBtn').addEventListener('click',saveSettings);
-$('saveSettingsBtn2').addEventListener('click',saveSettings);
-$('reloadSettingsBtn').addEventListener('click',async()=>{
-  try{await loadSettings();toast('Settings reloaded');}catch(e){toast(e.message);}
-});
-$('saveWalletsBtn').addEventListener('click',saveWallets);
-$('reloadWalletsBtn').addEventListener('click',async()=>{
-  try{await loadSettings();toast('Wallet settings reloaded');}catch(e){toast(e.message);}
-});
-$('loadWithdrawalsBtn').addEventListener('click',loadWithdrawals);
-$('loadUsersBtn').addEventListener('click',loadUsers);
-$('reloadTasksBtn').addEventListener('click',loadTasks);
-$('newTaskBtn').addEventListener('click',()=>openTaskModal(null));
-$('taskForm').addEventListener('submit',saveTask);
-$('updateWithdrawalStatus').addEventListener('click',updateWithdrawalStatus);
-$('withdrawalSearch').addEventListener('input',renderWithdrawals);
-$('withdrawalStatusFilter').addEventListener('change',renderWithdrawals);
-$('withdrawalMethodFilter').addEventListener('change',renderWithdrawals);
-$('userSearch').addEventListener('input',renderUsers);
-document.querySelectorAll('[data-page]').forEach(btn=>btn.addEventListener('click',()=>navigate(btn.dataset.page)));
-document.querySelectorAll('[data-go]').forEach(btn=>btn.addEventListener('click',()=>navigate(btn.dataset.go)));
-document.querySelectorAll('[data-close]').forEach(btn=>btn.addEventListener('click',()=>closeModal(btn.dataset.close)));
-document.querySelectorAll('.modal').forEach(modal=>modal.addEventListener('click',e=>{if(e.target===modal)closeModal(modal.id);}));
-document.addEventListener('keydown',e=>{if(e.key==='Escape')document.querySelectorAll('.modal.show').forEach(m=>closeModal(m.id));});
-document.addEventListener('click',e=>{
-  const add=e.target.closest('#addNetworkBtn');
-  if(add){addNetwork();return;}
-  const remove=e.target.closest('[data-remove-network]');
-  if(remove){removeNetwork(Number(remove.dataset.removeNetwork));return;}
+  if (
+    settings.maxEnergy < 1 ||
+    settings.tapReward < 0 ||
+    settings.dailyBonus < 0 ||
+    settings.minWithdraw < 0 ||
+    settings.referralsPerSpin < 1
+  ) {
+    toast("Check the numeric settings.");
+    return;
+  }
+
+  busy = true;
+
+  try {
+    await api("/api/admin/settings", {
+      method: "PUT",
+      body: JSON.stringify(settings)
+    });
+
+    await load();
+    toast("App settings saved.");
+  } catch (error) {
+    toast(error.message);
+  } finally {
+    busy = false;
+  }
 });
 
-checkSession();
-})();
+/* TASKS */
+
+function renderTasks() {
+  const tasks = data.tasks || [];
+
+  $("taskList").innerHTML = tasks.map(task => `
+    <div class="task-row">
+      <strong>
+        ${esc(task.title)}
+        <small> · ${esc(task.platform)} · +${money(task.reward)} CNV</small>
+      </strong>
+
+      <small>
+        ${esc(task.url)} · ${task.enabled ? "Enabled" : "Disabled"}
+      </small>
+
+      <div class="actions" style="margin-top:9px">
+        <button class="btn"
+          data-toggle-task="${Number(task.id)}">
+          ${task.enabled ? "Disable" : "Enable"}
+        </button>
+
+        <button class="btn red"
+          data-delete-task="${Number(task.id)}">
+          Delete
+        </button>
+      </div>
+    </div>
+  `).join("") || `<p class="muted">No tasks.</p>`;
+
+  $("taskList").querySelectorAll("[data-toggle-task]").forEach(button => {
+    button.addEventListener("click", async () => {
+      const id = Number(button.dataset.toggleTask);
+      const task = tasks.find(item => Number(item.id) === id);
+
+      if (!task) return;
+
+      try {
+        await api(`/api/admin/tasks/${id}`, {
+          method: "PATCH",
+          body: JSON.stringify({
+            enabled: !task.enabled
+          })
+        });
+
+        await load();
+        toast("Task updated.");
+      } catch (error) {
+        toast(error.message);
+      }
+    });
+  });
+
+  $("taskList").querySelectorAll("[data-delete-task]").forEach(button => {
+    button.addEventListener("click", async () => {
+      const id = Number(button.dataset.deleteTask);
+
+      if (!confirm("Delete this task?")) return;
+
+      try {
+        await api(`/api/admin/tasks/${id}`, {
+          method: "DELETE"
+        });
+
+        await load();
+        toast("Task deleted.");
+      } catch (error) {
+        toast(error.message);
+      }
+    });
+  });
+}
+
+$("taskForm").addEventListener("submit", async event => {
+  event.preventDefault();
+
+  const title = $("taskTitle").value.trim();
+  const platform = $("taskPlatform").value.trim();
+  const url = $("taskUrl").value.trim();
+  const reward = Number($("taskReward").value);
+
+  if (!title || !platform || !url || !Number.isFinite(reward) || reward < 0) {
+    toast("Check the task details.");
+    return;
+  }
+
+  try {
+    await api("/api/admin/tasks", {
+      method: "POST",
+      body: JSON.stringify({
+        title,
+        platform,
+        url,
+        reward
+      })
+    });
+
+    event.target.reset();
+    $("taskReward").value = 100;
+
+    await load();
+    toast("Task added.");
+  } catch (error) {
+    toast(error.message);
+  }
+});
+
+/* WITHDRAWALS */
+
+function renderWithdrawals() {
+  const withdrawals = data.withdrawals || [];
+
+  $("withdrawTable").innerHTML = withdrawals.map(withdrawal => `
+    <tr>
+      <td>
+        #${Number(withdrawal.id)}<br>
+        ${esc(withdrawal.userName)}<br>
+        <small>${esc(withdrawal.tgId)}</small>
+      </td>
+
+      <td>
+        ${esc(withdrawal.method)}<br>
+        <small>${esc(withdrawal.address)}</small>
+      </td>
+
+      <td>${money(withdrawal.amount)} CNV</td>
+
+      <td>
+        <span class="status ${esc(withdrawal.status)}">
+          ${esc(withdrawal.status)}
+        </span>
+      </td>
+
+      <td>
+        <input class="field txid"
+          data-id="${Number(withdrawal.id)}"
+          placeholder="Transaction ID"
+          value="${esc(withdrawal.txid)}">
+
+        <input class="field note"
+          data-id="${Number(withdrawal.id)}"
+          placeholder="Admin note"
+          value="${esc(withdrawal.note)}">
+      </td>
+
+      <td>
+        <div class="actions">
+          <button class="btn"
+            data-status="approved"
+            data-id="${Number(withdrawal.id)}">
+            Approve
+          </button>
+
+          <button class="btn gold"
+            data-status="paid"
+            data-id="${Number(withdrawal.id)}">
+            Mark paid
+          </button>
+
+          <button class="btn red"
+            data-status="rejected"
+            data-id="${Number(withdrawal.id)}">
+            Reject/refund
+          </button>
+        </div>
+      </td>
+    </tr>
+  `).join("") || `<tr><td colspan="6">No requests yet.</td></tr>`;
+
+  $("withdrawTable").querySelectorAll("[data-status]").forEach(button => {
+    button.addEventListener("click", async () => {
+      const id = Number(button.dataset.id);
+      const status = button.dataset.status;
+
+      const txid = document.querySelector(`.txid[data-id="${id}"]`)?.value || "";
+      const note = document.querySelector(`.note[data-id="${id}"]`)?.value || "";
+
+      if (status === "paid" &&
+          !confirm("Confirm that you have sent the payment?")) {
+        return;
+      }
+
+      if (status === "rejected" &&
+          !confirm("Reject this request? Confirm the server's refund handling first.")) {
+        return;
+      }
+
+      try {
+        await api(`/api/admin/withdrawals/${id}`, {
+          method: "PATCH",
+          body: JSON.stringify({
+            status,
+            txid,
+            note
+          })
+        });
+
+        await load();
+        toast("Withdrawal updated.");
+      } catch (error) {
+        toast(error.message);
+      }
+    });
+  });
+}
+
+/* USERS */
+
+function renderUsers() {
+  const users = data.users || [];
+
+  $("userTable").innerHTML = users.map(user => `
+    <tr>
+      <td>
+        #${Number(user.id)}<br>
+        <small>${esc(user.tg_id)}</small>
+      </td>
+
+      <td>
+        ${esc(user.name)}<br>
+        <small>${esc(user.username)}</small>
+      </td>
+
+      <td>
+        <input class="field user-balance"
+          data-id="${Number(user.id)}"
+          type="number"
+          min="0"
+          value="${Number(user.balance)}">
+      </td>
+
+      <td>${money(user.total_taps)}</td>
+
+      <td>
+        <small>${esc(
+          user.created_at
+            ? new Date(user.created_at).toLocaleDateString()
+            : "—"
+        )}</small>
+      </td>
+
+      <td>
+        <div class="actions">
+          <button class="btn gold"
+            data-save-user="${Number(user.id)}">
+            Save balance
+          </button>
+
+          <button class="btn red"
+            data-ban-user="${Number(user.id)}"
+            data-banned="${user.is_banned ? "1" : "0"}">
+            ${user.is_banned ? "Unblock" : "Block"}
+          </button>
+        </div>
+      </td>
+    </tr>
+  `).join("") || `<tr><td colspan="6">No users yet.</td></tr>`;
+
+  $("userTable").querySelectorAll("[data-save-user]").forEach(button => {
+    button.addEventListener("click", async () => {
+      const id = Number(button.dataset.saveUser);
+      const input = document.querySelector(`.user-balance[data-id="${id}"]`);
+      const balance = Number(input.value);
+
+      if (!Number.isFinite(balance) || balance < 0) {
+        toast("Enter a valid balance.");
+        return;
+      }
+
+      try {
+        await api(`/api/admin/users/${id}`, {
+          method: "PATCH",
+          body: JSON.stringify({ balance })
+        });
+
+        await load();
+        toast("Balance saved.");
+      } catch (error) {
+        toast(error.message);
+      }
+    });
+  });
+
+  $("userTable").querySelectorAll("[data-ban-user]").forEach(button => {
+    button.addEventListener("click", async () => {
+      const id = Number(button.dataset.banUser);
+      const currentlyBanned = button.dataset.banned === "1";
+
+      if (!confirm(currentlyBanned ? "Unblock this user?" : "Block this user?")) {
+        return;
+      }
+
+      try {
+        await api(`/api/admin/users/${id}`, {
+          method: "PATCH",
+          body: JSON.stringify({
+            banned: !currentlyBanned
+          })
+        });
+
+        await load();
+        toast("User status updated.");
+      } catch (error) {
+        toast(error.message);
+      }
+    });
+  });
+}
+
+/* START */
+
+load();
 </script>
 </body>
 </html>
