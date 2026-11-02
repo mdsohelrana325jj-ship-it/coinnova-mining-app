@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<meta name="theme-color" content="#0b1020">
+<title>CoinNova • Mining App</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<style>
+:root{
+  --bg:#0b1020;--card:#151d32;--card2:#1c2842;
+  --purple:#8458ff;--cyan:#31e6dc;--gold:#ffd76a;
+  --text:#f7f8ff;--muted:#a6b0c8;--green:#46e6a0;
+  --red:#ff617b;--line:rgba(255,255,255,.09)
+}
+*{box-sizing:border-box}
+body{margin:0;background:radial-gradient(ellipse at top,#20234c 0,#0b1020 52%,#080c17 100%);color:var(--text);font-family:system-ui,-apple-system,Arial,sans-serif;min-height:100vh}
+button,input,select{font:inherit}
+button{cursor:pointer;border:0}
+.app{max-width:480px;margin:auto;min-height:100vh;padding:18px 16px 100px}
+.top{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.brand{display:flex;align-items:center;gap:10px;font-weight:900;font-size:20px;letter-spacing:.5px}
+.logo{height:43px;width:43px;border-radius:15px;display:grid;place-items:center;background:linear-gradient(135deg,#a78bfa,#6545ef);box-shadow:0 7px 25px #8458ff44;font-size:23px}
+.profile{display:flex;align-items:center;gap:8px;min-width:0}
+.avatar{height:42px;width:42px;border-radius:50%;background:#34405e;object-fit:cover;border:2px solid #a58aff;display:grid;place-items:center;font-weight:800}
+.profileName{font-size:12px;color:var(--muted);max-width:105px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pill{display:inline-block;background:#272a50;color:#c6bbff;border:1px solid #4d4380;border-radius:20px;padding:5px 10px;font-size:11px;font-weight:800}
+.welcome{margin:22px 0 14px;color:var(--muted);font-size:13px}
+.card{background:linear-gradient(145deg,#1a2540,#121a2d);border:1px solid var(--line);border-radius:22px;padding:18px;margin:13px 0;box-shadow:0 10px 35px #0002}
+.balance{text-align:center;padding:23px 16px}
+.label{color:var(--muted);font-size:12px;text-transform:uppercase;letter-spacing:1.5px}
+.coins{font-size:36px;font-weight:950;letter-spacing:-1px;margin:8px 0;color:var(--gold);overflow-wrap:anywhere}
+.sub{font-size:12px;color:var(--muted)}
+.taparea{display:grid;place-items:center;padding:18px 0 8px}
+.coin{height:176px;width:176px;border-radius:50%;color:#5d3a08;background:radial-gradient(circle at 35% 25%,#fff4bd 0,#ffdf78 24%,#f5ae32 57%,#a9680d 100%);border:8px solid #ffdc78;box-shadow:0 0 0 7px #ffc94a18,0 0 50px #ffc94a2e,inset 0 4px 10px #fff9;display:grid;place-items:center;font-size:70px;font-weight:1000;transition:transform .08s;user-select:none;touch-action:manipulation}
+.coin:active{transform:scale(.94)}
+.coin.pulse{animation:pulse .25s ease}
+@keyframes pulse{50%{transform:scale(1.06)}}
+.taphelp{margin-top:12px;color:var(--muted);font-size:12px}
+.btn{width:100%;padding:13px 15px;border-radius:13px;color:white;background:linear-gradient(100deg,#865aff,#6545e8);font-weight:800;box-shadow:0 5px 20px #8458ff25}
+.btn:disabled{opacity:.55;cursor:not-allowed}
+.btn.secondary{background:#293550;box-shadow:none}
+.btn.gold{background:linear-gradient(100deg,#ffe18a,#f4b83d);color:#382407}
+.btn.red{background:#472434;color:#ffb8c3}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.stat{background:#0d1527;border-radius:14px;padding:13px}
+.stat strong{display:block;font-size:19px;margin-top:5px}
+.sectionTitle{font-size:16px;font-weight:900;margin:0 0 13px}
+.row{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:12px 0;border-bottom:1px solid var(--line)}
+.row:last-child{border-bottom:0}
+.rowMain{min-width:0}
+.rowTitle{font-size:13px;font-weight:800}
+.rowDesc{font-size:11px;color:var(--muted);margin-top:4px;overflow-wrap:anywhere}
+.smallBtn{padding:9px 12px;border-radius:10px;background:#7e5aff;color:#fff;font-size:12px;font-weight:800;white-space:nowrap}
+.smallBtn:disabled{opacity:.45}
+.input,.select{width:100%;background:#0b1324;border:1px solid #303d5b;border-radius:12px;padding:12px;color:#fff;outline:none;margin:6px 0 12px}
+.input:focus,.select:focus{border-color:#9278ff}
+.formlabel{font-size:12px;color:var(--muted)}
+.notice{background:#1c2942;border:1px solid #354666;padding:11px 12px;border-radius:12px;color:#c4d0e9;font-size:12px;line-height:1.5;margin:10px 0}
+.status{font-size:11px;border-radius:20px;padding:5px 8px;background:#26344b;color:#c7d3ea}
+.bottom{position:fixed;z-index:5;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:480px;padding:10px 12px calc(10px + env(safe-area-inset-bottom));background:#0c1222ed;backdrop-filter:blur(16px);border-top:1px solid var(--line);display:grid;grid-template-columns:repeat(4,1fr);gap:7px}
+.nav{padding:9px 2px;border-radius:12px;background:transparent;color:#aab4ce;font-size:11px}
+.nav span{display:block;font-size:20px;margin-bottom:3px}
+.nav.active{background:#30265a;color:#c9baff}
+.page{display:none}.page.active{display:block}
+.toast{position:fixed;z-index:30;top:15px;left:50%;transform:translateX(-50%);width:max-content;max-width:90%;background:#202b43;border:1px solid #53627d;color:white;padding:11px 15px;border-radius:12px;font-size:13px;display:none}
+.loader{position:fixed;inset:0;z-index:100;background:#090e1c;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;transition:opacity .35s}
+.loaderLogo{width:78px;height:78px;border-radius:25px;display:grid;place-items:center;background:linear-gradient(135deg,#a58aff,#5b3bd8);font-size:40px;animation:float 1.1s infinite alternate}
+.spinner{width:27px;height:27px;border:3px solid #363754;border-top-color:#a58aff;border-radius:50%;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}@keyframes float{to{transform:translateY(-8px) scale(1.04)}}
+.modal{position:fixed;z-index:50;inset:0;background:#0009;display:none;align-items:center;justify-content:center;padding:20px}
+.modalBox{width:100%;max-width:400px;background:#151e33;border:1px solid var(--line);border-radius:20px;padding:20px}
+a{color:#bcaaff}
+@media(max-width:350px){.coins{font-size:29px}.coin{width:145px;height:145px;font-size:58px}.app{padding-left:12px;padding-right:12px}}
+</style>
+</head>
+<body>
+<div class="loader" id="loader">
+  <div class="loaderLogo">₵</div>
+  <strong>CoinNova</strong>
+  <div class="spinner"></div>
+  <small style="color:#a6b0c8">Connecting securely…</small>
+</div>
+<div class="toast" id="toast"></div>
+
+<div class="app">
+<header class="top">
+  <div class="brand"><div class="logo">₵</div><div>CoinNova<div style="font-size:10px;color:var(--muted);font-weight:600">TAP • EARN • GROW</div></div></div>
+  <div class="profile">
+    <img id="avatar" class="avatar" alt="Profile" hidden>
+    <div id="avatarFallback" class="avatar">CN</div>
+    <div class="profileName" id="profileName">Telegram User</div>
+  </div>
+</header>
+
+<div class="welcome" id="welcomeText">Welcome to CoinNova! Earn points by tapping.</div>
+
+<main>
+<section class="page active" id="page-home">
+  <div class="card balance">
+    <div class="label">Total Coin Balance</div>
+    <div class="coins" id="balance">0 ₵</div>
+    <div class="sub">Your progress is linked to your Telegram account</div>
+    <div class="taparea">
+      <button class="coin" id="tapButton" aria-label="Tap to earn">₵</button>
+      <div class="taphelp">TAP THE COIN TO EARN POINTS</div>
+    </div>
+    <button class="btn gold" id="dailyButton">🎁 Claim Daily Reward</button>
+  </div>
+  <div class="grid">
+    <div class="card stat"><span class="label">Total Mined</span><strong id="totalMined">0</strong></div>
+    <div class="card stat"><span class="label">Referrals</span><strong id="refCount">0</strong></div>
+  </div>
+  <div class="card">
+    <h3 class="sectionTitle">⚡ Mining Information</h3>
+    <div class="row"><div class="rowMain"><div class="rowTitle">Reward per tap</div><div class="rowDesc">Configured by the administrator</div></div><strong id="tapReward">1 ₵</strong></div>
+    <div class="row"><div class="rowMain"><div class="rowTitle">Minimum withdrawal</div><div class="rowDesc">Points needed to request a withdrawal</div></div><strong id="minWithdrawal">1000 ₵</strong></div>
+  </div>
+</section>
+
+<section class="page" id="page-tasks">
+  <div class="card">
+    <h3 class="sectionTitle">🎯 Tasks & Rewards</h3>
+    <div class="notice">Task rewards are in-app points. A claim does not verify that an external task was completed.</div>
+    <div id="taskList"><div class="sub">Loading tasks…</div></div>
+  </div>
+</section>
+
+<section class="page" id="page-referrals">
+  <div class="card">
+    <h3 class="sectionTitle">👥 Invite Friends</h3>
+    <p class="sub">Invite friends to your bot and check your referral progress.</p>
+    <div class="stat"><span class="label">Your referrals</span><strong id="referralCountLarge">0</strong></div>
+    <label class="formlabel" for="refLink">Your referral link</label>
+    <input class="input" id="refLink" readonly placeholder="Open this app from Telegram">
+    <button class="btn" id="copyRef">Copy Referral Link</button>
+    <div class="notice">Referral tracking must be connected to a Telegram bot /start handler before referrals can be counted automatically.</div>
+  </div>
+</section>
+
+<section class="page" id="page-wallet">
+  <div class="card">
+    <h3 class="sectionTitle">💳 Withdrawal Request</h3>
+    <div class="notice">Submitting a request does not send money automatically. Admin review and an approved payment provider are required for real payments.</div>
+    <div class="label">Available balance</div>
+    <div class="coins" style="font-size:27px" id="walletBalance">0 ₵</div>
+    <form id="withdrawForm">
+      <label class="formlabel" for="method">Payment method</label>
+      <select class="select" id="method">
+        <option value="bKash">bKash</option>
+        <option value="Nagad">Nagad</option>
+        <option value="Rocket">Rocket</option>
+        <option value="USDT">USDT</option>
+        <option value="Binance">Binance</option>
+        <option value="Trust Wallet">Trust Wallet</option>
+        <option value="Bitget">Bitget</option>
+      </select>
+      <label class="formlabel" for="walletAddress">Account number / wallet address</label>
+      <input class="input" id="walletAddress" required maxlength="200" placeholder="Enter your account or wallet">
+      <label class="formlabel" for="withdrawAmount">Amount in points</label>
+      <input class="input" id="withdrawAmount" type="number" min="1" step="1" required placeholder="Enter amount">
+      <button class="btn" id="withdrawButton" type="submit">Submit Withdrawal Request</button>
+    </form>
+  </div>
+  <div class="card"><h3 class="sectionTitle">📜 Withdrawal History</h3><div id="withdrawList" class="sub">No requests loaded.</div></div>
+</section>
+</main>
+</div>
+
+<nav class="bottom">
+  <button class="nav active" data-page="home"><span>⌂</span>Home</button>
+  <button class="nav" data-page="tasks"><span>✓</span>Tasks</button>
+  <button class="nav" data-page="referrals"><span>♧</span>Invite</button>
+  <button class="nav" data-page="wallet"><span>◈</span>Wallet</button>
+</nav>
+
+<script>
+(() => {
+'use strict';
+const tg = window.Telegram && window.Telegram.WebApp;
+let state = {user:null,settings:{},tasks:[],withdrawals:[],busy:false};
+const $ = id => document.getElementById(id);
+const loader = $('loader');
+
+function toast(message) {
+  const el = $('toast');
+  el.textContent = message;
+  el.style.display = 'block';
+  clearTimeout(toast.timer);
+  toast.timer = setTimeout(() => el.style.display='none', 3000);
+}
+function hideLoader() {
+  loader.style.opacity='0';
+  setTimeout(() => loader.style.display='none', 380);
+}
+function fmt(n) {
+  return Number(n || 0).toLocaleString();
+}
+async function api(url, options={}) {
+  const response = await fetch(url, {
+    credentials:'same-origin',
+    ...options,
+    headers:{'Content-Type':'application/json', ...(options.headers||{})}
+  });
+  let data;
+  try { data = await response.json(); }
+  catch { throw new Error('Server returned an invalid response.'); }
+  if (!response.ok || data.ok === false) {
+    throw new Error(data.error || `Request failed (${response.status})`);
+  }
+  return data;
+}
+function renderUser(user) {
+  state.user=user;
+  $('balance').textContent=fmt(user.balance)+' ₵';
+  $('walletBalance').textContent=fmt(user.balance)+' ₵';
+  $('totalMined').textContent=fmt(user.totalMined);
+  $('refCount').textContent=fmt(user.referrals);
+  const full=[user.firstName,user.lastName].filter(Boolean).join(' ') || (user.username ? '@'+user.username : 'Telegram User');
+  $('profileName').textContent=full;
+  $('avatarFallback').textContent=(user.firstName||user.username||'CN').slice(0,2).toUpperCase();
+  if(user.photoUrl){
+    $('avatar').src=user.photoUrl;
+    $('avatar').hidden=false;
+    $('avatarFallback').style.display='none';
+    $('avatar').onerror=()=>{$('avatar').hidden=true;$('avatarFallback').style.display='grid';};
+  }else{
+    $('avatar').hidden=true;
+    $('avatarFallback').style.display='grid';
+  }
+}
+function renderSettings(s) {
+  state.settings=s||{};
+  $('welcomeText').textContent=s.welcomeText||'Welcome to CoinNova!';
+  $('tapReward').textContent=fmt(s.miningReward||1)+' ₵';
+  $('minWithdrawal').textContent=fmt(s.minimumWithdrawal||1000)+' ₵';
+  $('tapButton').disabled=s.miningEnabled===false || s.maintenanceMode===true;
+  $('dailyButton').disabled=s.maintenanceMode===true;
+  $('withdrawButton').disabled=s.withdrawalEnabled===false || s.maintenanceMode===true;
+  document.title=(s.appName||'CoinNova')+' • Mining App';
+}
+async function loadTasks() {
+  const data=await api('/api/tasks');
+  state.tasks=data.tasks||[];
+  const list=$('taskList');
+  list.replaceChildren();
+  if(!state.tasks.length){list.textContent='No tasks available right now.';return;}
+  state.tasks.forEach(task=>{
+    const row=document.createElement('div');row.className='row';
+    const main=document.createElement('div');main.className='rowMain';
+    const title=document.createElement('div');title.className='rowTitle';title.textContent=task.title;
+    const desc=document.createElement('div');desc.className='rowDesc';desc.textContent=(task.description||'')+' • Reward: '+fmt(task.reward)+' ₵';
+    main.append(title,desc);
+    const actions=document.createElement('div');actions.style.display='flex';actions.style.gap='6px';
+    if(task.url){
+      const link=document.createElement('a');link.href=task.url;link.target='_blank';link.rel='noopener noreferrer';link.className='smallBtn';link.textContent='Open';
+      actions.append(link);
+    }
+    const claim=document.createElement('button');claim.className='smallBtn';claim.textContent=task.claimed?'Claimed':'Claim';claim.disabled=!!task.claimed;
+    claim.addEventListener('click',async()=>{
+      claim.disabled=true;
+      try{const d=await api(`/api/tasks/${task.id}/claim`,{method:'POST',body:'{}'});renderUser(d.user);toast('Reward added: '+fmt(d.added));await loadTasks();}
+      catch(e){toast(e.message);claim.disabled=false;}
+    });
+    actions.append(claim);row.append(main,actions);list.append(row);
+  });
+}
+async function loadReferrals(){
+  const d=await api('/api/referrals');
+  $('refCount').textContent=fmt(d.referrals);
+  $('referralCountLarge').textContent=fmt(d.referrals);
+  $('refLink').value=d.referralLink||'';
+}
+async function loadWithdrawals(){
+  const d=await api('/api/withdrawals');state.withdrawals=d.withdrawals||[];
+  const list=$('withdrawList');list.replaceChildren();
+  if(!state.withdrawals.length){list.textContent='No withdrawal requests yet.';return;}
+  state.withdrawals.forEach(w=>{
+    const row=document.createElement('div');row.className='row';
+    const main=document.createElement('div');main.className='rowMain';
+    const title=document.createElement('div');title.className='rowTitle';title.textContent=w.method+' • '+fmt(w.amount)+' points';
+    const desc=document.createElement('div');desc.className='rowDesc';desc.textContent=new Date(w.createdAt).toLocaleString();
+    main.append(title,desc);
+    const status=document.createElement('span');status.className='status';status.textContent=w.status;
+    row.append(main,status);list.append(row);
+  });
+}
+async function boot(){
+  try{
+    if(tg){tg.ready();tg.expand();try{tg.setHeaderColor('#0b1020');tg.setBackgroundColor('#0b1020');}catch{}}
+    const settingsData=await api('/api/settings');
+    renderSettings(settingsData.settings);
+    if(!tg || !tg.initData){
+      throw new Error('Open this app using its Telegram bot Mini App button. Normal browser login is disabled.');
+    }
+    let data;
+    try{data=await api('/api/me');}
+    catch{
+      data=await api('/api/auth/telegram',{method:'POST',body:JSON.stringify({initData:tg.initData})});
+    }
+    renderSettings(data.settings||settingsData.settings);
+    renderUser(data.user);
+    await Promise.allSettled([loadTasks(),loadReferrals(),loadWithdrawals()]);
+  }catch(e){
+    toast(e.message);
+    const notice=document.createElement('div');notice.className='notice';
+    notice.textContent=e.message;
+    document.querySelector('main').prepend(notice);
+  }finally{hideLoader();}
+}
+document.querySelectorAll('.nav').forEach(button=>button.addEventListener('click',()=>{
+  document.querySelectorAll('.nav').forEach(b=>b.classList.toggle('active',b===button));
+  document.querySelectorAll('.page').forEach(p=>p.classList.toggle('active',p.id==='page-'+button.dataset.page));
+  if(button.dataset.page==='tasks')loadTasks().catch(e=>toast(e.message));
+  if(button.dataset.page==='referrals')loadReferrals().catch(e=>toast(e.message));
+  if(button.dataset.page==='wallet')loadWithdrawals().catch(e=>toast(e.message));
+}));
+$('tapButton').addEventListener('click',async()=>{
+  if(state.busy)return;state.busy=true;
+  $('tapButton').classList.add('pulse');
+  setTimeout(()=>$('tapButton').classList.remove('pulse'),250);
+  try{const d=await api('/api/mine',{method:'POST',body:JSON.stringify({taps:1})});renderUser(d.user);}
+  catch(e){toast(e.message);}
+  finally{state.busy=false;}
+});
+$('dailyButton').addEventListener('click',async()=>{
+  try{const d=await api('/api/daily',{method:'POST',body:'{}'});renderUser(d.user);toast('Daily reward: +'+fmt(d.added)+' ₵');}
+  catch(e){toast(e.message);}
+});
+$('copyRef').addEventListener('click',async()=>{
+  const value=$('refLink').value;if(!value){toast('Referral link is not available yet.');return;}
+  try{await navigator.clipboard.writeText(value);toast('Referral link copied.');}
+  catch{$('refLink').select();toast('Select and copy the link.');}
+});
+$('withdrawForm').addEventListener('submit',async e=>{
+  e.preventDefault();
+  const amount=Number($('withdrawAmount').value);
+  if(!Number.isSafeInteger(amount)||amount<=0){toast('Enter a valid whole-number amount.');return;}
+  const button=$('withdrawButton');button.disabled=true;
+  try{
+    const d=await api('/api/withdrawals',{method:'POST',body:JSON.stringify({
+      method:$('method').value,wallet:$('walletAddress').value.trim(),amount
+    })});
+    toast('Request submitted: #'+d.withdrawalId);
+    $('withdrawForm').reset();
+    const me=await api('/api/me');renderUser(me.user);await loadWithdrawals();
+  }catch(err){toast(err.message);}
+  finally{button.disabled=state.settings.withdrawalEnabled===false;}
+});
+boot();
+})();
+</script>
+</body>
+</html>
