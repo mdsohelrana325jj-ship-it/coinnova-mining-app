@@ -3,1120 +3,1011 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
-<meta name="theme-color" content="#10152a">
+<meta name="theme-color" content="#080b15">
 <title>CoinNova • Mining App</title>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <style>
 :root{
-  --bg:#0b1020;
-  --bg2:#111932;
-  --card:#151e38;
-  --card2:#1b2745;
-  --gold:#ffd166;
-  --gold2:#ffb703;
-  --green:#43e6a0;
-  --blue:#61a8ff;
-  --red:#ff6174;
-  --text:#f5f7ff;
-  --muted:#9ca9c9;
-  --border:rgba(255,255,255,.09);
-  --radius:20px;
+  --bg:#080b15;--panel:#11182a;--panel2:#172139;
+  --gold:#ffd66b;--gold2:#ff9f43;--cyan:#45e8ff;
+  --green:#51f5b7;--text:#f5f7ff;--muted:#9aa7c2;
+  --line:#283651;--pink:#ff70c7;--purple:#9675ff;
 }
 *{box-sizing:border-box}
-html{scroll-behavior:smooth}
-body{
-  margin:0;
-  color:var(--text);
-  background:
-    radial-gradient(ellipse at 50% -10%,rgba(100,91,255,.22),transparent 45%),
-    radial-gradient(ellipse at 100% 35%,rgba(38,147,255,.08),transparent 35%),
-    var(--bg);
-  font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
-  min-height:100vh;
-}
+body{margin:0;background:radial-gradient(circle at 50% -10%,#293660 0,transparent 42%),var(--bg);color:var(--text);font-family:Inter,system-ui,-apple-system,Segoe UI,sans-serif;min-height:100vh}
 button,input,select{font:inherit}
-button{cursor:pointer}
-button:disabled{opacity:.55;cursor:not-allowed}
-.app{max-width:480px;margin:auto;min-height:100vh;padding:0 15px 100px}
-.topbar{
-  height:76px;display:flex;align-items:center;justify-content:space-between;
-  position:relative;z-index:2
-}
-.brand{display:flex;align-items:center;gap:10px}
-.brand-logo{
-  width:43px;height:43px;border-radius:15px;display:grid;place-items:center;
-  font-size:23px;color:#201700;background:linear-gradient(145deg,#fff0a6,#ffb703);
-  box-shadow:0 5px 22px #ffbf2935
-}
-.brand-name{font-weight:900;font-size:18px;letter-spacing:.2px}
-.brand-sub{font-size:10px;color:var(--muted);letter-spacing:2px;margin-top:2px}
-.status-pill{
-  display:flex;align-items:center;gap:6px;background:#162a31;
-  border:1px solid #2c5d52;border-radius:30px;padding:8px 11px;
-  color:#70f0b7;font-size:11px;font-weight:800
-}
-.dot{width:7px;height:7px;border-radius:50%;background:var(--green);box-shadow:0 0 10px var(--green)}
-.hero{
-  border:1px solid var(--border);border-radius:26px;padding:22px 18px 18px;
-  background:linear-gradient(145deg,#202b4d,#151d36 65%,#192343);
-  box-shadow:0 14px 40px #0002;position:relative;overflow:hidden
-}
-.hero:before{
-  content:"";position:absolute;width:220px;height:220px;border-radius:50%;
-  background:#ffc94a0b;right:-100px;top:-115px;border:1px solid #ffdc7b18
-}
-.eyebrow{color:var(--muted);font-size:12px;font-weight:700;letter-spacing:.6px}
-.balance-label{margin-top:17px;color:#c3cce3;font-size:12px}
-.balance{
-  display:flex;align-items:center;gap:9px;margin-top:4px;
-  font-size:35px;font-weight:950;letter-spacing:-1.3px;word-break:break-word
-}
-.coin{color:var(--gold);font-size:27px}
-.balance-unit{font-size:13px;color:var(--gold);letter-spacing:0}
-.hero-bottom{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:20px}
-.user-chip{
-  display:flex;align-items:center;gap:9px;min-width:0
-}
-.avatar{
-  width:37px;height:37px;border-radius:13px;background:linear-gradient(135deg,#7065ff,#37b8ff);
-  display:grid;place-items:center;font-size:18px;font-weight:900;flex-shrink:0
-}
-.user-name{font-size:12px;font-weight:800;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:155px}
-.user-id{font-size:10px;color:var(--muted);margin-top:3px}
-.level-badge{font-size:10px;font-weight:800;color:var(--gold);background:#ffd16616;border:1px solid #ffd16630;border-radius:20px;padding:8px 10px;white-space:nowrap}
-.section{margin-top:23px}
-.section-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;gap:10px}
-.section-title{font-size:16px;font-weight:900}
-.section-link{border:0;background:transparent;color:var(--gold);font-size:11px;font-weight:800}
-.mining-card{
-  padding:19px 16px 16px;border-radius:24px;background:linear-gradient(155deg,#1b2948,#121a30);
-  border:1px solid var(--border);text-align:center;position:relative;overflow:hidden
-}
-.mining-tag{
-  display:inline-flex;align-items:center;gap:6px;border-radius:20px;padding:7px 11px;
-  background:#43e6a012;border:1px solid #43e6a02a;color:var(--green);
-  font-size:10px;font-weight:900;letter-spacing:.5px
-}
-.mine-orb-wrap{height:200px;display:grid;place-items:center;position:relative}
-.orbit{
-  position:absolute;width:178px;height:178px;border-radius:50%;
-  border:1px solid #ffd16632;animation:spin 18s linear infinite
-}
-.orbit:before,.orbit:after{
-  content:"";position:absolute;border:1px solid #7d91ff45;border-radius:50%;
-  inset:13px;transform:rotate(55deg) scaleX(.62)
-}
-.orbit:after{inset:27px;transform:rotate(-55deg) scaleX(.65);border-color:#43e6a045}
+button{cursor:pointer;border:0;color:inherit}
+button:disabled{opacity:.45;cursor:not-allowed}
+.app{max-width:480px;margin:auto;min-height:100vh;padding:16px 14px 105px;overflow:hidden}
+.top{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.brand{display:flex;align-items:center;gap:10px;min-width:0}
+.brand-mark{width:43px;height:43px;flex-shrink:0;border-radius:15px;background:linear-gradient(135deg,#fff2a5,#f5a623);color:#50300b;display:grid;place-items:center;font-weight:1000;font-size:23px;box-shadow:0 0 25px #ffca5555;animation:float 3s ease-in-out infinite}
+.brand h1{font-size:18px;letter-spacing:1px;margin:0}
+.brand small{color:var(--muted);font-size:10px}
+.profile{display:flex;align-items:center;gap:7px;max-width:160px;background:#111a2c;border:1px solid var(--line);padding:5px 8px 5px 5px;border-radius:999px}
+.avatar{width:36px;height:36px;flex-shrink:0;border-radius:50%;object-fit:cover;background:linear-gradient(135deg,#ffe9a0,#f3a42a);border:2px solid var(--gold);display:grid;place-items:center;color:#50300b;font-weight:950}
+.profile-meta{min-width:0}
+.profile-meta b{display:block;font-size:11px;max-width:90px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.profile-meta small{display:block;color:var(--muted);font-size:8px}
+.balance-card{margin:20px 0 15px;padding:18px;border-radius:24px;border:1px solid #364563;background:linear-gradient(135deg,#1d2a46,#10182a 65%);box-shadow:0 16px 40px #0005;position:relative;overflow:hidden}
+.balance-card:after{content:"";position:absolute;width:150px;height:150px;border-radius:50%;right:-45px;top:-65px;background:#ffd66b14;pointer-events:none}
+.label{font-size:10px;color:var(--muted);letter-spacing:1.5px;text-transform:uppercase}
+.balance{font-size:34px;font-weight:950;margin:5px 0;color:#fff4c9;text-shadow:0 0 24px #ffd66b30;overflow-wrap:anywhere}
+.balance span{font-size:12px;color:var(--gold)}
+.stats{display:flex;gap:7px;margin-top:14px}
+.stat{flex:1;min-width:0;padding:10px 8px;background:#080f1d80;border-radius:13px}
+.stat strong{display:block;font-size:14px;overflow-wrap:anywhere}
+.stat small{font-size:9px;color:var(--muted)}
+.section{display:none;animation:fade .25s ease}
+.section.active{display:block}
+.coin-stage{height:265px;display:grid;place-items:center;position:relative;isolation:isolate}
+.orbit{position:absolute;width:230px;height:230px;border:1px solid #ffd66b24;border-radius:50%;animation:spin 18s linear infinite;pointer-events:none}
+.orbit:before,.orbit:after{content:"";position:absolute;width:8px;height:8px;border-radius:50%;background:var(--cyan);box-shadow:0 0 16px var(--cyan);top:22px;left:35px}
+.orbit:after{top:auto;left:auto;right:14px;bottom:50px;background:var(--pink);box-shadow:0 0 16px var(--pink)}
+.orbit.two{width:190px;height:190px;border-style:dashed;animation-direction:reverse;animation-duration:25s}
+.coin{width:155px;height:155px;border-radius:50%;position:relative;background:radial-gradient(circle at 32% 24%,#fff5be 0,#ffdc68 16%,#efa52e 46%,#9b5317 72%,#ffcf5d 100%);box-shadow:0 0 0 8px #ffc44c16,0 0 0 16px #ffc44c0b,0 20px 55px #0008,0 0 40px #ffc44c55;display:grid;place-items:center;user-select:none;touch-action:manipulation;transition:transform .08s;animation:coinfloat 3s ease-in-out infinite}
+.coin:before{content:"";position:absolute;inset:10px;border:2px solid #fff0a5;border-radius:50%;box-shadow:inset 0 0 15px #9b531755;pointer-events:none}
+.coin:active{transform:scale(.92)}
+.coin-core{width:88px;height:88px;border-radius:50%;border:2px solid #a96b1b;display:grid;place-items:center;color:#7c4511;font-size:54px;font-weight:1000;text-shadow:0 2px #ffe9a2;box-shadow:inset 0 0 18px #fff2a3aa}
+.tap-hint{position:absolute;bottom:0;color:var(--muted);font-size:11px;letter-spacing:.5px}
+.energy-wrap{background:var(--panel);border:1px solid var(--line);padding:13px;border-radius:16px}
+.energy-row{display:flex;justify-content:space-between;gap:8px;font-size:11px;margin-bottom:9px}
+.energy-row b{color:var(--gold)}
+.bar{height:8px;background:#070b13;border-radius:99px;overflow:hidden}
+.bar i{display:block;height:100%;width:100%;background:linear-gradient(90deg,var(--gold2),var(--gold));border-radius:99px;transition:width .25s}
+.quick{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:12px 0}
+.quick button{padding:12px 4px;border-radius:14px;background:linear-gradient(135deg,#1b2943,#11182a);border:1px solid var(--line);font-weight:750;font-size:11px;transition:.2s}
+.quick button:active,.nav button:active{transform:scale(.96)}
+.quick .ico{display:block;font-size:21px;margin-bottom:5px}
+.section-head{display:flex;justify-content:space-between;align-items:center;gap:8px;margin:20px 0 11px}
+.section-head h2{font-size:18px;margin:0}
+.muted{color:var(--muted);font-size:11px}
+.task,.wallet-option,.history,.ref-card{display:flex;align-items:center;gap:10px;background:linear-gradient(135deg,#151f34,#101727);border:1px solid var(--line);border-radius:16px;padding:12px;margin:8px 0;min-width:0}
+.logo{width:42px;height:42px;border-radius:13px;background:#0b1220;border:1px solid #34425c;display:grid;place-items:center;flex-shrink:0;overflow:hidden;color:var(--cyan);font-weight:900;font-size:22px}
+.logo img{width:26px;height:26px;object-fit:contain}
+.task-info,.wallet-info{flex:1;min-width:0}
+.task-info b,.wallet-info b{display:block;font-size:12px;overflow-wrap:anywhere}
+.task-info small,.wallet-info small{font-size:10px;color:var(--muted);overflow-wrap:anywhere}
+.reward{color:var(--gold);font-weight:800;font-size:11px;white-space:nowrap}
+.mini-btn{border:1px solid #4b5c7c;background:#202e49;border-radius:10px;padding:9px 10px;font-size:10px;font-weight:800;white-space:nowrap}
+.mini-btn.gold{background:linear-gradient(135deg,#ffe69a,#f4a42c);color:#41280a;border:0}
+.primary{width:100%;padding:13px;border-radius:14px;font-weight:900;color:#36220b;background:linear-gradient(100deg,#ffe9a0,#f6a72e);box-shadow:0 8px 25px #f6a72e25;transition:.2s}
+.primary:active{transform:scale(.985)}
+.field{width:100%;background:#080e1b;border:1px solid #34415b;color:var(--text);padding:12px;border-radius:12px;outline:none;margin:6px 0 12px}
+.field:focus{border-color:var(--cyan)}
+label{font-size:11px;color:var(--muted)}
+.notice{padding:12px;border-radius:13px;background:#332b1c;border:1px solid #65502a;color:#f9dca0;font-size:10px;line-height:1.6;margin:12px 0}
+.rule-note{padding:12px;border-radius:13px;background:#0b1323;border:1px solid #293a58;font-size:10px;line-height:1.7;color:#b9c6dc;margin-top:12px}
+.nav{position:fixed;z-index:10;bottom:0;left:50%;transform:translateX(-50%);width:min(480px,100%);display:grid;grid-template-columns:repeat(5,1fr);gap:3px;padding:8px 7px calc(8px + env(safe-area-inset-bottom));background:#090e1beb;backdrop-filter:blur(18px);border-top:1px solid #2a3650}
+.nav button{background:transparent;color:#8592ac;font-size:9px;padding:6px 1px;border-radius:11px;transition:.2s}
+.nav button span{display:block;font-size:20px;margin-bottom:3px}
+.nav button.active{color:var(--gold);background:#ffd66b12}
+.toast{position:fixed;z-index:50;top:15px;left:50%;transform:translate(-50%,-150%);background:#17243a;border:1px solid #3b4e6e;padding:12px 16px;border-radius:13px;font-size:12px;box-shadow:0 12px 35px #0008;transition:.3s;max-width:92%;text-align:center}
+.toast.show{transform:translate(-50%,0)}
+.float-text{position:absolute;z-index:3;color:#fff2a1;font-weight:1000;font-size:20px;pointer-events:none;text-shadow:0 2px 12px #f99c27;animation:rise .75s ease-out forwards}
+.empty{text-align:center;color:var(--muted);padding:24px 10px;font-size:12px}
+.footer-note{text-align:center;color:#68758e;font-size:10px;margin:18px 0 0}
+.loading-screen{position:fixed;inset:0;z-index:100;background:radial-gradient(circle at 50% 35%,#24345a 0,#0b1020 48%,#070a13 100%);display:flex;align-items:center;justify-content:center;flex-direction:column;gap:15px;transition:opacity .4s,visibility .4s}
+.loading-screen.done{opacity:0;visibility:hidden;pointer-events:none}
+.loader-wrap{width:120px;height:120px;display:grid;place-items:center;position:relative}
+.loader-logo{width:78px;height:78px;border-radius:25px;background:linear-gradient(135deg,#fff0a8,#f3a12c);display:grid;place-items:center;color:#50300b;font-size:42px;font-weight:1000;animation:float 1.6s infinite}
+.loader-ring{position:absolute;inset:0;border:2px solid #ffd66b2a;border-top-color:var(--gold);border-radius:50%;animation:spin 1.2s linear infinite}
+.loading-title{font-size:19px;font-weight:950;letter-spacing:2px}
+.loading-sub{color:var(--muted);font-size:10px;letter-spacing:1px;text-align:center;padding:0 20px}
+.spin-panel{background:linear-gradient(145deg,#182643,#0c1425);border:1px solid #465779;border-radius:21px;padding:14px;margin:10px 0;overflow:hidden}
+.spin-meta{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.spin-meta .stat{border:1px solid #334461}
+.spin-wheel-wrap{display:grid;place-items:center;padding:14px 0}
+.spin-pointer{font-size:25px;color:#fff0a5;line-height:1;margin-bottom:-6px;z-index:2}
+.spin-wheel{width:min(218px,68vw);height:min(218px,68vw);border-radius:50%;position:relative;border:7px solid #ffe6a0;box-shadow:0 0 0 5px #f5b53624,0 0 35px #ffc44c35;display:grid;place-items:center;background:conic-gradient(#ffcb54 0deg 60deg,#1b3153 60deg 120deg,#47d8cb 120deg 180deg,#3d4f80 180deg 240deg,#ff8c61 240deg 300deg,#694fd1 300deg 360deg);transition:transform 4.3s cubic-bezier(.12,.75,.08,1)}
+.spin-wheel:before{content:"";position:absolute;inset:12px;border-radius:50%;border:2px dashed #fff9}
+.spin-wheel-core{width:62px;height:62px;border-radius:50%;background:linear-gradient(135deg,#fff3b4,#efa52e);color:#4a2c09;display:grid;place-items:center;font-size:22px;font-weight:1000;border:4px solid #fff0b2;z-index:1}
+.spin-btn{max-width:280px;margin:0 auto;display:block}
+.level-row{display:grid;grid-template-columns:37px minmax(0,1fr) auto;gap:9px;align-items:center;padding:12px 0;border-bottom:1px solid var(--line)}
+.level-row:last-child{border-bottom:0}
+.level-badge{width:34px;height:34px;border-radius:11px;background:linear-gradient(135deg,#ffe69a,#f4a42c);display:grid;place-items:center;color:#43290a;font-weight:950;font-size:11px}
+.level-row b{font-size:11px}
+.level-row small{display:block;color:var(--muted);font-size:9px;margin-top:3px}
+.level-rate{color:var(--gold);font-weight:900;font-size:12px}
+.modal-bg{position:fixed;inset:0;z-index:60;background:#03060bd9;display:none;align-items:flex-end;justify-content:center}
+.modal-bg.show{display:flex}
+.modal{width:min(480px,100%);max-height:80vh;overflow:auto;background:#111a2c;border:1px solid #33435f;border-radius:24px 24px 0 0;padding:20px 16px calc(22px + env(safe-area-inset-bottom));animation:slide .25s}
+.modal h3{margin:0 0 12px}
+.close{float:right;background:#26334a;border-radius:9px;padding:6px 10px}
 @keyframes spin{to{transform:rotate(360deg)}}
-.mine-button{
-  position:relative;z-index:1;width:135px;height:135px;border:0;border-radius:50%;
-  background:radial-gradient(circle at 35% 25%,#fff4c0,#ffd166 35%,#ffad0a 75%,#bc6d00);
-  color:#3b2900;box-shadow:0 0 0 10px #ffcb4910,0 0 45px #ffbe3435,inset 0 -9px 15px #a75c1a55;
-  display:flex;flex-direction:column;align-items:center;justify-content:center;
-  transition:transform .14s ease;user-select:none;-webkit-tap-highlight-color:transparent
-}
-.mine-button:active{transform:scale(.94)}
-.mine-button .pickaxe{font-size:43px;line-height:1.1}
-.mine-button strong{font-size:13px;margin-top:4px;letter-spacing:1px}
-.mine-button.mining{animation:pulse 1.6s ease-in-out infinite}
-@keyframes pulse{50%{box-shadow:0 0 0 17px #ffcb4908,0 0 65px #ffbe3455,inset 0 -9px 15px #a75c1a55}}
-.mining-status{font-size:12px;font-weight:800;margin-top:2px}
-.mining-sub{font-size:11px;color:var(--muted);margin-top:7px;line-height:1.5}
-.progress-track{height:6px;border-radius:20px;background:#ffffff10;margin-top:16px;overflow:hidden}
-.progress-fill{height:100%;width:0%;background:linear-gradient(90deg,#ffb703,#ffe8a1);border-radius:20px;transition:width .3s}
-.mining-meta{display:flex;justify-content:space-between;color:var(--muted);font-size:10px;margin-top:8px}
-.stats-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px}
-.stat-card{
-  min-width:0;padding:14px 10px;border:1px solid var(--border);border-radius:17px;
-  background:linear-gradient(145deg,#192440,#121a2e)
-}
-.stat-icon{font-size:20px}
-.stat-label{font-size:10px;color:var(--muted);margin-top:10px;line-height:1.3}
-.stat-value{font-size:15px;font-weight:900;margin-top:5px;overflow-wrap:anywhere}
-.stat-value small{font-size:9px;color:var(--muted);font-weight:700}
-.action-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
-.action-card{
-  text-align:left;padding:15px 13px;border:1px solid var(--border);border-radius:18px;
-  background:linear-gradient(145deg,#1a2543,#121a30);color:var(--text);
-  min-height:94px;transition:transform .15s,border-color .15s
-}
-.action-card:active{transform:scale(.98)}
-.action-icon{font-size:25px}
-.action-title{font-size:13px;font-weight:900;margin-top:8px}
-.action-desc{font-size:10px;color:var(--muted);margin-top:4px;line-height:1.4}
-.task-list,.withdraw-list{display:grid;gap:9px}
-.task-item,.withdraw-item{
-  display:flex;align-items:center;gap:11px;padding:13px;
-  border:1px solid var(--border);border-radius:17px;background:#151e35
-}
-.task-icon,.withdraw-icon{width:43px;height:43px;border-radius:14px;background:#ffffff0c;display:grid;place-items:center;font-size:21px;flex-shrink:0}
-.task-info,.withdraw-info{flex:1;min-width:0}
-.task-name,.withdraw-name{font-size:12px;font-weight:850;overflow-wrap:anywhere}
-.task-desc,.withdraw-desc{font-size:10px;color:var(--muted);margin-top:4px;line-height:1.45;overflow-wrap:anywhere}
-.small-btn{
-  border:0;border-radius:11px;padding:9px 12px;background:linear-gradient(135deg,#ffe08b,#ffb703);
-  color:#332400;font-size:10px;font-weight:900;white-space:nowrap
-}
-.small-btn.done{background:#43e6a01a;color:var(--green);border:1px solid #43e6a033}
-.referral-card{
-  border-radius:21px;padding:17px;border:1px solid #7b88ff35;
-  background:linear-gradient(135deg,#23244c,#182541)
-}
-.referral-top{display:flex;align-items:center;justify-content:space-between;gap:10px}
-.referral-number{font-size:28px;font-weight:950;color:var(--gold);margin-top:6px}
-.referral-copy{display:flex;gap:8px;margin-top:14px}
-.referral-copy input{flex:1;min-width:0}
-.field{
-  width:100%;border:1px solid #ffffff16;background:#0e1528;color:var(--text);
-  border-radius:13px;padding:13px;font-size:12px;outline:none
-}
-.field:focus{border-color:#ffd16699;box-shadow:0 0 0 3px #ffd16610}
-.field::placeholder{color:#7481a2}
-.field-label{display:block;font-size:11px;color:#bdc7e0;font-weight:800;margin:13px 0 7px}
-.bottom-nav{
-  position:fixed;z-index:10;bottom:0;left:50%;transform:translateX(-50%);
-  width:min(480px,100%);padding:10px 9px calc(10px + env(safe-area-inset-bottom));
-  display:grid;grid-template-columns:repeat(5,1fr);gap:4px;
-  background:#0d1425ee;border-top:1px solid #ffffff12;backdrop-filter:blur(20px)
-}
-.nav-btn{background:transparent;border:0;color:#8592b1;border-radius:13px;padding:8px 2px 6px;display:flex;flex-direction:column;align-items:center;gap:5px;font-size:9px;font-weight:800}
-.nav-btn span{font-size:20px}
-.nav-btn.active{background:#ffd16613;color:var(--gold)}
-.overlay{
-  position:fixed;z-index:30;inset:0;background:#050916c9;backdrop-filter:blur(8px);
-  display:none;align-items:flex-end;justify-content:center;padding:15px
-}
-.overlay.show{display:flex}
-.sheet{
-  width:min(450px,100%);max-height:90dvh;overflow:auto;
-  border:1px solid #ffffff17;border-radius:25px 25px 20px 20px;
-  background:linear-gradient(155deg,#1b2645,#10182d 75%);padding:20px;
-  box-shadow:0 25px 100px #0008;animation:sheetIn .22s ease
-}
-@keyframes sheetIn{from{transform:translateY(30px);opacity:.4}to{transform:translateY(0);opacity:1}}
-.sheet-head{display:flex;align-items:center;gap:12px;margin-bottom:12px}
-.sheet-back,.close-btn{
-  border:1px solid #ffffff16;background:#ffffff08;color:var(--text);
-  width:39px;height:39px;border-radius:13px;font-size:20px;flex-shrink:0
-}
-.sheet-heading{font-size:19px;font-weight:950}
-.sheet-subtitle{font-size:11px;color:var(--muted);margin-top:4px;line-height:1.5}
-.sheet-close-row{display:flex;justify-content:flex-end;margin-bottom:4px}
-.sheet-close-row .close-btn{width:32px;height:32px;font-size:16px}
-.asset-banner{
-  padding:17px;border-radius:18px;background:linear-gradient(135deg,#2b234b,#17243d);
-  border:1px solid #ffffff13;margin-top:15px
-}
-.asset-banner h3{margin:0;font-size:14px}
-.asset-banner p{font-size:11px;color:#b5c1de;line-height:1.65;margin:8px 0 0}
-.binance-btn{
-  width:100%;border:1px solid #f0b90b66;border-radius:17px;
-  padding:14px;background:linear-gradient(135deg,#ffdf73,#f0b90b);
-  color:#201900;font-weight:950;display:flex;align-items:center;gap:12px;text-align:left;margin-top:14px
-}
-.binance-logo{width:43px;height:43px;border-radius:13px;background:#171717;display:grid;place-items:center;color:#f0b90b;font-size:25px;flex-shrink:0}
-.binance-copy{flex:1}
-.binance-copy strong{font-size:14px;display:block}
-.binance-copy small{font-size:10px;display:block;margin-top:3px;opacity:.7}
-.arrow{font-size:22px}
-.notice{font-size:10px;color:#aab8d7;line-height:1.65;margin-top:14px;padding:12px;border-radius:13px;background:#ffffff06;border:1px solid #ffffff0c}
-.primary-btn{
-  width:100%;border:0;border-radius:14px;padding:14px 16px;margin-top:16px;
-  background:linear-gradient(135deg,#ffe69a,#ffb703);color:#332400;font-weight:950;font-size:12px
-}
-.secondary-btn{
-  width:100%;border:1px solid #ffffff19;border-radius:14px;padding:13px;
-  background:#ffffff08;color:var(--text);font-weight:800;font-size:12px;margin-top:9px
-}
-.method-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px;margin-top:15px}
-.method-card{
-  padding:14px 7px;border:1px solid var(--border);background:#ffffff05;
-  border-radius:15px;text-align:center;color:var(--text);min-width:0
-}
-.method-card:active{border-color:var(--gold)}
-.method-logo{height:38px;display:grid;place-items:center;font-size:24px;font-weight:950}
-.method-name{font-size:11px;font-weight:900;margin-top:7px}
-.method-note{font-size:9px;color:var(--muted);margin-top:5px;line-height:1.4;overflow-wrap:anywhere}
-.network-list{display:grid;gap:10px;margin-top:15px}
-.network-card{
-  width:100%;text-align:left;padding:15px;border:1px solid #ffffff16;border-radius:17px;
-  background:#ffffff06;color:var(--text);display:flex;align-items:center;gap:12px
-}
-.network-card.selected{border-color:var(--gold);background:#ffd1660c}
-.network-icon{width:44px;height:44px;border-radius:14px;background:#25314c;display:grid;place-items:center;font-weight:950;font-size:14px}
-.network-info{flex:1}
-.network-name{font-size:13px;font-weight:950}
-.network-desc{font-size:10px;color:var(--muted);margin-top:4px}
-.network-fee{font-size:10px;color:var(--gold);font-weight:850;margin-top:6px}
-.checkmark{color:var(--green);font-weight:950}
-.form-hint{font-size:10px;color:var(--muted);line-height:1.5;margin-top:7px}
-.summary-box{margin-top:14px;border:1px solid #ffffff12;background:#ffffff05;border-radius:15px;padding:13px}
-.summary-row{display:flex;justify-content:space-between;gap:12px;font-size:11px;margin:7px 0}
-.summary-row span:first-child{color:var(--muted)}
-.summary-row strong{text-align:right;overflow-wrap:anywhere}
-.toast{
-  position:fixed;z-index:100;left:50%;bottom:95px;transform:translate(-50%,15px);
-  opacity:0;pointer-events:none;background:#202c46;border:1px solid #ffffff18;
-  padding:12px 16px;border-radius:13px;font-size:12px;font-weight:800;
-  max-width:calc(100% - 30px);text-align:center;transition:.22s;box-shadow:0 10px 35px #0006
-}
-.toast.show{opacity:1;transform:translate(-50%,0)}
-.empty{text-align:center;padding:23px 12px;color:var(--muted);font-size:12px;border:1px dashed #ffffff19;border-radius:15px}
-.page{display:none}
-.page.active{display:block}
-.loading{opacity:.65;pointer-events:none}
-.hidden{display:none!important}
-@media(max-width:360px){
-  .app{padding-left:11px;padding-right:11px}
-  .balance{font-size:29px}
-  .stats-grid{gap:6px}
-  .stat-card{padding:11px 8px}
-  .stat-value{font-size:13px}
-  .mine-orb-wrap{height:180px}
-  .orbit{width:160px;height:160px}
-  .mine-button{width:122px;height:122px}
-  .method-grid{gap:6px}
-}
+@keyframes float{50%{transform:translateY(-4px)}}
+@keyframes coinfloat{50%{transform:translateY(-5px) rotateY(7deg)}}
+@keyframes rise{to{transform:translateY(-65px) scale(1.15);opacity:0}}
+@keyframes fade{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:none}}
+@keyframes slide{from{transform:translateY(40px);opacity:.5}to{transform:none;opacity:1}}
+@keyframes tapPop{50%{transform:scale(.9) rotate(-2deg)}}
+@keyframes spinWin{50%{filter:brightness(1.6);transform:scale(1.04)}}
+.tap-pop{animation:tapPop .18s ease-out}
+.spin-win{animation:spinWin .6s ease-out}
+@media(max-width:350px){.app{padding-left:10px;padding-right:10px}.balance{font-size:29px}.coin{width:140px;height:140px}.coin-core{width:78px;height:78px;font-size:46px}.orbit{width:205px;height:205px}.orbit.two{width:175px;height:175px}.profile{max-width:135px}}
 </style>
 </head>
 <body>
-<div class="app">
-  <header class="topbar">
-    <div class="brand">
-      <div class="brand-logo">₡</div>
-      <div>
-        <div class="brand-name" id="appName">CoinNova</div>
-        <div class="brand-sub">TAP • MINE • EARN</div>
-      </div>
-    </div>
-    <div class="status-pill"><span class="dot"></span><span id="systemStatus">ONLINE</span></div>
-  </header>
 
-  <main>
-    <section class="page active" id="page-home">
-      <div class="hero">
-        <div class="eyebrow">YOUR MINING DASHBOARD ✦</div>
-        <div class="balance-label">Available Balance</div>
-        <div class="balance"><span class="coin">₡</span><span id="balance">0.00</span></div>
-        <div style="font-size:10px;color:var(--muted);margin-top:4px">CoinNova Coins</div>
-        <div class="hero-bottom">
-          <div class="user-chip">
-            <div class="avatar" id="avatar">C</div>
-            <div style="min-width:0">
-              <div class="user-name" id="userName">Guest Miner</div>
-              <div class="user-id" id="userId">ID: —</div>
-            </div>
-          </div>
-          <div class="level-badge">⚡ NOVA MINER</div>
-        </div>
-      </div>
-
-      <div class="section">
-        <div class="section-head">
-          <div class="section-title">⛏️ Mining Station</div>
-          <span class="eyebrow" id="miningRewardLabel">+0 / session</span>
-        </div>
-        <div class="mining-card">
-          <div class="mining-tag"><span class="dot"></span><span id="mineTag">READY TO MINE</span></div>
-          <div class="mine-orb-wrap">
-            <div class="orbit"></div>
-            <button class="mine-button" id="mineButton" aria-label="Start mining">
-              <span class="pickaxe">⛏️</span>
-              <strong id="mineButtonText">START MINING</strong>
-            </button>
-          </div>
-          <div class="mining-status" id="miningStatus">Your next reward is waiting</div>
-          <div class="mining-sub" id="miningSub">Tap the mining button to start your session.</div>
-          <div class="progress-track"><div class="progress-fill" id="mineProgress"></div></div>
-          <div class="mining-meta"><span id="mineProgressText">0% completed</span><span id="mineTimer">Ready</span></div>
-        </div>
-      </div>
-
-      <div class="section">
-        <div class="section-head"><div class="section-title">📊 Your Statistics</div></div>
-        <div class="stats-grid">
-          <div class="stat-card">
-            <div class="stat-icon">💰</div>
-            <div class="stat-label">Total Earned</div>
-            <div class="stat-value" id="totalEarned">0 <small>COINS</small></div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-icon">🎁</div>
-            <div class="stat-label">Daily Reward</div>
-            <div class="stat-value" id="dailyReward">0 <small>COINS</small></div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-icon">👥</div>
-            <div class="stat-label">Referrals</div>
-            <div class="stat-value" id="referralCount">0</div>
-          </div>
-        </div>
-      </div>
-
-      <div class="section">
-        <div class="section-head"><div class="section-title">🚀 Quick Actions</div></div>
-        <div class="action-grid">
-          <button class="action-card" data-page="wallet">
-            <div class="action-icon">💳</div><div class="action-title">Withdraw Assets</div>
-            <div class="action-desc">USDT, bKash, Nagad & Rocket</div>
-          </button>
-          <button class="action-card" data-page="tasks">
-            <div class="action-icon">🎯</div><div class="action-title">Earn More</div>
-            <div class="action-desc">Complete tasks and collect rewards</div>
-          </button>
-          <button class="action-card" data-page="referrals">
-            <div class="action-icon">👥</div><div class="action-title">Invite Friends</div>
-            <div class="action-desc">Grow your network and earn rewards</div>
-          </button>
-          <button class="action-card" id="dailyButton">
-            <div class="action-icon">🎁</div><div class="action-title">Daily Bonus</div>
-            <div class="action-desc">Claim your daily reward</div>
-          </button>
-        </div>
-      </div>
-      <div class="section">
-        <div class="section-head"><div class="section-title">📢 Announcement</div></div>
-        <div class="referral-card"><div id="welcomeText" style="font-size:12px;line-height:1.7;color:#d9e2f9">Welcome to CoinNova. Start mining and explore available rewards.</div></div>
-      </div>
-    </section>
-
-    <section class="page" id="page-wallet">
-      <div class="section-head" style="margin-top:15px">
-        <div><div class="section-title" style="font-size:21px">💳 Withdraw Assets</div><div class="eyebrow" style="margin-top:6px">CHOOSE YOUR PAYMENT METHOD</div></div>
-      </div>
-      <div class="hero" style="padding:17px">
-        <div class="eyebrow">YOUR AVAILABLE BALANCE</div>
-        <div class="balance" style="font-size:29px;margin-top:7px"><span class="coin">₡</span><span id="walletBalance">0.00</span></div>
-        <div class="form-hint">Select an enabled withdrawal method below. Fees and minimum amounts are displayed before you submit a request.</div>
-      </div>
-
-      <div class="section">
-        <div class="section-head"><div class="section-title">🌐 Crypto Assets</div></div>
-        <button class="binance-btn" id="binanceEntry">
-          <div class="binance-logo">◆</div>
-          <div class="binance-copy"><strong id="usdtWalletName">Binance • USDT</strong><small>Crypto withdrawal request</small></div>
-          <span class="arrow">›</span>
-        </button>
-      </div>
-      <div class="section">
-        <div class="section-head"><div class="section-title">🇧🇩 E-Wallets</div></div>
-        <div class="method-grid" id="ewalletGrid">
-          <button class="method-card" data-method="bKash"><div class="method-logo">💗</div><div class="method-name">bKash</div><div class="method-note">Mobile wallet</div></button>
-          <button class="method-card" data-method="Nagad"><div class="method-logo">🟠</div><div class="method-name">Nagad</div><div class="method-note">Mobile wallet</div></button>
-          <button class="method-card" data-method="Rocket"><div class="method-logo">🟣</div><div class="method-name">Rocket</div><div class="method-note">Mobile wallet</div></button>
-        </div>
-        <div class="form-hint">Available methods, fees, networks and minimums are controlled by the administrator.</div>
-      </div>
-      <div class="section">
-        <div class="section-head"><div class="section-title">🧾 Your Requests</div><button class="section-link" id="refreshWithdrawals">Refresh ↻</button></div>
-        <div class="withdraw-list" id="withdrawalHistory"><div class="empty">Log in to view your withdrawal requests.</div></div>
-      </div>
-    </section>
-
-    <section class="page" id="page-tasks">
-      <div class="section-head" style="margin-top:15px"><div><div class="section-title" style="font-size:21px">🎯 Earn More Coins</div><div class="eyebrow" style="margin-top:6px">COMPLETE TASKS • GET REWARDED</div></div></div>
-      <div class="task-list" id="taskList"><div class="empty">Loading tasks…</div></div>
-    </section>
-
-    <section class="page" id="page-referrals">
-      <div class="section-head" style="margin-top:15px"><div><div class="section-title" style="font-size:21px">👥 Invite Friends</div><div class="eyebrow" style="margin-top:6px">GROW YOUR NOVA NETWORK</div></div></div>
-      <div class="referral-card">
-        <div class="referral-top"><div><div class="eyebrow">TOTAL REFERRALS</div><div class="referral-number" id="referralTotal">0</div></div><div style="font-size:37px">🚀</div></div>
-        <div class="form-hint" id="referralInfo">Invite friends using your personal link.</div>
-        <label class="field-label" for="referralLink">Your Referral Link</label>
-        <div class="referral-copy"><input class="field" id="referralLink" readonly placeholder="Your link will appear here"><button class="small-btn" id="copyReferral">COPY</button></div>
-      </div>
-      <div class="section"><div class="section-head"><div class="section-title">💡 How it works</div></div><div class="notice">1. Copy your personal invite link.<br>2. Share it with your friends.<br>3. When a friend joins through the supported referral system, eligible rewards are handled by the server settings.</div></div>
-    </section>
-
-    <section class="page" id="page-profile">
-      <div class="section-head" style="margin-top:15px"><div><div class="section-title" style="font-size:21px">👤 My Account</div><div class="eyebrow" style="margin-top:6px">YOUR COINNOVA PROFILE</div></div></div>
-      <div class="hero">
-        <div class="user-chip"><div class="avatar" id="profileAvatar" style="width:55px;height:55px;font-size:23px">C</div><div><div class="user-name" id="profileName" style="font-size:16px">Guest Miner</div><div class="user-id" id="profileId">Telegram ID: —</div></div></div>
-        <div class="stats-grid" style="margin-top:18px">
-          <div class="stat-card"><div class="stat-label">Balance</div><div class="stat-value" id="profileBalance">0</div></div>
-          <div class="stat-card"><div class="stat-label">Earned</div><div class="stat-value" id="profileEarned">0</div></div>
-          <div class="stat-card"><div class="stat-label">Invited</div><div class="stat-value" id="profileReferrals">0</div></div>
-        </div>
-        <button class="secondary-btn" id="loginButton">Connect Telegram Account</button>
-        <button class="secondary-btn" id="logoutButton">Log Out</button>
-      </div>
-      <div class="section"><div class="section-title">🔒 Account Security</div><div class="notice">Only use the official app connection flow. Never share your Telegram login code, password, bot token or private wallet keys with anyone.</div></div>
-    </section>
-  </main>
-</div>
-
-<nav class="bottom-nav">
-  <button class="nav-btn active" data-page="home"><span>⌂</span>Home</button>
-  <button class="nav-btn" data-page="wallet"><span>◈</span>Wallet</button>
-  <button class="nav-btn" data-page="tasks"><span>✦</span>Tasks</button>
-  <button class="nav-btn" data-page="referrals"><span>♧</span>Invite</button>
-  <button class="nav-btn" data-page="profile"><span>◎</span>Profile</button>
-</nav>
-
-<!-- USDT intro popup -->
-<div class="overlay" id="assetOverlay">
-  <div class="sheet">
-    <div class="sheet-close-row"><button class="close-btn" data-close="assetOverlay">✕</button></div>
-    <div class="sheet-head">
-      <div class="binance-logo" style="width:52px;height:52px;font-size:29px">◆</div>
-      <div><div class="sheet-heading">Withdraw Asset</div><div class="sheet-subtitle">withdraw crypto from binance to other exchange/wallets</div></div>
-    </div>
-    <div class="asset-banner">
-      <h3>USDT Withdrawal</h3>
-      <p>Submit your destination address and choose the correct network. Always verify the address and network before submitting a request.</p>
-    </div>
-    <button class="binance-btn" id="continueUsdt">
-      <div class="binance-logo">◆</div>
-      <div class="binance-copy"><strong>Withdraw USDT</strong><small>Continue to address and network</small></div>
-      <span class="arrow">›</span>
-    </button>
-    <div class="notice">⚠️ This form submits a withdrawal request for review. It does not automatically transfer funds from Binance or another external wallet.</div>
-  </div>
-</div>
-
-<!-- Withdrawal form popup -->
-<div class="overlay" id="withdrawOverlay">
-  <div class="sheet">
-    <div class="sheet-head">
-      <button class="sheet-back" id="withdrawBack" aria-label="Go back">‹</button>
-      <div style="flex:1;text-align:center;padding-right:39px"><div class="sheet-heading" id="withdrawTitle">Enter address</div><div class="sheet-subtitle" id="withdrawSubtitle">Enter your destination details</div></div>
-    </div>
-    <div id="networkArea">
-      <button class="secondary-btn" id="selectNetwork" style="margin-top:6px">🌐 Select Network <span style="float:right">⌄</span></button>
-    </div>
-    <div id="networkSelectedInfo" class="form-hint">Choose the network that matches your destination wallet.</div>
-    <label class="field-label" id="addressLabel" for="withdrawAddress">Wallet Address</label>
-    <input class="field" id="withdrawAddress" autocomplete="off" placeholder="Enter destination address">
-    <div class="form-hint" id="addressHelp">Double-check your address before submitting.</div>
-    <label class="field-label" for="withdrawAmount">Amount</label>
-    <input class="field" id="withdrawAmount" inputmode="decimal" type="number" min="0" step="any" placeholder="Enter withdrawal amount">
-    <div class="form-hint" id="amountHelp">Minimum: — • Fee: —</div>
-    <div class="summary-box">
-      <div class="summary-row"><span>Payment method</span><strong id="summaryMethod">USDT</strong></div>
-      <div class="summary-row"><span>Network</span><strong id="summaryNetwork">Not selected</strong></div>
-      <div class="summary-row"><span>Requested amount</span><strong id="summaryAmount">0</strong></div>
-      <div class="summary-row"><span>Estimated fee</span><strong id="summaryFee">—</strong></div>
-    </div>
-    <button class="primary-btn" id="sendWithdrawal">SEND WITHDRAWAL REQUEST</button>
-    <div class="notice">A request is not a completed payment. Your request may need administrator review. Never submit seed phrases or private keys.</div>
-  </div>
-</div>
-
-<!-- Network selection popup -->
-<div class="overlay" id="networkOverlay">
-  <div class="sheet">
-    <div class="sheet-head">
-      <button class="sheet-back" id="networkBack">‹</button>
-      <div style="flex:1;text-align:center;padding-right:39px"><div class="sheet-heading">Select Network</div><div class="sheet-subtitle">Choose the network used by your destination wallet</div></div>
-    </div>
-    <div class="network-list" id="networkList">
-      <button class="network-card" data-network="TRX"><div class="network-icon">TRX</div><div class="network-info"><div class="network-name">TRX (TRC20)</div><div class="network-desc">Tron network wallet</div><div class="network-fee">Fee: 10% • Minimum: 10 USDT</div></div><span>›</span></button>
-      <button class="network-card" data-network="TON"><div class="network-icon">TON</div><div class="network-info"><div class="network-name">TON</div><div class="network-desc">TON network wallet</div><div class="network-fee">Fee: 10% • Minimum: 3 USDT</div></div><span>›</span></button>
-    </div>
-    <div class="notice">Network options and fees shown here depend on the app configuration. Confirm the destination wallet supports the selected network.</div>
-  </div>
+<div class="loading-screen" id="loadingScreen">
+  <div class="loader-wrap"><div class="loader-ring"></div><div class="loader-logo">C</div></div>
+  <div class="loading-title" id="loadingTitle">COINNOVA</div>
+  <div class="loading-sub" id="loadingSub">VERIFYING TELEGRAM ACCOUNT...</div>
 </div>
 
 <div class="toast" id="toast"></div>
 
+<main class="app">
+<header class="top">
+  <div class="brand">
+    <div class="brand-mark">C</div>
+    <div><h1 id="appName">COINNOVA</h1><small id="tagline">TAP • MINE • EARN</small></div>
+  </div>
+  <div class="profile">
+    <img class="avatar" id="profilePhoto" alt="Profile" style="display:none">
+    <div class="avatar" id="profileFallback">?</div>
+    <div class="profile-meta"><b id="profileName">Telegram User</b><small>TELEGRAM ACCOUNT</small></div>
+  </div>
+</header>
+
+<div class="balance-card">
+  <div class="label">Your mining balance</div>
+  <div class="balance"><b id="balance">0</b> <span>CNV</span></div>
+  <div class="stats">
+    <div class="stat"><strong id="totalTaps">0</strong><small>Total taps</small></div>
+    <div class="stat"><strong id="refCount">0</strong><small>Qualified referrals</small></div>
+    <div class="stat"><strong id="tapRate">+1</strong><small>Coins / tap</small></div>
+  </div>
+</div>
+
+<section id="home" class="section active">
+  <div class="coin-stage" id="coinStage">
+    <div class="orbit"></div><div class="orbit two"></div>
+    <button class="coin" id="coin" aria-label="Tap to mine"><span class="coin-core">C</span></button>
+    <div class="tap-hint">TAP THE COIN TO MINE</div>
+  </div>
+  <div class="energy-wrap">
+    <div class="energy-row"><span>⚡ ENERGY</span><b><span id="energy">1000</span> / <span id="maxEnergy">1000</span></b></div>
+    <div class="bar"><i id="energyBar"></i></div>
+  </div>
+  <div class="quick">
+    <button data-go="tasks"><span class="ico">🎯</span>Tasks</button>
+    <button data-go="spin"><span class="ico">🎡</span>Lucky Spin</button>
+    <button data-go="friends"><span class="ico">🤝</span>Invite friends</button>
+  </div>
+  <div class="notice">CNV coins are in-app reward points. Withdrawals require operator review and actual payment processing.</div>
+</section>
+
+<section id="tasks" class="section">
+  <div class="section-head"><h2>🎯 Earn more</h2><span class="muted">Complete tasks</span></div>
+  <div id="taskList"></div>
+</section>
+
+<section id="spin" class="section">
+  <div class="section-head"><h2>🎡 Lucky Spin</h2><span class="muted">Invite • Spin • Earn</span></div>
+  <div class="spin-panel">
+    <div class="spin-meta">
+      <div class="stat"><strong id="spinAvailable">0</strong><small>Available spins</small></div>
+      <div class="stat"><strong id="spinReferralRule">1 referral</strong><small>Referrals per spin</small></div>
+    </div>
+    <div class="spin-wheel-wrap">
+      <div class="spin-pointer">▼</div>
+      <div class="spin-wheel" id="spinWheel"><div class="spin-wheel-core">CNV</div></div>
+    </div>
+    <button class="primary spin-btn" id="spinBtn">🎡 SPIN NOW</button>
+    <div class="rule-note" id="spinRules">Invite qualified friends to unlock spins.</div>
+  </div>
+  <div class="section-head"><h2>🎁 Daily reward</h2><span class="muted">Once per day</span></div>
+  <div class="ref-card"><div class="logo">🎁</div><div class="task-info"><b>Daily login bonus</b><small>Claim your daily coins</small></div><strong class="reward" id="dailyAmount">+50</strong></div>
+  <button class="primary" id="dailyBtn">CLAIM DAILY BONUS</button>
+  <div class="section-head"><h2>Recent spins</h2></div>
+  <div id="spinHistory"></div>
+</section>
+
+<section id="commission" class="section">
+  <div class="section-head"><h2>💎 Team Commission</h2><span class="muted">6 levels</span></div>
+  <div class="balance-card">
+    <div class="label">Today's commission</div>
+    <div class="balance"><b id="commissionTotal">0</b> <span>CNV</span></div>
+    <div class="muted">Daily processing after 1:00 AM Bangladesh time.</div>
+  </div>
+  <div class="spin-panel"><h3 style="margin:0 0 6px">Your team performance</h3><div id="commissionLevels"></div></div>
+  <div class="section-head"><h2>Commission history</h2></div>
+  <div id="commissionHistory"></div>
+  <div class="rule-note">Commission rates are controlled by the administrator. Commission is calculated from eligible recorded team earnings and credited by the server.</div>
+</section>
+
+<section id="friends" class="section">
+  <div class="section-head"><h2>🤝 Invite friends</h2><span class="muted">Grow together</span></div>
+  <div class="ref-card">
+    <div class="logo">👥</div>
+    <div class="task-info"><b>Referral reward</b><small id="refRule">A friend must complete at least 10 taps to qualify.</small></div>
+    <strong class="reward" id="refBonus">+100</strong>
+  </div>
+  <label>Your invite link</label>
+  <input class="field" id="refLink" readonly value="Loading invite link...">
+  <button class="primary" id="copyRef">COPY INVITE LINK</button>
+  <button class="primary" id="openCommission" style="margin-top:10px;background:linear-gradient(100deg,#b8a6ff,#7254ff);color:#fff">💎 VIEW 6-LEVEL COMMISSION</button>
+  <p class="muted">Only new Telegram accounts opened through your referral and completing the required activity count as qualified referrals.</p>
+</section>
+
+<section id="wallet" class="section">
+  <div class="section-head"><h2>💳 Withdraw</h2><span class="muted">Admin reviewed</span></div>
+  <div class="notice">Payments are not automatic. The administrator must verify your request and send payment. Never share your wallet seed phrase or password.</div>
+  <form id="withdrawForm">
+    <label>Payment method</label>
+    <div id="methodList"></div>
+    <select class="field" id="method" hidden></select>
+    <label>Mobile number or wallet address</label>
+    <input class="field" id="address" minlength="5" maxlength="180" placeholder="Enter destination" required>
+    <label>Amount (CNV)</label>
+    <input class="field" id="amount" type="number" min="1" step="1" placeholder="Minimum withdrawal" required>
+    <button class="primary" type="submit">SUBMIT WITHDRAWAL REQUEST</button>
+  </form>
+  <div class="section-head"><h2>Withdrawal history</h2></div>
+  <div id="withdrawHistory"></div>
+</section>
+
+<p class="footer-note">CoinNova • Secure rewards experience</p>
+</main>
+
+<nav class="nav">
+  <button class="active" data-tab="home"><span>⌂</span>Home</button>
+  <button data-tab="tasks"><span>◎</span>Tasks</button>
+  <button data-tab="spin"><span>✦</span>Spin</button>
+  <button data-tab="friends"><span>♧</span>Friends</button>
+  <button data-tab="wallet"><span>◈</span>Wallet</button>
+</nav>
+
+<div class="modal-bg" id="modalBg">
+  <div class="modal">
+    <button class="close" id="closeModal">✕</button>
+    <h3 id="modalTitle">Notice</h3>
+    <div id="modalBody"></div>
+  </div>
+</div>
+
 <script>
-(function(){
-'use strict';
+"use strict";
+
+const tg = window.Telegram?.WebApp;
+tg?.ready();
+tg?.expand();
 
 const $ = id => document.getElementById(id);
-const state = {
+
+let state = {
   user:null,
-  settings:{},
+  settings:null,
   tasks:[],
+  referrals:0,
   withdrawals:[],
-  methods:{},
-  currentMethod:'USDT',
-  selectedNetwork:'',
-  currentPage:'home',
-  mining:false,
-  miningStartedAt:0,
-  miningTimer:null,
-  busy:false,
-  botUsername:'',
-  referralLink:'',
-  networks:[
-    {id:'TRX',name:'TRX (TRC20)',description:'Tron network wallet',feeLabel:'10% fee',minimum:10},
-    {id:'TON',name:'TON',description:'TON network wallet',feeLabel:'10% fee',minimum:3}
-  ]
+  referralUrl:"",
+  commissionLevels:[],
+  commissionToday:0,
+  spinHistory:[],
+  commissionHistory:[],
+  busy:false
 };
 
-const tg = window.Telegram && window.Telegram.WebApp ? window.Telegram.WebApp : null;
-if(tg){try{tg.ready();tg.expand();}catch(e){}}
+let tapPending = 0;
+let tapTimer = null;
+let tapSending = false;
+let selectedMethod = "";
+let spinRunning = false;
 
-function number(value){
-  const n=Number(value);
-  return Number.isFinite(n)?n:0;
+function fmt(n){
+  return Number(n || 0).toLocaleString("en-US");
 }
-function fmt(value, decimals=2){
-  return number(value).toLocaleString('en-US',{minimumFractionDigits:0,maximumFractionDigits:decimals});
-}
+
 function esc(value){
-  return String(value==null?'':value).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  return String(value ?? "").replace(/[&<>"']/g, c => ({
+    "&":"&amp;",
+    "<":"&lt;",
+    ">":"&gt;",
+    '"':"&quot;",
+    "'":"&#39;"
+  })[c]);
 }
+
 function toast(message){
-  const el=$('toast');
-  el.textContent=String(message||'Something went wrong');
-  el.classList.add('show');
-  clearTimeout(toast.timer);
-  toast.timer=setTimeout(()=>el.classList.remove('show'),2800);
+  const el = $("toast");
+  el.textContent = String(message || "");
+  el.classList.add("show");
+  clearTimeout(el._timer);
+  el._timer = setTimeout(() => el.classList.remove("show"), 2700);
 }
-function showOverlay(id){$(id).classList.add('show');}
-function hideOverlay(id){$(id).classList.remove('show');}
-function hideAllOverlays(){
-  ['assetOverlay','withdrawOverlay','networkOverlay'].forEach(hideOverlay);
-}
-async function api(path,options={}){
-  const config={method:options.method||'GET',credentials:'same-origin',headers:{'Content-Type':'application/json'},...options};
-  if(options.body && typeof options.body!=='string')config.body=JSON.stringify(options.body);
-  const response=await fetch(path,config);
-  let data={};
-  try{data=await response.json();}catch(e){}
-  if(!response.ok)throw new Error(data.error||data.message||('Request failed ('+response.status+')'));
+
+async function api(url, options = {}){
+  const response = await fetch(url, {
+    credentials:"same-origin",
+    headers:{
+      "Content-Type":"application/json",
+      ...(options.headers || {})
+    },
+    ...options
+  });
+
+  let data = {};
+  try { data = await response.json(); } catch {}
+
+  if (!response.ok){
+    throw new Error(data.error || `Request failed (${response.status})`);
+  }
+
   return data;
 }
-function getUserFromResponse(data){
-  if(!data)return null;
-  return data.user||data.me||data.account||null;
-}
-function displayName(user){
-  if(!user)return 'Guest Miner';
-  return user.first_name || user.firstName || user.name || user.username || 'CoinNova Miner';
-}
-function getBalance(user){
-  return number(user && (user.balance ?? user.coins ?? user.amount));
-}
-function setUser(user){
-  state.user=user||null;
-  const name=displayName(user);
-  const id=user ? (user.telegram_id ?? user.telegramId ?? user.id ?? '—') : '—';
-  const balance=getBalance(user);
-  const initial=(name.trim()[0]||'C').toUpperCase();
-  $('userName').textContent=name;
-  $('profileName').textContent=name;
-  $('userId').textContent='ID: '+id;
-  $('profileId').textContent='Telegram ID: '+id;
-  $('avatar').textContent=initial;
-  $('profileAvatar').textContent=initial;
-  $('balance').textContent=fmt(balance);
-  $('walletBalance').textContent=fmt(balance);
-  $('profileBalance').textContent=fmt(balance);
-  $('profileEarned').textContent=fmt(user ? (user.total_earned ?? user.totalEarned ?? user.earned ?? balance):0);
-  $('totalEarned').innerHTML=esc(fmt(user ? (user.total_earned ?? user.totalEarned ?? user.earned ?? balance):0))+' <small>COINS</small>';
-  $('referralCount').textContent=fmt(user ? (user.referral_count ?? user.referralCount ?? user.referrals_count ?? 0):0,0);
-  $('profileReferrals').textContent=$('referralCount').textContent;
-  $('referralTotal').textContent=$('referralCount').textContent;
-  $('loginButton').textContent=user?'Connected ✓':'Connect Telegram Account';
-}
-function normalizeSettings(data){
-  return data && (data.settings||data.data||data) || {};
-}
-function normalizeMethodConfig(){
-  const configured=state.settings.wallets || state.settings.withdrawalMethods || state.settings.paymentMethods || {};
-  const defaults={
-    USDT:{enabled:true,name:'Binance • USDT',logoUrl:'',minimum:10,feePercent:10,feeLabel:'10% fee',networks:[
-      {id:'TRX',name:'TRX (TRC20)',description:'Tron network wallet',minimum:10,feePercent:10,feeLabel:'10% fee'},
-      {id:'TON',name:'TON',description:'TON network wallet',minimum:3,feePercent:10,feeLabel:'10% fee'}
-    ]},
-    bKash:{enabled:true,name:'bKash',minimum:100,feePercent:0,feeLabel:'No fee',logoUrl:''},
-    Nagad:{enabled:true,name:'Nagad',minimum:100,feePercent:0,feeLabel:'No fee',logoUrl:''},
-    Rocket:{enabled:true,name:'Rocket',minimum:100,feePercent:0,feeLabel:'No fee',logoUrl:''}
-  };
-  state.methods={};
-  Object.keys(defaults).forEach(key=>{
-    const found=configured[key] || configured[key.toLowerCase()] || {};
-    state.methods[key]={...defaults[key],...found};
-    if(Array.isArray(found.networks))state.methods[key].networks=found.networks;
-    if(state.methods[key].enabled===undefined)state.methods[key].enabled=true;
-  });
-  if(configured && typeof configured==='object'){
-    Object.keys(configured).forEach(key=>{
-      if(!state.methods[key]){
-        state.methods[key]={enabled:configured[key].enabled!==false,...configured[key]};
-      }
-    });
-  }
-}
-function applySettings(){
-  const s=state.settings;
-  if(s.appName)$('appName').textContent=s.appName;
-  if(s.welcomeText)$('welcomeText').textContent=s.welcomeText;
-  if(s.miningEnabled===false || String(s.miningEnabled)==='false'){
-    $('mineButton').disabled=true;
-    $('mineButtonText').textContent='MINING PAUSED';
-    $('mineTag').textContent='MINING DISABLED';
-    $('miningStatus').textContent='Mining is currently paused';
-  }else{
-    $('mineButton').disabled=false;
-  }
-  if(s.maintenanceMode===true || String(s.maintenanceMode)==='true'){
-    $('systemStatus').textContent='MAINTENANCE';
-    $('systemStatus').previousElementSibling.style.background='var(--gold)';
-  }
-  $('miningRewardLabel').textContent='+'+fmt(s.miningReward||0)+' / session';
-  $('dailyReward').innerHTML=esc(fmt(s.dailyReward||0))+' <small>COINS</small>';
-  if(s.registrationEnabled===false || String(s.registrationEnabled)==='false'){
-    $('loginButton').disabled=true;
-  }
-  normalizeMethodConfig();
-  renderWalletMethods();
-}
-function renderWalletMethods(){
-  const usdt=state.methods.USDT;
-  const usdtEnabled=usdt && usdt.enabled!==false;
-  $('binanceEntry').classList.toggle('hidden',!usdtEnabled);
-  $('usdtWalletName').textContent=(usdt && usdt.name)||'Binance • USDT';
 
-  const container=$('ewalletGrid');
-  const list=['bKash','Nagad','Rocket'];
-  container.innerHTML='';
-  const icons={bKash:'💗',Nagad:'🟠',Rocket:'🟣'};
-  list.forEach(method=>{
-    const config=state.methods[method]||{};
-    if(config.enabled===false)return;
-    const btn=document.createElement('button');
-    btn.className='method-card';
-    btn.dataset.method=method;
-    let logo=icons[method]||'💳';
-    if(config.logoUrl){
-      logo='<img src="'+esc(config.logoUrl)+'" alt="" style="width:32px;height:32px;object-fit:contain" onerror="this.style.display=\'none\'">';
-    }
-    btn.innerHTML='<div class="method-logo">'+(String(logo).startsWith('<img')?logo:esc(logo))+'</div>'+
-      '<div class="method-name">'+esc(config.name||method)+'</div>'+
-      '<div class="method-note">Min '+esc(fmt(config.minimum||0))+' coins</div>';
-    btn.addEventListener('click',()=>openWithdrawal(method));
-    container.appendChild(btn);
+function showTab(name){
+  if(name === "commission"){
+    loadCommissions().catch(() => {});
+  }
+
+  document.querySelectorAll(".section").forEach(section => {
+    section.classList.toggle("active", section.id === name);
   });
-  if(!container.children.length){
-    container.innerHTML='<div class="empty" style="grid-column:1/-1">No e-wallet methods are currently enabled.</div>';
-  }
-}
-async function loadSettings(){
-  try{
-    const data=await api('/api/settings');
-    state.settings=normalizeSettings(data);
-    applySettings();
-  }catch(e){
-    console.warn('Settings unavailable:',e.message);
-    normalizeMethodConfig();
-  }
-}
-async function loadMe(){
-  try{
-    const data=await api('/api/me');
-    const user=getUserFromResponse(data);
-    if(user){
-      setUser(user);
-      if(data.stats){
-        $('totalEarned').innerHTML=esc(fmt(data.stats.totalEarned ?? data.stats.total_earned ?? getBalance(user)))+' <small>COINS</small>';
-        $('referralCount').textContent=fmt(data.stats.referrals ?? data.stats.referralCount ?? 0,0);
-        $('referralTotal').textContent=$('referralCount').textContent;
-      }
-      return true;
-    }
-    setUser(null);
-    return false;
-  }catch(e){
-    setUser(null);
-    return false;
-  }
-}
-async function loginTelegram(){
-  if(!tg || !tg.initData){
-    toast('Open this app through its Telegram bot to connect your account.');
-    return;
-  }
-  try{
-    $('loginButton').disabled=true;
-    const data=await api('/api/auth/telegram',{method:'POST',body:{initData:tg.initData}});
-    setUser(getUserFromResponse(data)||data);
-    await refreshAll();
-    toast('Telegram account connected');
-  }catch(e){
-    toast(e.message||'Telegram login failed');
-  }finally{
-    $('loginButton').disabled=false;
-  }
-}
-async function logout(){
-  try{await api('/api/logout',{method:'POST',body:{}});}catch(e){}
-  setUser(null);
-  toast('Logged out');
-}
-async function refreshAll(){
-  await loadMe();
-  await Promise.allSettled([loadTasks(),loadReferrals(),loadWithdrawals()]);
-}
-async function startMining(){
-  if(state.busy)return;
-  if(!state.user){toast('Connect your Telegram account first.');return;}
-  if(state.settings.miningEnabled===false || String(state.settings.miningEnabled)==='false'){
-    toast('Mining is currently disabled.');
-    return;
-  }
-  state.busy=true;
-  $('mineButton').disabled=true;
-  try{
-    const data=await api('/api/mine',{method:'POST',body:{}});
-    if(data.user)setUser(data.user);
-    else if(data.balance!==undefined && state.user){
-      state.user.balance=data.balance;
-      setUser(state.user);
-    }else await loadMe();
-    toast(data.message||'Mining request completed');
-    if(data.success===false)toast(data.message||'Mining could not start');
-    state.mining=true;
-    state.miningStartedAt=Date.now();
-    $('mineButton').classList.add('mining');
-    $('mineTag').textContent='MINING ACTIVE';
-    $('mineButtonText').textContent='MINING...';
-    $('miningStatus').textContent='Mining session started';
-    $('miningSub').textContent='Your server accepted the mining request. Check back for updates.';
-    $('mineProgress').style.width='100%';
-    $('mineProgressText').textContent='Session started';
-    $('mineTimer').textContent='Active';
-    setTimeout(async()=>{
-      state.mining=false;
-      $('mineButton').classList.remove('mining');
-      $('mineButtonText').textContent='START MINING';
-      $('mineTag').textContent='READY TO MINE';
-      $('miningStatus').textContent='Mining session complete';
-      $('miningSub').textContent='Check your updated balance.';
-      $('mineProgress').style.width='0%';
-      $('mineProgressText').textContent='0% completed';
-      $('mineTimer').textContent='Ready';
-      await loadMe();
-      $('mineButton').disabled=state.settings.miningEnabled===false;
-    },5000);
-  }catch(e){
-    toast(e.message||'Mining request failed');
-  }finally{
-    state.busy=false;
-    if(!state.mining)$('mineButton').disabled=false;
-  }
-}
-async function claimDaily(){
-  if(!state.user){toast('Connect your Telegram account first.');return;}
-  try{
-    $('dailyButton').disabled=true;
-    const data=await api('/api/daily',{method:'POST',body:{}});
-    if(data.user)setUser(data.user);else await loadMe();
-    toast(data.message||'Daily reward request completed');
-  }catch(e){toast(e.message||'Daily reward unavailable');}
-  finally{$('dailyButton').disabled=false;}
-}
-function normalizeTasks(data){
-  if(Array.isArray(data))return data;
-  return data.tasks||data.items||data.data||[];
-}
-async function loadTasks(){
-  try{
-    const data=await api('/api/tasks');
-    state.tasks=normalizeTasks(data);
-    renderTasks();
-  }catch(e){
-    $('taskList').innerHTML='<div class="empty">Unable to load tasks right now.</div>';
-  }
-}
-function renderTasks(){
-  const box=$('taskList');
-  if(!state.tasks.length){
-    box.innerHTML='<div class="empty">No tasks are available right now. Check again later.</div>';
-    return;
-  }
-  box.innerHTML='';
-  state.tasks.forEach(task=>{
-    const id=task.id;
-    const claimed=task.claimed===true||task.completed===true||task.status==='completed'||task.status==='claimed';
-    const item=document.createElement('div');
-    item.className='task-item';
-    item.innerHTML='<div class="task-icon">🎯</div><div class="task-info"><div class="task-name">'+esc(task.title||task.name||'Reward Task')+'</div>'+
-      '<div class="task-desc">'+esc(task.description||task.details||'Complete this task to earn coins.')+'</div>'+
-      '<div class="task-desc" style="color:var(--gold)">+'+esc(fmt(task.reward||task.amount||0))+' coins</div></div>'+
-      '<button class="small-btn '+(claimed?'done':'')+'" '+(claimed?'disabled':'')+'>'+ (claimed?'CLAIMED':'CLAIM')+'</button>';
-    const button=item.querySelector('button');
-    button.addEventListener('click',()=>claimTask(id,button));
-    box.appendChild(item);
+
+  document.querySelectorAll(".nav button").forEach(button => {
+    button.classList.toggle("active", button.dataset.tab === name);
   });
-}
-async function claimTask(id,button){
-  if(!state.user){toast('Connect your Telegram account first.');return;}
-  try{
-    button.disabled=true;
-    const data=await api('/api/tasks/'+encodeURIComponent(id)+'/claim',{method:'POST',body:{}});
-    toast(data.message||'Task claim request completed');
-    await loadMe();
-    await loadTasks();
-  }catch(e){
-    toast(e.message||'Unable to claim task');
-    button.disabled=false;
-  }
-}
-async function loadReferrals(){
-  try{
-    const data=await api('/api/referrals');
-    const info=data.referrals||data;
-    const count=info.count??info.total??info.referralCount;
-    if(count!==undefined){
-      $('referralCount').textContent=fmt(count,0);
-      $('referralTotal').textContent=fmt(count,0);
-      $('profileReferrals').textContent=fmt(count,0);
-    }
-    const link=info.link||info.referralLink||data.link||'';
-    state.referralLink=link;
-    $('referralLink').value=link;
-    $('referralInfo').textContent=info.message||'Share your personal link with friends. Rewards are calculated by the server.';
-  }catch(e){
-    const user=state.user;
-    const id=user&&(user.telegram_id||user.telegramId||user.id);
-    if(tg && tg.initDataUnsafe && tg.initDataUnsafe.user && state.botUsername){
-      const start=id?'ref_'+id:'';
-      state.referralLink='https://t.me/'+state.botUsername+'?start='+encodeURIComponent(start);
-      $('referralLink').value=state.referralLink;
-    }
-  }
-}
-async function loadWithdrawals(){
-  if(!state.user){
-    $('withdrawalHistory').innerHTML='<div class="empty">Connect your account to view your requests.</div>';
-    return;
-  }
-  try{
-    const data=await api('/api/withdrawals');
-    state.withdrawals=Array.isArray(data)?data:(data.withdrawals||data.items||data.data||[]);
-    renderWithdrawals();
-  }catch(e){
-    $('withdrawalHistory').innerHTML='<div class="empty">Could not load withdrawal history.</div>';
-  }
-}
-function renderWithdrawals(){
-  const box=$('withdrawalHistory');
-  if(!state.withdrawals.length){
-    box.innerHTML='<div class="empty">You have no withdrawal requests yet.</div>';
-    return;
-  }
-  box.innerHTML='';
-  state.withdrawals.forEach(item=>{
-    const status=String(item.status||'pending').toLowerCase();
-    const color=status==='approved'||status==='completed'?'var(--green)':status==='rejected'?'var(--red)':'var(--gold)';
-    const node=document.createElement('div');
-    node.className='withdraw-item';
-    node.innerHTML='<div class="withdraw-icon">💳</div><div class="withdraw-info"><div class="withdraw-name">'+esc(item.method||item.wallet||item.asset||'Withdrawal')+' · '+esc(fmt(item.amount,6))+'</div>'+
-      '<div class="withdraw-desc">'+esc(item.network||'')+(item.address?' · '+esc(maskAddress(item.address)):'')+'</div>'+
-      '<div class="withdraw-desc">Request #'+esc(item.id??'—')+' · <strong style="color:'+color+'">'+esc(status.toUpperCase())+'</strong></div></div>';
-    box.appendChild(node);
-  });
-}
-function maskAddress(address){
-  const s=String(address);
-  if(s.length<13)return s;
-  return s.slice(0,6)+'…'+s.slice(-5);
+
+  window.scrollTo({top:0,behavior:"smooth"});
 }
 
-function methodConfig(method){
-  return state.methods[method]||{enabled:true,name:method,minimum:0,feePercent:0,feeLabel:'Check with admin'};
-}
-function openAssetIntro(){
-  if(!state.methods.USDT || state.methods.USDT.enabled===false){toast('USDT withdrawals are currently disabled.');return;}
-  showOverlay('assetOverlay');
-}
-function openWithdrawal(method){
-  const config=methodConfig(method);
-  if(config.enabled===false){toast('This withdrawal method is disabled.');return;}
-  state.currentMethod=method;
-  state.selectedNetwork='';
-  $('withdrawAddress').value='';
-  $('withdrawAmount').value='';
-  $('summaryMethod').textContent=config.name||method;
-  $('summaryNetwork').textContent='Not selected';
-  $('summaryAmount').textContent='0';
-  $('summaryFee').textContent='—';
-  $('withdrawTitle').textContent=method==='USDT'?'Enter address':'Enter account details';
-  $('withdrawSubtitle').textContent=method==='USDT'?'Choose the network and destination wallet':'Enter the mobile wallet/account number';
-  $('addressLabel').textContent=method==='USDT'?'Wallet Address':'Account Number';
-  $('withdrawAddress').placeholder=method==='USDT'?'Enter destination wallet address':'Enter '+(config.name||method)+' account number';
-  $('addressHelp').textContent=method==='USDT'?'Use an address that supports the selected network.':'Enter the mobile wallet number that should receive the payment.';
-  $('networkArea').classList.toggle('hidden',method!=='USDT');
-  $('networkSelectedInfo').classList.toggle('hidden',method!=='USDT');
-  $('networkSelectedInfo').textContent=method==='USDT'?'Choose the network that matches your destination wallet.':'';
-  const min=number(config.minimum||0);
-  $('amountHelp').textContent='Minimum: '+fmt(min,6)+' '+(method==='USDT'?'USDT':'coins')+' • Fee: '+(config.feeLabel||((number(config.feePercent)>0)?config.feePercent+'%':'No fee'));
-  hideOverlay('assetOverlay');
-  hideOverlay('networkOverlay');
-  showOverlay('withdrawOverlay');
-  updateWithdrawalSummary();
-}
-function getSelectedNetwork(){
-  const config=methodConfig(state.currentMethod);
-  const networks=Array.isArray(config.networks)?config.networks:state.networks;
-  return networks.find(n=>(n.id||n.code||n.name)===state.selectedNetwork)||null;
-}
-function updateWithdrawalSummary(){
-  const method=state.currentMethod;
-  const config=methodConfig(method);
-  const amount=number($('withdrawAmount').value);
-  const network=getSelectedNetwork();
-  const feePercent=number(network ? (network.feePercent ?? config.feePercent) : config.feePercent);
-  const fee=amount*Math.max(0,feePercent)/100;
-  $('summaryMethod').textContent=config.name||method;
-  $('summaryNetwork').textContent=method==='USDT'?(network?(network.name||network.id):'Not selected'):'Not required';
-  $('summaryAmount').textContent=fmt(amount,6)+' '+(method==='USDT'?'USDT':'coins');
-  $('summaryFee').textContent=fmt(fee,6)+' '+(method==='USDT'?'USDT':'coins')+' ('+fmt(feePercent,2)+'%)';
-}
-function renderNetworkOptions(){
-  const config=methodConfig('USDT');
-  const networks=Array.isArray(config.networks)&&config.networks.length?config.networks:state.networks;
-  const box=$('networkList');
-  box.innerHTML='';
-  networks.forEach(n=>{
-    const id=n.id||n.code||n.name;
-    const name=n.name||id;
-    const minimum=number(n.minimum ?? n.minWithdrawal ?? 0);
-    const feeLabel=n.feeLabel||((number(n.feePercent)>0)?fmt(n.feePercent,2)+'% fee':'No fee');
-    const card=document.createElement('button');
-    card.className='network-card'+(state.selectedNetwork===id?' selected':'');
-    card.innerHTML='<div class="network-icon">'+esc(id==='TRX'?'TRX':id==='TON'?'TON':String(id).slice(0,4))+'</div>'+
-      '<div class="network-info"><div class="network-name">'+esc(name)+'</div>'+
-      '<div class="network-desc">'+esc(n.description||n.label||'Crypto network')+'</div>'+
-      '<div class="network-fee">'+esc(feeLabel)+' • Minimum '+esc(fmt(minimum,6))+' USDT</div></div>'+
-      '<span>'+(state.selectedNetwork===id?'<span class="checkmark">✓</span>':'›')+'</span>';
-    card.addEventListener('click',()=>{
-      state.selectedNetwork=id;
-      $('networkSelectedInfo').textContent='Selected: '+name+' • Minimum: '+fmt(minimum,6)+' USDT • Fee: '+feeLabel;
-      $('selectNetwork').innerHTML='🌐 '+esc(name)+' <span style="float:right">✓</span>';
-      updateWithdrawalSummary();
-      hideOverlay('networkOverlay');
-    });
-    box.appendChild(card);
-  });
-}
-async function sendWithdrawal(){
-  if(!state.user){toast('Connect your Telegram account first.');return;}
-  if(state.busy)return;
-  const method=state.currentMethod;
-  const config=methodConfig(method);
-  const address=$('withdrawAddress').value.trim();
-  const amount=Number($('withdrawAmount').value);
-  const network=getSelectedNetwork();
-  if(!address){toast(method==='USDT'?'Enter your destination wallet address.':'Enter your account number.');return;}
-  if(!Number.isFinite(amount)||amount<=0){toast('Enter a valid amount.');return;}
-  if(method==='USDT'&&!network){toast('Please select a withdrawal network.');return;}
-  const minimum=number(network ? (network.minimum ?? network.minWithdrawal ?? config.minimum) : config.minimum);
-  if(amount<minimum){toast('Minimum withdrawal is '+fmt(minimum,6)+(method==='USDT'?' USDT':' coins')+'.');return;}
-  const feePercent=number(network ? (network.feePercent ?? config.feePercent) : config.feePercent);
-  const fee=amount*Math.max(0,feePercent)/100;
-  const balance=getBalance(state.user);
-  if(method!=='USDT' && amount>balance){toast('Insufficient balance.');return;}
-  if(method==='USDT' && amount>balance){
-    toast('Your balance may not cover this request. The server will validate the amount.');
-  }
-  const confirmed=window.confirm(
-    'Submit withdrawal request?\n\nMethod: '+(config.name||method)+
-    '\nNetwork: '+(network?(network.name||network.id):'N/A')+
-    '\nAmount: '+fmt(amount,6)+
-    '\nEstimated fee: '+fmt(fee,6)+
-    '\n\nThis creates a request; it does not send funds automatically.'
-  );
-  if(!confirmed)return;
-  const button=$('sendWithdrawal');
-  state.busy=true;
-  button.disabled=true;
-  button.textContent='SUBMITTING…';
+document.querySelectorAll("[data-tab]").forEach(button => {
+  button.addEventListener("click", () => showTab(button.dataset.tab));
+});
+
+document.querySelectorAll("[data-go]").forEach(button => {
+  button.addEventListener("click", () => showTab(button.dataset.go));
+});
+
+function playTone(kind = "tap"){
+  if(!state.settings?.sound) return;
+
   try{
-    const body={
-      method:method,
-      wallet:method,
-      address:address,
-      amount:amount,
-      network:network?(network.id||network.code||network.name):null
+    const AudioCtx = window.AudioContext || window.webkitAudioContext;
+    if(!AudioCtx) return;
+
+    const context = new AudioCtx();
+    const notes = kind === "spin"
+      ? [440,580,720,880]
+      : kind === "win"
+        ? [660,880,1100]
+        : [620];
+
+    notes.forEach((frequency,index) => {
+      const oscillator = context.createOscillator();
+      const gain = context.createGain();
+      const start = context.currentTime + index * 0.08;
+
+      oscillator.type = kind === "tap" ? "sine" : "triangle";
+      oscillator.frequency.value = frequency;
+
+      gain.gain.setValueAtTime(0.0001,start);
+      gain.gain.exponentialRampToValueAtTime(0.04,start + 0.02);
+      gain.gain.exponentialRampToValueAtTime(0.0001,start + 0.13);
+
+      oscillator.connect(gain);
+      gain.connect(context.destination);
+      oscillator.start(start);
+      oscillator.stop(start + 0.14);
+    });
+
+    setTimeout(() => context.close(),700);
+  }catch{}
+}
+
+function renderProfile(){
+  if(!state.user) return;
+
+  const user = state.user;
+  $("profileName").textContent = user.name || "Telegram User";
+
+  const photo = $("profilePhoto");
+  const fallback = $("profileFallback");
+
+  if(user.photoUrl){
+    photo.src = user.photoUrl;
+    photo.style.display = "block";
+    fallback.style.display = "none";
+
+    photo.onerror = () => {
+      photo.style.display = "none";
+      fallback.style.display = "grid";
+      fallback.textContent = (user.name || "?").trim().charAt(0).toUpperCase();
     };
-    const data=await api('/api/withdrawals',{method:'POST',body});
-    toast(data.message||'Withdrawal request submitted');
-    hideOverlay('withdrawOverlay');
-    await loadMe();
-    await loadWithdrawals();
-  }catch(e){
-    toast(e.message||'Withdrawal request failed');
-  }finally{
-    state.busy=false;
-    button.disabled=false;
-    button.textContent='SEND WITHDRAWAL REQUEST';
+  }else{
+    photo.style.display = "none";
+    fallback.style.display = "grid";
+    fallback.textContent = (user.name || "?").trim().charAt(0).toUpperCase() || "?";
   }
 }
 
-function navigate(page){
-  if(!$(('page-'+page)))return;
-  state.currentPage=page;
-  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
-  $('page-'+page).classList.add('active');
-  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.toggle('active',b.dataset.page===page));
-  if(page==='wallet'){loadWithdrawals();}
-  if(page==='tasks'){loadTasks();}
-  if(page==='referrals'){loadReferrals();}
-  window.scrollTo({top:0,behavior:'smooth'});
-}
+function renderTasks(){
+  const tasks = state.tasks || [];
+  const list = $("taskList");
 
-document.querySelectorAll('[data-page]').forEach(button=>{
-  button.addEventListener('click',()=>navigate(button.dataset.page));
-});
-$('mineButton').addEventListener('click',startMining);
-$('dailyButton').addEventListener('click',claimDaily);
-$('binanceEntry').addEventListener('click',openAssetIntro);
-$('continueUsdt').addEventListener('click',()=>openWithdrawal('USDT'));
-$('selectNetwork').addEventListener('click',()=>{
-  renderNetworkOptions();
-  showOverlay('networkOverlay');
-});
-$('networkBack').addEventListener('click',()=>hideOverlay('networkOverlay'));
-$('withdrawBack').addEventListener('click',()=>{
-  hideOverlay('withdrawOverlay');
-  if(state.currentMethod==='USDT')showOverlay('assetOverlay');
-});
-$('sendWithdrawal').addEventListener('click',sendWithdrawal);
-$('withdrawAmount').addEventListener('input',updateWithdrawalSummary);
-$('copyReferral').addEventListener('click',async()=>{
-  const value=$('referralLink').value;
-  if(!value){toast('Your referral link is not available yet.');return;}
-  try{
-    await navigator.clipboard.writeText(value);
-    toast('Referral link copied');
-  }catch(e){
-    $('referralLink').select();
-    try{document.execCommand('copy');toast('Referral link copied');}
-    catch(err){toast('Select and copy the link manually.');}
-  }
-});
-$('refreshWithdrawals').addEventListener('click',loadWithdrawals);
-$('loginButton').addEventListener('click',loginTelegram);
-$('logoutButton').addEventListener('click',logout);
-document.querySelectorAll('[data-close]').forEach(button=>{
-  button.addEventListener('click',()=>hideOverlay(button.dataset.close));
-});
-['assetOverlay','withdrawOverlay','networkOverlay'].forEach(id=>{
-  $(id).addEventListener('click',event=>{
-    if(event.target===$(id))hideOverlay(id);
+  list.innerHTML = tasks.map(task => `
+    <div class="task">
+      <div class="logo">${taskIcon(task.platform)}</div>
+      <div class="task-info">
+        <b>${esc(task.title)}</b>
+        <small>${esc(task.platform)} · <span class="reward">+${fmt(task.reward)} CNV</span></small>
+      </div>
+      <button class="mini-btn ${task.claimed ? "" : "gold"}"
+        data-task="${Number(task.id)}" ${task.claimed ? "disabled" : ""}>
+        ${task.claimed ? "CLAIMED" : "OPEN"}
+      </button>
+    </div>
+  `).join("") || `<div class="empty">No tasks available right now.</div>`;
+
+  list.querySelectorAll("[data-task]").forEach(button => {
+    button.addEventListener("click", () => openTask(Number(button.dataset.task)));
   });
-});
-document.addEventListener('keydown',event=>{
-  if(event.key==='Escape')hideAllOverlays();
+}
+
+function taskIcon(platform){
+  const icons = {
+    Telegram:"✈",
+    YouTube:"▶",
+    TikTok:"♪",
+    Facebook:"f",
+    Instagram:"◎",
+    X:"𝕏"
+  };
+
+  return `<span>${icons[platform] || "✦"}</span>`;
+}
+
+function renderMethods(){
+  const settings = state.settings || {};
+  const methods = (settings.paymentMethods || []).filter(method => method.enabled);
+  const list = $("methodList");
+  const select = $("method");
+
+  select.innerHTML = methods.map(method =>
+    `<option value="${esc(method.id)}">${esc(method.name)}</option>`
+  ).join("");
+
+  if(!methods.some(method => method.id === selectedMethod)){
+    selectedMethod = methods[0]?.id || "";
+  }
+
+  select.value = selectedMethod;
+
+  list.innerHTML = methods.map(method => {
+    const selected = method.id === selectedMethod;
+
+    return `
+      <button type="button"
+        class="wallet-option"
+        data-method-choice="${esc(method.id)}"
+        style="width:100%;text-align:left;color:var(--text);border-color:${selected ? "var(--gold)" : "var(--line)"};background:${selected ? "#222b3c" : "linear-gradient(135deg,#151f34,#101727)"}">
+        <div class="logo">
+          ${method.logo
+            ? `<img src="${esc(method.logo)}" alt="" onerror="this.style.display='none';this.parentElement.textContent='${esc((method.name || "W").charAt(0))}'">`
+            : esc((method.name || "W").charAt(0))}
+        </div>
+        <div class="wallet-info">
+          <b>${esc(method.name)}</b>
+          <small>${method.type === "crypto" ? "Crypto wallet / network" : "Mobile money"}</small>
+        </div>
+        <span class="reward">${selected ? "●" : "○"}</span>
+      </button>
+    `;
+  }).join("") || `<div class="empty">No payment methods are enabled.</div>`;
+
+  list.querySelectorAll("[data-method-choice]").forEach(button => {
+    button.addEventListener("click", () => {
+      selectedMethod = button.dataset.methodChoice;
+      select.value = selectedMethod;
+      renderMethods();
+    });
+  });
+
+  $("amount").min = Number(settings.minWithdraw || 1);
+  $("amount").placeholder = `Minimum ${fmt(settings.minWithdraw)} CNV`;
+}
+
+function renderSpinHistory(){
+  const history = state.spinHistory || [];
+
+  $("spinHistory").innerHTML = history.map(item => `
+    <div class="history">
+      <div class="logo">🎡</div>
+      <div class="task-info">
+        <b>Lucky Spin reward</b>
+        <small>${esc(new Date(item.createdAt).toLocaleString())}</small>
+      </div>
+      <strong class="reward">+${fmt(item.reward)} CNV</strong>
+    </div>
+  `).join("") || `<div class="empty">No spins yet. Invite friends to earn spins.</div>`;
+}
+
+function renderCommission(){
+  const settings = state.settings || {};
+  const levels = state.commissionLevels || [];
+
+  $("commissionTotal").textContent = fmt(state.commissionToday || 0);
+
+  $("commissionLevels").innerHTML = levels.map(level => {
+    const rate = Number((settings.commissionRates || [])[level.level - 1] || 0);
+
+    return `
+      <div class="level-row">
+        <div class="level-badge">L${Number(level.level)}</div>
+        <div>
+          <b>Level ${Number(level.level)}</b>
+          <small>${fmt(level.members)} team members</small>
+          <small>${fmt(level.todayCoins)} CNV team earnings today</small>
+        </div>
+        <div style="text-align:right">
+          <strong class="level-rate">${rate}%</strong>
+          <small>+${fmt(level.commissionToday)} today</small>
+        </div>
+      </div>
+    `;
+  }).join("") || `<div class="empty">No team information yet.</div>`;
+
+  $("commissionHistory").innerHTML = (state.commissionHistory || []).map(item => `
+    <div class="history">
+      <div class="logo">💎</div>
+      <div class="task-info">
+        <b>Level ${Number(item.level)} commission</b>
+        <small>${esc(item.day)} · ${Number(item.rate)}% of ${fmt(item.baseAmount)} CNV</small>
+      </div>
+      <strong class="reward">+${fmt(item.amount)} CNV</strong>
+    </div>
+  `).join("") || `<div class="empty">No commission payouts yet.</div>`;
+}
+
+function renderWithdrawals(){
+  $("withdrawHistory").innerHTML = (state.withdrawals || []).map(item => `
+    <div class="history">
+      <div class="logo">◈</div>
+      <div class="task-info">
+        <b>#${Number(item.id)} · ${esc(item.method)}</b>
+        <small>${esc(new Date(item.createdAt).toLocaleString())}</small>
+        <small>${esc(item.address)}</small>
+      </div>
+      <span class="reward">${fmt(item.amount)}<br><small>${esc(item.status)}</small></span>
+    </div>
+  `).join("") || `<div class="empty">No withdrawal requests yet.</div>`;
+}
+
+function render(){
+  if(!state.user || !state.settings) return;
+
+  const user = state.user;
+  const settings = state.settings;
+
+  renderProfile();
+
+  $("appName").textContent = (settings.appName || "CoinNova").toUpperCase();
+  $("tagline").textContent = settings.tagline || "TAP • MINE • EARN";
+
+  $("balance").textContent = fmt(user.balance);
+  $("totalTaps").textContent = fmt(user.totalTaps);
+  $("energy").textContent = fmt(user.energy);
+  $("maxEnergy").textContent = fmt(settings.maxEnergy);
+  $("tapRate").textContent = "+" + fmt(settings.tapReward);
+  $("refCount").textContent = fmt(state.referrals || 0);
+
+  const maxEnergy = Math.max(1,Number(settings.maxEnergy || 1000));
+  $("energyBar").style.width = Math.max(0,Math.min(100,Number(user.energy) / maxEnergy * 100)) + "%";
+
+  $("dailyAmount").textContent = "+" + fmt(settings.dailyBonus);
+  $("refBonus").textContent = "+" + fmt(settings.referralBonus);
+  $("refRule").textContent = `A referral qualifies after 10 taps. You need ${fmt(settings.referralRequired)} qualified referral(s) to withdraw.`;
+
+  $("refLink").value = state.referralUrl || "Open this app through your Telegram bot to get an invite link.";
+
+  $("spinAvailable").textContent = fmt(user.spinsAvailable);
+  $("spinReferralRule").textContent = `${Number(settings.referralsPerSpin || 1)} referral(s)`;
+  $("spinBtn").disabled = !settings.spinEnabled || Number(user.spinsAvailable || 0) < 1 || spinRunning;
+
+  $("spinRules").textContent =
+    `Every ${Number(settings.referralsPerSpin || 1)} qualified referral(s) unlocks a spin. Possible prizes: ${(settings.spinRewards || []).join(", ")} CNV. The server selects the actual prize.`;
+
+  $("commissionTotal").textContent = fmt(state.commissionToday || 0);
+
+  renderTasks();
+  renderMethods();
+  renderSpinHistory();
+  renderCommission();
+  renderWithdrawals();
+}
+
+async function refresh(){
+  const data = await api("/api/me");
+
+  state = {
+    ...state,
+    ...data,
+    user:data.user,
+    settings:data.settings,
+    tasks:data.tasks || [],
+    referrals:data.referrals || 0,
+    withdrawals:data.withdrawals || [],
+    spinHistory:data.spinHistory || [],
+    commissionLevels:data.commissionLevels || [],
+    commissionToday:data.commissionToday || 0
+  };
+
+  render();
+}
+
+async function loadCommissions(){
+  try{
+    const data = await api("/api/commissions");
+
+    state.commissionLevels = data.levels || [];
+    state.commissionToday = Number(data.total || 0);
+    state.commissionHistory = data.history || [];
+
+    renderCommission();
+  }catch(error){
+    console.error("Commission load failed:",error);
+  }
+}
+
+async function openTask(id){
+  const task = state.tasks.find(item => Number(item.id) === Number(id));
+  if(!task) return;
+
+  window.open(task.url,"_blank","noopener,noreferrer");
+
+  const confirmed = window.confirm(
+    "After visiting the task, claim the reward? This starter version does not independently verify social follows or subscriptions."
+  );
+
+  if(!confirmed) return;
+
+  try{
+    const data = await api(`/api/tasks/${id}/claim`,{
+      method:"POST",
+      body:"{}"
+    });
+
+    state.user = data.user;
+    await refresh();
+    toast(`+${fmt(data.reward)} CNV added`);
+  }catch(error){
+    toast(error.message);
+  }
+}
+
+/* Tapping: optimistic display, but server decides the real balance. */
+
+$("coin").addEventListener("pointerdown",event => {
+  event.preventDefault();
+
+  if(!state.user || !state.settings || state.busy) return;
+
+  if(Number(state.user.energy) < 1){
+    toast("Not enough energy. Wait for energy to recover.");
+    return;
+  }
+
+  const rect = $("coinStage").getBoundingClientRect();
+  const floating = document.createElement("span");
+
+  floating.className = "float-text";
+  floating.textContent = "+" + fmt(state.settings.tapReward);
+  floating.style.left = (event.clientX - rect.left - 12) + "px";
+  floating.style.top = (event.clientY - rect.top - 10) + "px";
+
+  $("coinStage").appendChild(floating);
+  setTimeout(() => floating.remove(),800);
+
+  const coin = $("coin");
+  coin.classList.remove("tap-pop");
+  void coin.offsetWidth;
+  coin.classList.add("tap-pop");
+
+  playTone("tap");
+
+  tapPending++;
+  state.user.energy = Math.max(0,Number(state.user.energy) - 1);
+  state.user.balance = Number(state.user.balance) + Number(state.settings.tapReward);
+  state.user.totalTaps = Number(state.user.totalTaps) + 1;
+
+  render();
+
+  if(tapPending >= 10){
+    sendTaps();
+  }else{
+    clearTimeout(tapTimer);
+    tapTimer = setTimeout(sendTaps,250);
+  }
 });
 
-async function init(){
-  if(tg && tg.initDataUnsafe && tg.initDataUnsafe.user){
-    const u=tg.initDataUnsafe.user;
-    $('userName').textContent=[u.first_name,u.last_name].filter(Boolean).join(' ')||u.username||'Telegram Miner';
-    $('avatar').textContent=(u.first_name||u.username||'C').charAt(0).toUpperCase();
+async function sendTaps(){
+  if(tapSending || tapPending < 1) return;
+
+  tapSending = true;
+
+  try{
+    while(tapPending > 0){
+      const count = Math.min(20,tapPending);
+      tapPending -= count;
+
+      const data = await api("/api/tap",{
+        method:"POST",
+        body:JSON.stringify({count})
+      });
+
+      state.user = data.user;
+      render();
+    }
+  }catch(error){
+    tapPending = 0;
+    toast(error.message);
+    try{ await refresh(); }catch{}
+  }finally{
+    tapSending = false;
   }
-  await loadSettings();
-  await refreshAll();
 }
-init();
-})();
+
+/* Lucky Spin */
+
+$("spinBtn").addEventListener("click",async() => {
+  if(spinRunning || $("spinBtn").disabled) return;
+
+  spinRunning = true;
+  $("spinBtn").disabled = true;
+  playTone("spin");
+
+  const wheel = $("spinWheel");
+  wheel.classList.remove("spin-win");
+
+  const turns = 1800 + Math.floor(Math.random() * 720);
+  wheel.style.transform = `rotate(${turns}deg)`;
+
+  try{
+    const result = await api("/api/spin",{
+      method:"POST",
+      body:"{}"
+    });
+
+    setTimeout(async() => {
+      playTone("win");
+      wheel.classList.add("spin-win");
+
+      try{
+        await refresh();
+        await loadCommissions();
+      }catch{}
+
+      toast(`🎉 You won ${fmt(result.reward)} CNV!`);
+      spinRunning = false;
+
+      if(state.user && state.settings){
+        $("spinBtn").disabled =
+          !state.settings.spinEnabled ||
+          Number(state.user.spinsAvailable || 0) < 1;
+      }
+    },4300);
+  }catch(error){
+    wheel.style.transform = "rotate(0deg)";
+    spinRunning = false;
+    toast(error.message);
+
+    try{ await refresh(); }catch{}
+    $("spinBtn").disabled =
+      !state.settings?.spinEnabled ||
+      Number(state.user?.spinsAvailable || 0) < 1;
+  }
+});
+
+/* Daily bonus */
+
+$("dailyBtn").addEventListener("click",async() => {
+  $("dailyBtn").disabled = true;
+
+  try{
+    const result = await api("/api/bonus/daily",{
+      method:"POST",
+      body:"{}"
+    });
+
+    state.user = result.user;
+    await refresh();
+    toast(`Daily bonus: +${fmt(result.reward)} CNV`);
+  }catch(error){
+    toast(error.message);
+  }finally{
+    $("dailyBtn").disabled = false;
+  }
+});
+
+/* Referral link */
+
+$("copyRef").addEventListener("click",async() => {
+  if(!state.referralUrl){
+    toast("Referral link is unavailable. Check your bot configuration.");
+    return;
+  }
+
+  try{
+    await navigator.clipboard.writeText(state.referralUrl);
+    toast("Invite link copied!");
+  }catch{
+    const input = $("refLink");
+    input.select();
+    input.setSelectionRange(0,99999);
+
+    try{
+      document.execCommand("copy");
+      toast("Invite link copied!");
+    }catch{
+      toast("Please copy the link manually.");
+    }
+  }
+});
+
+$("openCommission").addEventListener("click",async() => {
+  await loadCommissions();
+  showTab("commission");
+});
+
+/* Withdrawal request */
+
+$("method").addEventListener("change",() => {
+  selectedMethod = $("method").value;
+  renderMethods();
+});
+
+$("withdrawForm").addEventListener("submit",async event => {
+  event.preventDefault();
+
+  const method = selectedMethod || $("method").value;
+  const address = $("address").value.trim();
+  const amount = Number($("amount").value);
+
+  if(!method){
+    toast("Choose a payment method.");
+    return;
+  }
+
+  if(!address || address.length < 5){
+    toast("Enter a valid wallet address or number.");
+    return;
+  }
+
+  if(!Number.isSafeInteger(amount) || amount < Number(state.settings?.minWithdraw || 1)){
+    toast(`Minimum withdrawal is ${fmt(state.settings?.minWithdraw)} CNV.`);
+    return;
+  }
+
+  const submitButton = $("withdrawForm").querySelector("button[type=submit]");
+  submitButton.disabled = true;
+
+  try{
+    const result = await api("/api/withdraw",{
+      method:"POST",
+      body:JSON.stringify({method,address,amount})
+    });
+
+    $("address").value = "";
+    $("amount").value = "";
+
+    await refresh();
+    toast(result.message || "Withdrawal request submitted.");
+  }catch(error){
+    toast(error.message);
+  }finally{
+    submitButton.disabled = false;
+  }
+});
+
+/* Loading and session boot */
+
+function hideLoading(){
+  $("loadingScreen").classList.add("done");
+}
+
+function showModal(title,html){
+  $("modalTitle").textContent = title;
+  $("modalBody").innerHTML = html;
+  $("modalBg").classList.add("show");
+}
+
+$("closeModal").addEventListener("click",() => {
+  $("modalBg").classList.remove("show");
+});
+
+async function boot(){
+  try{
+    if(tg?.initData){
+      const startParam = tg.initDataUnsafe?.start_param || "";
+
+      const result = await api("/api/auth/telegram",{
+        method:"POST",
+        body:JSON.stringify({
+          initData:tg.initData,
+          startParam
+        })
+      });
+
+      state = {
+        ...state,
+        ...result,
+        user:result.user,
+        settings:result.settings,
+        tasks:result.tasks || [],
+        referralUrl:result.referralUrl || ""
+      };
+
+      await refresh();
+      await loadCommissions();
+
+      hideLoading();
+      return;
+    }
+
+    /* Allows a previously authenticated browser session to resume. */
+    const result = await api("/api/me");
+
+    state = {
+      ...state,
+      ...result,
+      user:result.user,
+      settings:result.settings,
+      tasks:result.tasks || []
+    };
+
+    await refresh();
+    await loadCommissions();
+
+    hideLoading();
+  }catch(error){
+    hideLoading();
+
+    showModal(
+      "Open in Telegram",
+      `<p class="muted">Please open CoinNova through your Telegram bot so your Telegram account can be verified.</p>
+       <p class="muted">Check that BOT_TOKEN and BOT_USERNAME are configured in your deployment environment and that the Mini App URL is correctly configured in Telegram.</p>
+       <p class="muted">Server message: ${esc(error.message)}</p>`
+    );
+  }
+}
+
+/* Energy regeneration display.
+   Server-side energy is authoritative when tapping. */
+
+setInterval(() => {
+  if(!state.user || !state.settings) return;
+
+  const maximum = Number(state.settings.maxEnergy || 1000);
+  const regen = Number(state.settings.energyPerSecond || 0);
+
+  state.user.energy = Math.min(
+    maximum,
+    Number(state.user.energy || 0) + regen
+  );
+
+  $("energy").textContent = fmt(state.user.energy);
+  $("energyBar").style.width =
+    Math.max(0,Math.min(100,state.user.energy / Math.max(1,maximum) * 100)) + "%";
+},1000);
+
+/* Refresh server-authoritative data periodically. */
+
+setInterval(() => {
+  if(state.user){
+    refresh().catch(error => console.error("Refresh failed:",error));
+  }
+},20000);
+
+document.addEventListener("visibilitychange",() => {
+  if(!document.hidden && state.user){
+    refresh().catch(() => {});
+  }
+});
+
+boot();
 </script>
 </body>
 </html>
