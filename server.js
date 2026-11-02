@@ -1,428 +1,597 @@
-'use strict';
+require("dotenv").config();
 
-require('dotenv').config();
-
-const express = require('express');
-const path = require('path');
-const fs = require('fs');
-const crypto = require('crypto');
-const cookieParser = require('cookie-parser');
-const helmet = require('helmet');
-const rateLimit = require('express-rate-limit');
-const bcrypt = require('bcryptjs');
-const Database = require('better-sqlite3');
+const express = require("express");
+const helmet = require("helmet");
+const cookieParser = require("cookie-parser");
+const rateLimit = require("express-rate-limit");
+const crypto = require("crypto");
+const fs = require("fs");
+const path = require("path");
+const Database = require("better-sqlite3");
 
 const app = express();
-
-app.disable('x-powered-by');
-app.set('trust proxy', 1);
-
-app.use(helmet({
-  contentSecurityPolicy: false,
-  crossOriginEmbedderPolicy: false
-}));
-
-app.use(express.json({ limit: '100kb' }));
-app.use(express.urlencoded({ extended: false, limit: '30kb' }));
-app.use(cookieParser());
-
 const PORT = Number(process.env.PORT || 3000);
-const BOT_TOKEN = process.env.BOT_TOKEN || '';
-const BOT_USERNAME = (process.env.BOT_USERNAME || '').replace(/^@/, '');
-const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || '';
-const SESSION_SECRET = process.env.SESSION_SECRET || '';
-const DB_PATH = process.env.DB_PATH || './coinnova.sqlite';
+const PROD = process.env.NODE_ENV === "production";
+const BOT_TOKEN = process.env.BOT_TOKEN || "";
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "";
+const SESSION_SECRET = process.env.SESSION_SECRET || "";
+const BOT_USERNAME = (process.env.BOT_USERNAME || "").replace(/^@/, "");
+const ALLOW_DEMO_LOGIN =
+  process.env.ALLOW_DEMO_LOGIN === "true" && !PROD;
 
-if (process.env.NODE_ENV === 'production') {
-  if (ADMIN_PASSWORD.length < 12) {
-    throw new Error('Set ADMIN_PASSWORD to at least 12 characters.');
-  }
+const dbPath =
+  process.env.DB_PATH ||
+  path.join(__dirname, "data", "coinnova.sqlite");
 
-  if (SESSION_SECRET.length < 32) {
-    throw new Error('SESSION_SECRET must contain at least 32 characters.');
-  }
+fs.mkdirSync(path.dirname(dbPath), { recursive: true });
+
+const db = new Database(dbPath);
+db.pragma("journal_mode = WAL");
+db.pragma("foreign_keys = ON");
+
+if (
+  PROD &&
+  (!BOT_TOKEN ||
+    !ADMIN_PASSWORD ||
+    SESSION_SECRET.length < 32)
+) {
+  console.warn(
+    "WARNING: Set BOT_TOKEN, ADMIN_PASSWORD, and SESSION_SECRET (32+ chars) in production environment variables."
+  );
 }
 
-fs.mkdirSync(path.dirname(path.resolve(DB_PATH)), { recursive: true });
+app.set("trust proxy", 1);
+app.use(helmet({ contentSecurityPolicy: false }));
+app.use(cookieParser());
+app.use(express.json({ limit: "100kb" }));
+app.use(express.urlencoded({ extended: false, limit: "20kb" }));
+app.use(
+  rateLimit({
+    windowMs: 60000,
+    limit: 180,
+    standardHeaders: true,
+    legacyHeaders: false
+  })
+);
 
-const db = new Database(DB_PATH);
+app.use(
+  express.static(path.join(__dirname, "public"), {
+    extensions: ["html"]
+  })
+);
 
-db.pragma('journal_mode = WAL');
-db.pragma('foreign_keys = ON');
-db.pragma('busy_timeout = 5000');
+/* =========================
+   DATABASE
+========================= */
 
 db.exec(`
 CREATE TABLE IF NOT EXISTS users (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
-  tg_id TEXT NOT NULL UNIQUE,
-  first_name TEXT NOT NULL DEFAULT '',
-  last_name TEXT NOT NULL DEFAULT '',
-  username TEXT NOT NULL DEFAULT '',
-  photo_url TEXT NOT NULL DEFAULT '',
-  balance INTEGER NOT NULL DEFAULT 0,
-  total_mined INTEGER NOT NULL DEFAULT 0,
-  referrals INTEGER NOT NULL DEFAULT 0,
-  referred_by TEXT,
-  last_daily TEXT,
-  created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+ id INTEGER PRIMARY KEY AUTOINCREMENT,
+ tg_id TEXT UNIQUE NOT NULL,
+ name TEXT NOT NULL,
+ username TEXT DEFAULT '',
+ photo_url TEXT DEFAULT '',
+ balance INTEGER NOT NULL DEFAULT 0,
+ energy INTEGER NOT NULL DEFAULT 1000,
+ last_energy_at INTEGER NOT NULL DEFAULT 0,
+ invited_by TEXT DEFAULT '',
+ created_at INTEGER NOT NULL,
+ is_banned INTEGER NOT NULL DEFAULT 0,
+ total_taps INTEGER NOT NULL DEFAULT 0,
+ spins_available INTEGER NOT NULL DEFAULT 0
 );
 
 CREATE TABLE IF NOT EXISTS settings (
-  key TEXT PRIMARY KEY,
-  value TEXT NOT NULL
+ key TEXT PRIMARY KEY,
+ value TEXT NOT NULL
 );
 
 CREATE TABLE IF NOT EXISTS tasks (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
-  title TEXT NOT NULL,
-  description TEXT NOT NULL DEFAULT '',
-  url TEXT NOT NULL DEFAULT '',
-  reward INTEGER NOT NULL DEFAULT 0,
-  active INTEGER NOT NULL DEFAULT 1,
-  created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+ id INTEGER PRIMARY KEY AUTOINCREMENT,
+ title TEXT NOT NULL,
+ platform TEXT NOT NULL,
+ url TEXT NOT NULL,
+ reward INTEGER NOT NULL DEFAULT 0,
+ enabled INTEGER NOT NULL DEFAULT 1,
+ created_at INTEGER NOT NULL
 );
 
-CREATE TABLE IF NOT EXISTS user_tasks (
-  user_id INTEGER NOT NULL,
-  task_id INTEGER NOT NULL,
-  claimed_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  PRIMARY KEY (user_id, task_id),
-  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
-  FOREIGN KEY (task_id) REFERENCES tasks(id) ON DELETE CASCADE
+CREATE TABLE IF NOT EXISTS task_claims (
+ user_id INTEGER NOT NULL,
+ task_id INTEGER NOT NULL,
+ claimed_at INTEGER NOT NULL,
+ PRIMARY KEY(user_id, task_id),
+ FOREIGN KEY(user_id) REFERENCES users(id),
+ FOREIGN KEY(task_id) REFERENCES tasks(id)
 );
 
 CREATE TABLE IF NOT EXISTS withdrawals (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
-  user_id INTEGER NOT NULL,
-  method TEXT NOT NULL,
-  wallet TEXT NOT NULL,
-  amount INTEGER NOT NULL,
-  status TEXT NOT NULL DEFAULT 'pending',
-  created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  updated_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+ id INTEGER PRIMARY KEY AUTOINCREMENT,
+ user_id INTEGER NOT NULL,
+ method TEXT NOT NULL,
+ address TEXT NOT NULL,
+ amount INTEGER NOT NULL,
+ status TEXT NOT NULL DEFAULT 'pending',
+ txid TEXT DEFAULT '',
+ note TEXT DEFAULT '',
+ created_at INTEGER NOT NULL,
+ updated_at INTEGER NOT NULL,
+ FOREIGN KEY(user_id) REFERENCES users(id)
 );
 
-CREATE TABLE IF NOT EXISTS sessions (
-  token_hash TEXT PRIMARY KEY,
-  user_id INTEGER NOT NULL,
-  expires_at INTEGER NOT NULL,
-  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+CREATE TABLE IF NOT EXISTS referrals (
+ id INTEGER PRIMARY KEY AUTOINCREMENT,
+ inviter_id INTEGER NOT NULL,
+ invited_user_id INTEGER NOT NULL UNIQUE,
+ qualified INTEGER NOT NULL DEFAULT 0,
+ created_at INTEGER NOT NULL,
+ FOREIGN KEY(inviter_id) REFERENCES users(id),
+ FOREIGN KEY(invited_user_id) REFERENCES users(id)
 );
 
-CREATE TABLE IF NOT EXISTS admin_sessions (
-  token_hash TEXT PRIMARY KEY,
-  expires_at INTEGER NOT NULL
+CREATE TABLE IF NOT EXISTS earnings (
+ id INTEGER PRIMARY KEY AUTOINCREMENT,
+ user_id INTEGER NOT NULL,
+ amount INTEGER NOT NULL,
+ kind TEXT NOT NULL,
+ created_at INTEGER NOT NULL,
+ FOREIGN KEY(user_id) REFERENCES users(id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_earnings_user_time
+ON earnings(user_id, created_at);
+
+CREATE TABLE IF NOT EXISTS spin_history (
+ id INTEGER PRIMARY KEY AUTOINCREMENT,
+ user_id INTEGER NOT NULL,
+ reward INTEGER NOT NULL,
+ created_at INTEGER NOT NULL,
+ FOREIGN KEY(user_id) REFERENCES users(id)
+);
+
+CREATE TABLE IF NOT EXISTS spin_grants (
+ inviter_id INTEGER PRIMARY KEY,
+ total_granted INTEGER NOT NULL DEFAULT 0,
+ FOREIGN KEY(inviter_id) REFERENCES users(id)
+);
+
+CREATE TABLE IF NOT EXISTS commission_payouts (
+ id INTEGER PRIMARY KEY AUTOINCREMENT,
+ beneficiary_id INTEGER NOT NULL,
+ source_user_id INTEGER NOT NULL,
+ day TEXT NOT NULL,
+ level INTEGER NOT NULL,
+ base_amount INTEGER NOT NULL,
+ rate REAL NOT NULL,
+ amount INTEGER NOT NULL,
+ created_at INTEGER NOT NULL,
+ UNIQUE(beneficiary_id, source_user_id, day, level),
+ FOREIGN KEY(beneficiary_id) REFERENCES users(id),
+ FOREIGN KEY(source_user_id) REFERENCES users(id)
 );
 `);
 
-function addColumnIfMissing(table, column, definition) {
-  const columns = db.prepare(`PRAGMA table_info(${table})`).all();
+/* Database migration */
 
-  if (!columns.some(columnInfo => columnInfo.name === column)) {
-    db.exec(`ALTER TABLE ${table} ADD COLUMN ${column} ${definition}`);
-  }
+const userCols = db
+  .prepare("PRAGMA table_info(users)")
+  .all()
+  .map(c => c.name);
+
+if (!userCols.includes("photo_url")) {
+  db.exec(
+    "ALTER TABLE users ADD COLUMN photo_url TEXT DEFAULT ''"
+  );
 }
 
-addColumnIfMissing('users', 'photo_url', "TEXT NOT NULL DEFAULT ''");
-addColumnIfMissing('users', 'last_daily', 'TEXT');
+if (!userCols.includes("spins_available")) {
+  db.exec(
+    "ALTER TABLE users ADD COLUMN spins_available INTEGER NOT NULL DEFAULT 0"
+  );
+}
 
-addColumnIfMissing('withdrawals', 'network', "TEXT NOT NULL DEFAULT ''");
-addColumnIfMissing('withdrawals', 'fee', 'REAL NOT NULL DEFAULT 0');
-addColumnIfMissing('withdrawals', 'net_amount', 'REAL NOT NULL DEFAULT 0');
-addColumnIfMissing('withdrawals', 'asset', "TEXT NOT NULL DEFAULT 'POINTS'");
-addColumnIfMissing('withdrawals', 'admin_note', "TEXT NOT NULL DEFAULT ''");
+/* =========================
+   SETTINGS
+========================= */
 
-const DEFAULT_SETTINGS = {
-  appName: 'CoinNova',
-  miningReward: '1',
-  dailyReward: '100',
-  referralReward: '250',
-  minimumWithdrawal: '1000',
-  referralRequirement: '1',
-  miningEnabled: 'true',
-  registrationEnabled: 'true',
-  withdrawalEnabled: 'true',
-  welcomeText: 'Welcome to CoinNova!',
-  supportUrl: '',
-  telegramUrl: '',
-  maintenanceMode: 'false',
+const now = () => Date.now();
 
-  walletConfig: JSON.stringify({
-    USDT: {
+const defaultSettings = {
+  appName: "CoinNova",
+  tagline: "Tap • Mine • Earn",
+  tapReward: 1,
+  maxEnergy: 1000,
+  energyPerSecond: 3,
+  dailyBonus: 50,
+  minWithdraw: 1000,
+  referralRequired: 1,
+  referralBonus: 100,
+  maintenance: false,
+  sound: true,
+
+  referralsPerSpin: 1,
+  spinEnabled: true,
+  spinRewards: [10, 20, 30, 50, 100, 200],
+
+  commissionEnabled: true,
+  commissionRates: [10, 5, 3, 2, 1, 1],
+
+  paymentMethods: [
+    {
+      id: "bkash",
+      name: "bKash",
+      type: "mobile",
       enabled: true,
-      name: 'Binance USDT',
-      logo: 'https://cryptologos.cc/logos/tether-usdt-logo.png',
-      description: 'Withdraw crypto to your external wallet.',
-      feePercent: 10,
-      minimum: 10,
-      networks: [
-        {
-          id: 'TRX',
-          name: 'TRX (TRC20)',
-          description: 'TRON network',
-          enabled: true,
-          feePercent: 10,
-          minimum: 10
-        },
-        {
-          id: 'TON',
-          name: 'TON',
-          description: 'TON network',
-          enabled: true,
-          feePercent: 10,
-          minimum: 3
-        }
-      ]
+      logo: "https://cdn.simpleicons.org/bkash/E2136E"
     },
-
-    bKash: {
+    {
+      id: "nagad",
+      name: "Nagad",
+      type: "mobile",
       enabled: true,
-      name: 'bKash',
-      logo: '',
-      description: 'Enter your bKash account number.',
-      feePercent: 0,
-      minimum: 100,
-      networks: []
+      logo: "https://cdn.simpleicons.org/nagad/F6921E"
     },
-
-    Nagad: {
+    {
+      id: "rocket",
+      name: "Rocket",
+      type: "mobile",
       enabled: true,
-      name: 'Nagad',
-      logo: '',
-      description: 'Enter your Nagad account number.',
-      feePercent: 0,
-      minimum: 100,
-      networks: []
+      logo: "https://cdn.simpleicons.org/dutchbanglabank/8B1E8B"
     },
-
-    Rocket: {
+    {
+      id: "usdt_trc20",
+      name: "USDT · TRC20",
+      type: "crypto",
       enabled: true,
-      name: 'Rocket',
-      logo: '',
-      description: 'Enter your Rocket account number.',
-      feePercent: 0,
-      minimum: 100,
-      networks: []
+      logo: "https://cdn.simpleicons.org/tether/26A17B"
+    },
+    {
+      id: "usdt_bep20",
+      name: "USDT · BEP20",
+      type: "crypto",
+      enabled: true,
+      logo: "https://cdn.simpleicons.org/tether/26A17B"
+    },
+    {
+      id: "binance",
+      name: "Binance Pay / Wallet",
+      type: "crypto",
+      enabled: true,
+      logo: "https://cdn.simpleicons.org/binance/F0B90B"
+    },
+    {
+      id: "trustwallet",
+      name: "Trust Wallet",
+      type: "crypto",
+      enabled: true,
+      logo: "https://cdn.simpleicons.org/trustwallet/3375BB"
+    },
+    {
+      id: "bitget",
+      name: "Bitget Wallet",
+      type: "crypto",
+      enabled: true,
+      logo: "https://cdn.simpleicons.org/bitget/00F0FF"
     }
-  })
+  ],
+
+  updatedAt: now()
 };
 
-const getSettingStmt = db.prepare(
-  'SELECT value FROM settings WHERE key = ?'
+const getSetting = db.prepare(
+  "SELECT value FROM settings WHERE key=?"
 );
 
-const setSettingStmt = db.prepare(`
-  INSERT INTO settings(key, value)
-  VALUES (?, ?)
-  ON CONFLICT(key) DO UPDATE SET value = excluded.value
+const setSetting = db.prepare(`
+INSERT INTO settings(key, value)
+VALUES(?, ?)
+ON CONFLICT(key)
+DO UPDATE SET value=excluded.value
 `);
 
-for (const [key, value] of Object.entries(DEFAULT_SETTINGS)) {
-  if (!getSettingStmt.get(key)) {
-    setSettingStmt.run(key, value);
+function getSettings() {
+  const row = getSetting.get("main");
+
+  if (!row) {
+    setSetting.run("main", JSON.stringify(defaultSettings));
+    return { ...defaultSettings };
   }
-}
-
-function setting(key) {
-  const row = getSettingStmt.get(key);
-  return row ? row.value : DEFAULT_SETTINGS[key];
-}
-
-function setSetting(key, value) {
-  setSettingStmt.run(key, String(value));
-}
-
-function integer(value, fallback = 0, min = 0, max = 1000000000) {
-  const number = Number(value);
-
-  if (!Number.isSafeInteger(number)) {
-    return fallback;
-  }
-
-  return Math.max(min, Math.min(max, number));
-}
-
-function decimal(value, fallback = 0, min = 0, max = 1000000000) {
-  const number = Number(value);
-
-  if (!Number.isFinite(number)) {
-    return fallback;
-  }
-
-  return Math.max(min, Math.min(max, number));
-}
-
-function cleanText(value, max = 200) {
-  return String(value == null ? '' : value)
-    .trim()
-    .slice(0, max);
-}
-
-function validHttpUrl(value) {
-  if (!value) return '';
 
   try {
-    const url = new URL(String(value));
-
-    if (!['https:', 'http:'].includes(url.protocol)) {
-      return '';
-    }
-
-    return url.href;
+    return {
+      ...defaultSettings,
+      ...JSON.parse(row.value)
+    };
   } catch {
-    return '';
+    return { ...defaultSettings };
   }
 }
 
-function parseWalletConfig() {
+function saveSettings(settings) {
+  settings.updatedAt = now();
+  setSetting.run("main", JSON.stringify(settings));
+  return settings;
+}
+
+if (!getSetting.get("main")) {
+  saveSettings(defaultSettings);
+}
+
+/* Default tasks */
+
+const taskCount = db
+  .prepare("SELECT COUNT(*) n FROM tasks")
+  .get().n;
+
+if (!taskCount) {
+  const insertTask = db.prepare(`
+    INSERT INTO tasks
+    (title, platform, url, reward, enabled, created_at)
+    VALUES (?, ?, ?, ?, 1, ?)
+  `);
+
+  [
+    ["Join our Telegram", "Telegram", "https://telegram.org", 100],
+    ["Watch on YouTube", "YouTube", "https://youtube.com", 100],
+    ["Follow on TikTok", "TikTok", "https://tiktok.com", 100],
+    ["Follow on Facebook", "Facebook", "https://facebook.com", 100],
+    ["Follow on Instagram", "Instagram", "https://instagram.com", 100],
+    ["Follow on X", "X", "https://x.com", 100]
+  ].forEach(task => insertTask.run(...task, now()));
+}
+
+/* =========================
+   AUTHENTICATION HELPERS
+========================= */
+
+function b64url(value) {
+  return Buffer.from(value).toString("base64url");
+}
+
+function sign(payload) {
+  const body = b64url(JSON.stringify(payload));
+
+  const signature = crypto
+    .createHmac(
+      "sha256",
+      SESSION_SECRET || "dev-secret-change-me"
+    )
+    .update(body)
+    .digest("base64url");
+
+  return body + "." + signature;
+}
+
+function verify(token) {
   try {
-    const parsed = JSON.parse(setting('walletConfig'));
+    const [body, signature] = String(token || "").split(".");
 
-    return parsed && typeof parsed === 'object' && !Array.isArray(parsed)
-      ? parsed
-      : {};
-  } catch {
-    return {};
-  }
-}
+    if (!body || !signature) return null;
 
-function hashToken(token) {
-  return crypto.createHash('sha256').update(token).digest('hex');
-}
+    const expected = crypto
+      .createHmac(
+        "sha256",
+        SESSION_SECRET || "dev-secret-change-me"
+      )
+      .update(body)
+      .digest();
 
-function signCookie(token) {
-  return crypto
-    .createHmac('sha256', SESSION_SECRET || 'development-only-secret')
-    .update(token)
-    .digest('hex');
-}
+    const actual = Buffer.from(signature, "base64url");
 
-function safeEqual(a, b) {
-  const first = Buffer.from(String(a));
-  const second = Buffer.from(String(b));
-
-  return first.length === second.length &&
-    crypto.timingSafeEqual(first, second);
-}
-
-function newToken() {
-  return crypto.randomBytes(32).toString('hex');
-}
-
-function sendSessionCookie(res, name, token, maxAge) {
-  res.cookie(name, `${token}.${signCookie(token)}`, {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'lax',
-    maxAge,
-    path: '/'
-  });
-}
-
-function readSignedCookie(req, name) {
-  const raw = req.cookies && req.cookies[name];
-
-  if (!raw || typeof raw !== 'string') return null;
-
-  const index = raw.lastIndexOf('.');
-
-  if (index <= 0) return null;
-
-  const token = raw.slice(0, index);
-  const signature = raw.slice(index + 1);
-
-  if (!safeEqual(signature, signCookie(token))) {
-    return null;
-  }
-
-  return token;
-}
-
-function telegramInitDataValid(initData) {
-  if (!BOT_TOKEN || !initData || typeof initData !== 'string') {
-    return null;
-  }
-
-  if (initData.length > 10000) return null;
-
-  const params = new URLSearchParams(initData);
-  const suppliedHash = params.get('hash');
-  const authDate = Number(params.get('auth_date'));
-
-  if (!suppliedHash || !/^[a-f0-9]{64}$/i.test(suppliedHash)) {
-    return null;
-  }
-
-  if (!Number.isFinite(authDate)) return null;
-
-  const now = Math.floor(Date.now() / 1000);
-
-  if (authDate > now + 60 || now - authDate > 86400) {
-    return null;
-  }
-
-  params.delete('hash');
-
-  const checkString = [...params.entries()]
-    .sort(([a], [b]) => a.localeCompare(b))
-    .map(([key, value]) => `${key}=${value}`)
-    .join('\n');
-
-  const secretKey = crypto
-    .createHmac('sha256', 'WebAppData')
-    .update(BOT_TOKEN)
-    .digest();
-
-  const calculatedHash = crypto
-    .createHmac('sha256', secretKey)
-    .update(checkString)
-    .digest('hex');
-
-  if (!safeEqual(calculatedHash, suppliedHash.toLowerCase())) {
-    return null;
-  }
-
-  try {
-    const user = JSON.parse(params.get('user') || '{}');
-
-    if (!user.id || !Number.isSafeInteger(Number(user.id))) {
+    if (
+      actual.length !== expected.length ||
+      !crypto.timingSafeEqual(actual, expected)
+    ) {
       return null;
     }
 
-    return {
-      id: String(user.id),
-      first_name: cleanText(user.first_name, 100),
-      last_name: cleanText(user.last_name, 100),
-      username: cleanText(user.username, 100),
-      photo_url: validHttpUrl(user.photo_url || '')
-    };
+    const payload = JSON.parse(
+      Buffer.from(body, "base64url").toString()
+    );
+
+    if (payload.exp < Date.now()) return null;
+
+    return payload;
   } catch {
     return null;
   }
 }
 
+function setAuthCookie(res, payload) {
+  res.cookie(
+    "cn_auth",
+    sign({
+      ...payload,
+      exp: Date.now() + 7 * 24 * 60 * 60 * 1000
+    }),
+    {
+      httpOnly: true,
+      secure: PROD,
+      sameSite: "lax",
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+      path: "/"
+    }
+  );
+}
+
+function clearAuthCookie(res) {
+  res.clearCookie("cn_auth", { path: "/" });
+}
+
+function parseCookie(value) {
+  return Object.fromEntries(
+    value
+      .split(";")
+      .map(item => item.trim().split(/=(.*)/s).slice(0, 2))
+      .filter(item => item.length === 2)
+      .map(([key, val]) => [key, decodeURIComponent(val)])
+  );
+}
+
+function auth(req, res, next) {
+  const payload = verify(
+    req.cookies?.cn_auth ||
+    parseCookie(req.headers.cookie || "").cn_auth
+  );
+
+  if (!payload) {
+    return res.status(401).json({
+      error: "Please sign in again."
+    });
+  }
+
+  req.auth = payload;
+  next();
+}
+
+function adminAuth(req, res, next) {
+  auth(req, res, () => {
+    if (req.auth.role !== "admin") {
+      return res.status(403).json({
+        error: "Admin access required."
+      });
+    }
+
+    next();
+  });
+}
+
+function verifyTelegramInitData(initData) {
+  if (!BOT_TOKEN || !initData) return null;
+
+  const params = new URLSearchParams(initData);
+  const hash = params.get("hash");
+
+  if (!hash) return null;
+
+  params.delete("hash");
+
+  const dataCheck = [...params.entries()]
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([key, value]) => `${key}=${value}`)
+    .join("\n");
+
+  const secret = crypto
+    .createHmac("sha256", "WebAppData")
+    .update(BOT_TOKEN)
+    .digest();
+
+  const expected = crypto
+    .createHmac("sha256", secret)
+    .update(dataCheck)
+    .digest("hex");
+
+  try {
+    const received = Buffer.from(hash, "hex");
+    const calculated = Buffer.from(expected, "hex");
+
+    if (
+      received.length !== calculated.length ||
+      !crypto.timingSafeEqual(received, calculated)
+    ) {
+      return null;
+    }
+  } catch {
+    return null;
+  }
+
+  const authDate = Number(params.get("auth_date") || 0);
+
+  if (
+    !authDate ||
+    Date.now() / 1000 - authDate > 86400
+  ) {
+    return null;
+  }
+
+  try {
+    return JSON.parse(params.get("user") || "{}");
+  } catch {
+    return null;
+  }
+}
+
+/* =========================
+   USER HELPERS
+========================= */
+
+function getUserById(id) {
+  return db
+    .prepare("SELECT * FROM users WHERE id=?")
+    .get(id);
+}
+
+function publicUser(user) {
+  return {
+    id: user.id,
+    name: user.name,
+    username: user.username,
+    photoUrl: user.photo_url || "",
+    balance: user.balance,
+    energy: user.energy,
+    maxEnergy: getSettings().maxEnergy,
+    totalTaps: user.total_taps,
+    spinsAvailable: user.spins_available || 0,
+    createdAt: user.created_at,
+    referralCode: user.tg_id
+  };
+}
+
+function cleanText(value, max = 100) {
+  return String(value || "").trim().slice(0, max);
+}
+
+function validUrl(value) {
+  try {
+    const url = new URL(value);
+    return ["https:", "http:"].includes(url.protocol);
+  } catch {
+    return false;
+  }
+}
+
+function refreshEnergy(user) {
+  const settings = getSettings();
+
+  const elapsed = Math.max(
+    0,
+    Math.floor(
+      (now() - (user.last_energy_at || now())) / 1000
+    )
+  );
+
+  const energy = Math.min(
+    settings.maxEnergy,
+    user.energy + elapsed * settings.energyPerSecond
+  );
+
+  if (energy !== user.energy) {
+    db.prepare(`
+      UPDATE users
+      SET energy=?, last_energy_at=?
+      WHERE id=?
+    `).run(energy, now(), user.id);
+  }
+
+  return { ...user, energy };
+}
+
 function currentUser(req) {
-  const token = readSignedCookie(req, 'cn_session');
+  if (req.auth.role !== "user") return null;
 
-  if (!token) return null;
+  const user = getUserById(req.auth.uid);
 
-  return db.prepare(`
-    SELECT u.*
-    FROM sessions s
-    JOIN users u ON u.id = s.user_id
-    WHERE s.token_hash = ? AND s.expires_at > ?
-  `).get(hashToken(token), Date.now()) || null;
+  if (!user || user.is_banned) return null;
+
+  return refreshEnergy(user);
 }
 
 function requireUser(req, res, next) {
   const user = currentUser(req);
 
   if (!user) {
-    return res.status(401).json({
-      ok: false,
-      error: 'Please open the app in Telegram and log in.'
+    return res.status(403).json({
+      error: "User unavailable or blocked."
     });
   }
 
@@ -430,1197 +599,1525 @@ function requireUser(req, res, next) {
   next();
 }
 
-function requireAdmin(req, res, next) {
-  const token = readSignedCookie(req, 'cn_admin');
-
-  if (!token) {
-    return res.status(401).json({
-      ok: false,
-      error: 'Admin login required.'
-    });
-  }
-
-  const session = db.prepare(`
-    SELECT token_hash FROM admin_sessions
-    WHERE token_hash = ? AND expires_at > ?
-  `).get(hashToken(token), Date.now());
-
-  if (!session) {
-    return res.status(401).json({
-      ok: false,
-      error: 'Admin session expired.'
-    });
-  }
-
-  next();
+function countQualifiedReferrals(userId) {
+  return db.prepare(`
+    SELECT COUNT(*) n
+    FROM referrals
+    WHERE inviter_id=? AND qualified=1
+  `).get(userId).n;
 }
 
-const authLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  limit: 30,
-  standardHeaders: 'draft-7',
-  legacyHeaders: false
-});
-
-const adminLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  limit: 10,
-  standardHeaders: 'draft-7',
-  legacyHeaders: false
-});
-
-function publicUser(user) {
-  return {
-    id: user.id,
-    telegramId: user.tg_id,
-    firstName: user.first_name,
-    lastName: user.last_name,
-    username: user.username,
-    photoUrl: user.photo_url,
-    balance: user.balance,
-    totalMined: user.total_mined,
-    referrals: user.referrals,
-    lastDaily: user.last_daily,
-    createdAt: user.created_at
-  };
-}
-
-function publicWalletConfig() {
-  const config = parseWalletConfig();
-  const result = {};
-
-  for (const [key, wallet] of Object.entries(config)) {
-    result[key] = {
-      enabled: wallet.enabled === true,
-      name: cleanText(wallet.name, 80),
-      logo: validHttpUrl(wallet.logo || ''),
-      description: cleanText(wallet.description, 500),
-      feePercent: decimal(wallet.feePercent, 0, 0, 100),
-      minimum: decimal(wallet.minimum, 0, 0, 1000000000),
-      networks: Array.isArray(wallet.networks)
-        ? wallet.networks.map(network => ({
-            id: cleanText(network.id, 30),
-            name: cleanText(network.name, 80),
-            description: cleanText(network.description, 200),
-            enabled: network.enabled === true,
-            feePercent: decimal(
-              network.feePercent,
-              wallet.feePercent || 0,
-              0,
-              100
-            ),
-            minimum: decimal(
-              network.minimum,
-              wallet.minimum || 0,
-              0,
-              1000000000
-            )
-          }))
-        : []
-    };
+function recordEarning(userId, amount, kind) {
+  if (Number(amount) > 0) {
+    db.prepare(`
+      INSERT INTO earnings(user_id, amount, kind, created_at)
+      VALUES(?, ?, ?, ?)
+    `).run(userId, Math.floor(amount), kind, now());
   }
-
-  return result;
-}
-
-function publicSettings() {
-  return {
-    appName: setting('appName'),
-    miningReward: integer(setting('miningReward'), 1),
-    dailyReward: integer(setting('dailyReward'), 100),
-    referralReward: integer(setting('referralReward'), 250),
-    minimumWithdrawal: integer(setting('minimumWithdrawal'), 1000),
-    referralRequirement: integer(setting('referralRequirement'), 1, 0, 100),
-    miningEnabled: setting('miningEnabled') === 'true',
-    registrationEnabled: setting('registrationEnabled') === 'true',
-    withdrawalEnabled: setting('withdrawalEnabled') === 'true',
-    welcomeText: setting('welcomeText'),
-    supportUrl: setting('supportUrl'),
-    telegramUrl: setting('telegramUrl'),
-    maintenanceMode: setting('maintenanceMode') === 'true',
-    walletConfig: publicWalletConfig()
-  };
 }
 
 /* =========================
-   HEALTH AND PUBLIC SETTINGS
+   BANGLADESH TIME HELPERS
 ========================= */
 
-app.get('/api/health', (req, res) => {
-  res.json({
-    ok: true,
-    app: setting('appName'),
-    time: new Date().toISOString()
-  });
-});
+function bdDate(timestamp = Date.now()) {
+  return new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Asia/Dhaka",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit"
+  }).format(new Date(timestamp));
+}
 
-app.get('/api/settings', (req, res) => {
-  res.json({
-    ok: true,
-    settings: publicSettings()
-  });
-});
+function dayStartBd() {
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Asia/Dhaka",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit"
+  }).formatToParts(new Date());
 
-/* =========================
-   TELEGRAM AUTHENTICATION
-========================= */
-
-app.post('/api/auth/telegram', authLimiter, (req, res) => {
-  if (setting('registrationEnabled') !== 'true') {
-    return res.status(403).json({
-      ok: false,
-      error: 'Registration is disabled.'
-    });
-  }
-
-  const telegramUser = telegramInitDataValid(
-    req.body && req.body.initData
+  const values = Object.fromEntries(
+    parts.map(part => [part.type, part.value])
   );
 
-  if (!telegramUser) {
-    return res.status(401).json({
-      ok: false,
-      error: 'Telegram verification failed. Open this app from your Telegram bot.'
+  return Date.parse(
+    `${values.year}-${values.month}-${values.day}T00:00:00+06:00`
+  );
+}
+
+/* =========================
+   REFERRAL TEAM / COMMISSION
+========================= */
+
+function levelAncestors(userId, max = 6) {
+  const ancestors = [];
+  let current = userId;
+
+  for (let level = 1; level <= max; level++) {
+    const row = db.prepare(`
+      SELECT inviter_id
+      FROM referrals
+      WHERE invited_user_id=? AND qualified=1
+    `).get(current);
+
+    if (!row) break;
+
+    ancestors.push({
+      userId: row.inviter_id,
+      level
     });
+
+    current = row.inviter_id;
   }
 
-  const existing = db.prepare(
-    'SELECT * FROM users WHERE tg_id = ?'
-  ).get(telegramUser.id);
+  return ancestors;
+}
 
-  if (!existing && setting('maintenanceMode') === 'true') {
-    return res.status(503).json({
-      ok: false,
-      error: 'App is under maintenance.'
+function teamStats(userId) {
+  const levels = [];
+  let frontier = [userId];
+
+  for (let level = 1; level <= 6; level++) {
+    if (!frontier.length) {
+      levels.push({
+        level,
+        members: 0,
+        todayMembers: 0,
+        todayCoins: 0,
+        commissionToday: 0
+      });
+      continue;
+    }
+
+    const placeholders = frontier.map(() => "?").join(",");
+
+    const rows = db.prepare(`
+      SELECT id, created_at
+      FROM users
+      WHERE id IN (
+        SELECT invited_user_id
+        FROM referrals
+        WHERE qualified=1
+        AND inviter_id IN (${placeholders})
+      )
+    `).all(...frontier);
+
+    const ids = rows.map(row => row.id);
+
+    let todayCoins = 0;
+    let commissionToday = 0;
+
+    if (ids.length) {
+      const idPlaceholders = ids.map(() => "?").join(",");
+
+      todayCoins = db.prepare(`
+        SELECT COALESCE(SUM(amount), 0) n
+        FROM earnings
+        WHERE user_id IN (${idPlaceholders})
+        AND created_at>=?
+        AND created_at<?
+      `).get(
+        ...ids,
+        dayStartBd(),
+        dayStartBd() + 86400000
+      ).n;
+
+      commissionToday = db.prepare(`
+        SELECT COALESCE(SUM(amount), 0) n
+        FROM commission_payouts
+        WHERE beneficiary_id=?
+        AND level=?
+        AND created_at>=?
+        AND created_at<?
+      `).get(
+        userId,
+        level,
+        dayStartBd(),
+        dayStartBd() + 86400000
+      ).n;
+    }
+
+    levels.push({
+      level,
+      members: ids.length,
+      todayMembers: rows.filter(
+        row => bdDate(row.created_at) === bdDate()
+      ).length,
+      todayCoins,
+      commissionToday
     });
+
+    frontier = ids;
   }
 
-  if (existing) {
-    db.prepare(`
-      UPDATE users SET
-        first_name = ?,
-        last_name = ?,
-        username = ?,
-        photo_url = ?,
-        updated_at = CURRENT_TIMESTAMP
-      WHERE tg_id = ?
-    `).run(
-      telegramUser.first_name,
-      telegramUser.last_name,
-      telegramUser.username,
-      telegramUser.photo_url,
-      telegramUser.id
+  return levels;
+}
+
+/*
+ * Daily commission:
+ * Previous day's recorded earnings are used as the base.
+ * Payout processing starts after 1:00 AM Bangladesh time.
+ * Unique database keys prevent the same source/day/level
+ * commission from being credited more than once.
+ */
+function payDailyCommissions() {
+  const settings = getSettings();
+
+  if (!settings.commissionEnabled) return;
+
+  const timeParts = new Intl.DateTimeFormat("en-GB", {
+    timeZone: "Asia/Dhaka",
+    hour: "2-digit",
+    minute: "2-digit",
+    hourCycle: "h23"
+  }).formatToParts(new Date());
+
+  const time = Object.fromEntries(
+    timeParts.map(part => [part.type, part.value])
+  );
+
+  if (Number(time.hour) < 1) return;
+
+  const day = bdDate(Date.now() - 86400000);
+  const start = dayStartBd() - 86400000;
+  const end = start + 86400000;
+
+  const earners = db.prepare(`
+    SELECT DISTINCT user_id
+    FROM earnings
+    WHERE created_at>=? AND created_at<?
+  `).all(start, end);
+
+  const transaction = db.transaction(() => {
+    for (const earner of earners) {
+      const earned = db.prepare(`
+        SELECT COALESCE(SUM(amount), 0) n
+        FROM earnings
+        WHERE user_id=?
+        AND created_at>=?
+        AND created_at<?
+      `).get(earner.user_id, start, end).n;
+
+      if (earned <= 0) continue;
+
+      for (const ancestor of levelAncestors(earner.user_id, 6)) {
+        const rate = Number(
+          (settings.commissionRates || [])[ancestor.level - 1] || 0
+        );
+
+        const amount = Math.floor(earned * rate / 100);
+
+        if (rate <= 0 || amount <= 0) continue;
+
+        const inserted = db.prepare(`
+          INSERT OR IGNORE INTO commission_payouts
+          (
+            beneficiary_id,
+            source_user_id,
+            day,
+            level,
+            base_amount,
+            rate,
+            amount,
+            created_at
+          )
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        `).run(
+          ancestor.userId,
+          earner.user_id,
+          day,
+          ancestor.level,
+          earned,
+          rate,
+          amount,
+          now()
+        );
+
+        if (inserted.changes) {
+          db.prepare(`
+            UPDATE users
+            SET balance=balance+?
+            WHERE id=?
+          `).run(amount, ancestor.userId);
+        }
+      }
+    }
+  });
+
+  try {
+    transaction();
+  } catch (error) {
+    console.error(
+      "Daily commission payout failed:",
+      error.message
     );
-  } else {
+  }
+}
+
+setInterval(payDailyCommissions, 60 * 1000);
+setTimeout(payDailyCommissions, 5000);
+
+/* =========================
+   BASIC ROUTES
+========================= */
+
+app.get("/", (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "index.html"));
+});
+
+app.get("/admin", (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "Admin.html"));
+});
+
+app.get("/health", (req, res) => {
+  res.json({
+    ok: true,
+    app: "CoinNova",
+    time: now()
+  });
+});
+
+/* =========================
+   TELEGRAM LOGIN
+========================= */
+
+app.post(
+  "/api/auth/telegram",
+  rateLimit({ windowMs: 60000, limit: 30 }),
+  (req, res) => {
+    const telegramUser = verifyTelegramInitData(
+      String(req.body?.initData || "")
+    );
+
+    if (!telegramUser || !telegramUser.id) {
+      return res.status(401).json({
+        error:
+          "Telegram verification failed. Open this app from your Telegram bot."
+      });
+    }
+
+    const tgId = String(telegramUser.id);
+
+    const name = cleanText(
+      [
+        telegramUser.first_name,
+        telegramUser.last_name
+      ].filter(Boolean).join(" ") || "Miner",
+      80
+    );
+
+    const username = cleanText(
+      telegramUser.username || "",
+      64
+    );
+
+    const startParam = cleanText(
+      req.body?.startParam || "",
+      80
+    );
+
+    const transaction = db.transaction(() => {
+      let user = db.prepare(`
+        SELECT * FROM users WHERE tg_id=?
+      `).get(tgId);
+
+      if (!user) {
+        const settings = getSettings();
+
+        db.prepare(`
+          INSERT INTO users
+          (
+            tg_id,
+            name,
+            username,
+            photo_url,
+            balance,
+            energy,
+            last_energy_at,
+            invited_by,
+            created_at
+          )
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        `).run(
+          tgId,
+          name,
+          username,
+          validUrl(telegramUser.photo_url || "")
+            ? telegramUser.photo_url
+            : "",
+          0,
+          settings.maxEnergy,
+          now(),
+          startParam.startsWith("ref_")
+            ? startParam.slice(4)
+            : "",
+          now()
+        );
+
+        user = db.prepare(`
+          SELECT * FROM users WHERE tg_id=?
+        `).get(tgId);
+
+        if (startParam.startsWith("ref_")) {
+          const inviter = db.prepare(`
+            SELECT * FROM users WHERE tg_id=?
+          `).get(startParam.slice(4));
+
+          if (inviter && inviter.id !== user.id) {
+            db.prepare(`
+              INSERT OR IGNORE INTO referrals
+              (inviter_id, invited_user_id, qualified, created_at)
+              VALUES (?, ?, 0, ?)
+            `).run(inviter.id, user.id, now());
+          }
+        }
+      } else {
+        db.prepare(`
+          UPDATE users
+          SET name=?, username=?, photo_url=?
+          WHERE id=?
+        `).run(
+          name,
+          username,
+          validUrl(telegramUser.photo_url || "")
+            ? telegramUser.photo_url
+            : (user.photo_url || ""),
+          user.id
+        );
+      }
+
+      return db.prepare(`
+        SELECT * FROM users WHERE id=?
+      `).get(user.id);
+    });
+
+    const user = transaction();
+
+    if (user.is_banned) {
+      return res.status(403).json({
+        error: "This account is blocked."
+      });
+    }
+
+    setAuthCookie(res, {
+      role: "user",
+      uid: user.id,
+      tgId: user.tg_id
+    });
+
+    res.json({
+      user: publicUser(refreshEnergy(user)),
+      settings: getSettings(),
+      tasks: listTasksForUser(user.id),
+      referralUrl: BOT_USERNAME
+        ? `https://t.me/${BOT_USERNAME}?startapp=ref_${user.tg_id}`
+        : ""
+    });
+  }
+);
+
+/* Optional demo login for development only */
+
+app.post("/api/auth/demo", (req, res) => {
+  if (!ALLOW_DEMO_LOGIN) {
+    return res.status(403).json({
+      error:
+        "Demo login is disabled. Open this app inside Telegram."
+    });
+  }
+
+  const suffix = cleanText(
+    req.body?.name || "Miner",
+    30
+  ).replace(/\W/g, "").toLowerCase();
+
+  const tgId = "demo-" + suffix;
+
+  let user = db.prepare(`
+    SELECT * FROM users WHERE tg_id=?
+  `).get(tgId);
+
+  if (!user) {
     db.prepare(`
       INSERT INTO users
-        (tg_id, first_name, last_name, username, photo_url)
-      VALUES (?, ?, ?, ?, ?)
+      (
+        tg_id,
+        name,
+        username,
+        balance,
+        energy,
+        last_energy_at,
+        created_at
+      )
+      VALUES (?, ?, ?, ?, ?, ?, ?)
     `).run(
-      telegramUser.id,
-      telegramUser.first_name,
-      telegramUser.last_name,
-      telegramUser.username,
-      telegramUser.photo_url
+      tgId,
+      "Demo Miner",
+      "",
+      0,
+      getSettings().maxEnergy,
+      now(),
+      now()
     );
+
+    user = db.prepare(`
+      SELECT * FROM users WHERE tg_id=?
+    `).get(tgId);
   }
 
-  const user = db.prepare(
-    'SELECT * FROM users WHERE tg_id = ?'
-  ).get(telegramUser.id);
-
-  const token = newToken();
-
-  db.prepare(`
-    INSERT INTO sessions(token_hash, user_id, expires_at)
-    VALUES (?, ?, ?)
-  `).run(
-    hashToken(token),
-    user.id,
-    Date.now() + 30 * 24 * 60 * 60 * 1000
-  );
-
-  sendSessionCookie(
-    res,
-    'cn_session',
-    token,
-    30 * 24 * 60 * 60 * 1000
-  );
+  setAuthCookie(res, {
+    role: "user",
+    uid: user.id,
+    tgId: user.tg_id
+  });
 
   res.json({
-    ok: true,
-    user: publicUser(user),
-    settings: publicSettings()
+    user: publicUser(refreshEnergy(user)),
+    settings: getSettings(),
+    tasks: listTasksForUser(user.id),
+    referralUrl: ""
   });
 });
 
-app.get('/api/me', requireUser, (req, res) => {
-  res.json({
-    ok: true,
-    user: publicUser(req.user),
-    settings: publicSettings()
-  });
-});
+/* Admin login */
 
-app.post('/api/logout', (req, res) => {
-  const token = readSignedCookie(req, 'cn_session');
+app.post(
+  "/api/auth/admin",
+  rateLimit({ windowMs: 15 * 60 * 1000, limit: 8 }),
+  (req, res) => {
+    const password = String(req.body?.password || "");
 
-  if (token) {
-    db.prepare(
-      'DELETE FROM sessions WHERE token_hash = ?'
-    ).run(hashToken(token));
+    const submittedHash = crypto
+      .createHash("sha256")
+      .update(password)
+      .digest();
+
+    const configuredHash = crypto
+      .createHash("sha256")
+      .update(ADMIN_PASSWORD)
+      .digest();
+
+    if (
+      !ADMIN_PASSWORD ||
+      password.length > 300 ||
+      !crypto.timingSafeEqual(
+        submittedHash,
+        configuredHash
+      )
+    ) {
+      return res.status(401).json({
+        error: "Incorrect admin password."
+      });
+    }
+
+    setAuthCookie(res, { role: "admin" });
+
+    res.json({ ok: true });
   }
+);
 
-  res.clearCookie('cn_session', { path: '/' });
+app.post("/api/logout", (req, res) => {
+  clearAuthCookie(res);
   res.json({ ok: true });
 });
 
 /* =========================
-   MINING AND DAILY REWARDS
+   USER TASKS
 ========================= */
 
-app.post('/api/mine', requireUser, (req, res) => {
-  if (
-    setting('maintenanceMode') === 'true' ||
-    setting('miningEnabled') !== 'true'
-  ) {
-    return res.status(403).json({
-      ok: false,
-      error: 'Mining is currently disabled.'
+function listTasksForUser(userId) {
+  return db.prepare(`
+    SELECT
+      t.*,
+      CASE
+        WHEN c.user_id IS NULL THEN 0
+        ELSE 1
+      END claimed
+    FROM tasks t
+    LEFT JOIN task_claims c
+      ON c.task_id=t.id AND c.user_id=?
+    WHERE t.enabled=1
+    ORDER BY t.id
+  `).all(userId).map(task => ({
+    id: task.id,
+    title: task.title,
+    platform: task.platform,
+    url: task.url,
+    reward: task.reward,
+    claimed: !!task.claimed
+  }));
+}
+
+/* =========================
+   USER PROFILE
+========================= */
+
+app.get("/api/me", auth, requireUser, (req, res) => {
+  const userId = req.user.id;
+
+  res.json({
+    user: publicUser(req.user),
+    settings: getSettings(),
+    tasks: listTasksForUser(userId),
+
+    referralUrl: BOT_USERNAME
+      ? `https://t.me/${BOT_USERNAME}?startapp=ref_${req.user.tg_id}`
+      : "",
+
+    referrals: countQualifiedReferrals(userId),
+
+    spinHistory: db.prepare(`
+      SELECT
+        reward,
+        created_at createdAt
+      FROM spin_history
+      WHERE user_id=?
+      ORDER BY id DESC
+      LIMIT 10
+    `).all(userId),
+
+    commissionLevels: teamStats(userId),
+
+    commissionToday: db.prepare(`
+      SELECT COALESCE(SUM(amount), 0) n
+      FROM commission_payouts
+      WHERE beneficiary_id=? AND day=?
+    `).get(userId, bdDate()).n,
+
+    withdrawals: db.prepare(`
+      SELECT
+        id,
+        method,
+        address,
+        amount,
+        status,
+        txid,
+        note,
+        created_at createdAt
+      FROM withdrawals
+      WHERE user_id=?
+      ORDER BY id DESC
+      LIMIT 20
+    `).all(userId)
+  });
+});
+
+/* =========================
+   TAP / MINING
+========================= */
+
+app.post("/api/tap", auth, requireUser, (req, res) => {
+  const user = refreshEnergy(req.user);
+  const settings = getSettings();
+
+  if (settings.maintenance) {
+    return res.status(503).json({
+      error: "App is under maintenance."
     });
   }
 
-  const taps = integer(req.body && req.body.taps, 1, 1, 10);
-  const reward = integer(setting('miningReward'), 1, 0, 1000000);
-  const amount = taps * reward;
+  const taps = Math.max(
+    1,
+    Math.min(20, Number(req.body?.count) || 1)
+  );
+
+  if (user.energy < taps) {
+    return res.status(400).json({
+      error: "Not enough energy."
+    });
+  }
+
+  const reward = taps * settings.tapReward;
 
   db.prepare(`
     UPDATE users
-    SET balance = balance + ?,
-        total_mined = total_mined + ?,
-        updated_at = CURRENT_TIMESTAMP
-    WHERE id = ?
-  `).run(amount, amount, req.user.id);
-
-  const user = db.prepare(
-    'SELECT * FROM users WHERE id = ?'
-  ).get(req.user.id);
-
-  res.json({
-    ok: true,
-    added: amount,
-    user: publicUser(user)
-  });
-});
-
-app.post('/api/daily', requireUser, (req, res) => {
-  const today = new Date().toISOString().slice(0, 10);
-
-  const claim = db.transaction(() => {
-    const user = db.prepare(
-      'SELECT last_daily FROM users WHERE id = ?'
-    ).get(req.user.id);
-
-    if (user.last_daily === today) {
-      return false;
-    }
-
-    const reward = integer(setting('dailyReward'), 100, 0, 100000000);
-
-    db.prepare(`
-      UPDATE users
-      SET balance = balance + ?,
-          last_daily = ?,
-          updated_at = CURRENT_TIMESTAMP
-      WHERE id = ?
-    `).run(reward, today, req.user.id);
-
-    return reward;
-  });
-
-  const result = claim();
-
-  if (result === false) {
-    return res.status(409).json({
-      ok: false,
-      error: 'Daily reward already claimed.'
-    });
-  }
-
-  const user = db.prepare(
-    'SELECT * FROM users WHERE id = ?'
-  ).get(req.user.id);
-
-  res.json({
-    ok: true,
-    added: result,
-    user: publicUser(user)
-  });
-});
-
-/* =========================
-   TASKS
-========================= */
-
-app.get('/api/tasks', requireUser, (req, res) => {
-  const tasks = db.prepare(`
-    SELECT
-      t.id,
-      t.title,
-      t.description,
-      t.url,
-      t.reward,
-      CASE WHEN ut.user_id IS NULL THEN 0 ELSE 1 END AS claimed
-    FROM tasks t
-    LEFT JOIN user_tasks ut
-      ON ut.task_id = t.id AND ut.user_id = ?
-    WHERE t.active = 1
-    ORDER BY t.id DESC
-  `).all(req.user.id);
-
-  res.json({ ok: true, tasks });
-});
-
-app.post('/api/tasks/:id/claim', requireUser, (req, res) => {
-  const taskId = integer(req.params.id, 0, 1, 2147483647);
-
-  const task = db.prepare(
-    'SELECT * FROM tasks WHERE id = ? AND active = 1'
-  ).get(taskId);
-
-  if (!task) {
-    return res.status(404).json({
-      ok: false,
-      error: 'Task not found.'
-    });
-  }
-
-  try {
-    db.transaction(() => {
-      db.prepare(`
-        INSERT INTO user_tasks(user_id, task_id)
-        VALUES (?, ?)
-      `).run(req.user.id, task.id);
-
-      db.prepare(`
-        UPDATE users
-        SET balance = balance + ?,
-            updated_at = CURRENT_TIMESTAMP
-        WHERE id = ?
-      `).run(task.reward, req.user.id);
-    })();
-  } catch (error) {
-    if (String(error.code || '').startsWith('SQLITE_CONSTRAINT')) {
-      return res.status(409).json({
-        ok: false,
-        error: 'Task already claimed.'
-      });
-    }
-
-    throw error;
-  }
-
-  const user = db.prepare(
-    'SELECT * FROM users WHERE id = ?'
-  ).get(req.user.id);
-
-  res.json({
-    ok: true,
-    added: task.reward,
-    user: publicUser(user)
-  });
-});
-
-/* =========================
-   REFERRALS
-========================= */
-
-app.get('/api/referrals', requireUser, (req, res) => {
-  const count = db.prepare(`
-    SELECT COUNT(*) AS total
-    FROM users
-    WHERE referred_by = ?
-  `).get(req.user.tg_id).total;
-
-  res.json({
-    ok: true,
-    referrals: count,
-    referralLink: BOT_USERNAME
-      ? `https://t.me/${BOT_USERNAME}?start=${encodeURIComponent(req.user.tg_id)}`
-      : ''
-  });
-});
-
-/* =========================
-   USER WITHDRAWALS
-========================= */
-
-app.get('/api/withdrawals', requireUser, (req, res) => {
-  const rows = db.prepare(`
-    SELECT
-      id,
-      method,
-      wallet,
-      amount,
-      network,
-      fee,
-      net_amount AS netAmount,
-      asset,
-      status,
-      admin_note AS adminNote,
-      created_at AS createdAt,
-      updated_at AS updatedAt
-    FROM withdrawals
-    WHERE user_id = ?
-    ORDER BY id DESC
-    LIMIT 50
-  `).all(req.user.id);
-
-  res.json({
-    ok: true,
-    withdrawals: rows
-  });
-});
-
-app.post('/api/withdrawals', requireUser, (req, res) => {
-  if (setting('maintenanceMode') === 'true') {
-    return res.status(503).json({
-      ok: false,
-      error: 'App is under maintenance.'
-    });
-  }
-
-  if (setting('withdrawalEnabled') !== 'true') {
-    return res.status(403).json({
-      ok: false,
-      error: 'Withdrawals are disabled.'
-    });
-  }
-
-  const method = cleanText(req.body && req.body.method, 40);
-  const walletAddress = cleanText(
-    req.body && (req.body.wallet || req.body.address),
-    200
-  );
-  const networkId = cleanText(req.body && req.body.network, 30);
-  const amount = integer(req.body && req.body.amount, 0, 1, 1000000000);
-
-  if (!method || walletAddress.length < 4) {
-    return res.status(400).json({
-      ok: false,
-      error: 'Enter a valid withdrawal method and wallet/account.'
-    });
-  }
-
-  const config = parseWalletConfig();
-  const walletConfig = config[method];
-
-  if (!walletConfig || walletConfig.enabled !== true) {
-    return res.status(400).json({
-      ok: false,
-      error: 'This withdrawal method is unavailable.'
-    });
-  }
-
-  let minimum = decimal(walletConfig.minimum, 0, 0, 1000000000);
-  let feePercent = decimal(walletConfig.feePercent, 0, 0, 100);
-  let networkName = '';
-
-  if (Array.isArray(walletConfig.networks) && walletConfig.networks.length) {
-    const network = walletConfig.networks.find(item =>
-      item.id === networkId && item.enabled === true
-    );
-
-    if (!network) {
-      return res.status(400).json({
-        ok: false,
-        error: 'Select an available withdrawal network.'
-      });
-    }
-
-    minimum = decimal(network.minimum, minimum, 0, 1000000000);
-    feePercent = decimal(network.feePercent, feePercent, 0, 100);
-    networkName = cleanText(network.name || network.id, 80);
-  }
-
-  if (amount < minimum) {
-    return res.status(400).json({
-      ok: false,
-      error: `Minimum withdrawal for ${method} is ${minimum}.`,
-      minimum
-    });
-  }
-
-  const referrals = db.prepare(`
-    SELECT COUNT(*) AS total
-    FROM users
-    WHERE referred_by = ?
-  `).get(req.user.tg_id).total;
-
-  const requiredReferrals = integer(
-    setting('referralRequirement'),
-    1,
-    0,
-    100
+    SET
+      balance=balance+?,
+      energy=energy-?,
+      total_taps=total_taps+?,
+      last_energy_at=?
+    WHERE id=?
+  `).run(
+    reward,
+    taps,
+    taps,
+    now(),
+    user.id
   );
 
-  if (referrals < requiredReferrals) {
-    return res.status(403).json({
-      ok: false,
-      error: `You need ${requiredReferrals} referral(s) before withdrawal.`,
-      referrals,
-      required: requiredReferrals
-    });
-  }
+  recordEarning(user.id, reward, "tap");
 
   /*
-   * IMPORTANT:
-   * The current CoinNova balance is integer app points.
-   * It is not a real USDT balance.
-   *
-   * The fee is calculated for display/request records only.
-   * Automatic blockchain or mobile-money payments are not performed here.
+   * A referral qualifies after the invitee has made
+   * at least 10 taps.
    */
-  const fee = Math.round(amount * feePercent) / 100;
-  const netAmount = Math.max(0, amount - fee);
+  if (user.total_taps + taps >= 10) {
+    const referral = db.prepare(`
+      SELECT *
+      FROM referrals
+      WHERE invited_user_id=? AND qualified=0
+    `).get(user.id);
 
-  try {
-    const withdrawalId = db.transaction(() => {
-      const user = db.prepare(
-        'SELECT balance FROM users WHERE id = ?'
-      ).get(req.user.id);
+    if (referral) {
+      db.prepare(`
+        UPDATE referrals SET qualified=1 WHERE id=?
+      `).run(referral.id);
 
-      if (!user || user.balance < amount) {
-        throw new Error('INSUFFICIENT_BALANCE');
-      }
+      const currentSettings = getSettings();
+      const referralBonus = currentSettings.referralBonus;
 
       db.prepare(`
         UPDATE users
-        SET balance = balance - ?,
-            updated_at = CURRENT_TIMESTAMP
-        WHERE id = ?
-      `).run(amount, req.user.id);
+        SET balance=balance+?
+        WHERE id=?
+      `).run(referralBonus, referral.inviter_id);
 
-      return db.prepare(`
-        INSERT INTO withdrawals
-          (user_id, method, wallet, amount, network, fee, net_amount, asset)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-      `).run(
-        req.user.id,
-        method,
-        walletAddress,
+      recordEarning(
+        referral.inviter_id,
+        referralBonus,
+        "referral_bonus"
+      );
+
+      const perSpin = Math.max(
+        1,
+        Number(currentSettings.referralsPerSpin) || 1
+      );
+
+      const qualified = countQualifiedReferrals(
+        referral.inviter_id
+      );
+
+      const grantRow = db.prepare(`
+        SELECT total_granted
+        FROM spin_grants
+        WHERE inviter_id=?
+      `).get(referral.inviter_id);
+
+      const granted = grantRow?.total_granted || 0;
+      const shouldHave = Math.floor(qualified / perSpin);
+
+      if (
+        currentSettings.spinEnabled &&
+        shouldHave > granted
+      ) {
+        const newSpins = shouldHave - granted;
+
+        db.prepare(`
+          UPDATE users
+          SET spins_available=spins_available+?
+          WHERE id=?
+        `).run(newSpins, referral.inviter_id);
+
+        db.prepare(`
+          INSERT INTO spin_grants(inviter_id, total_granted)
+          VALUES(?, ?)
+          ON CONFLICT(inviter_id)
+          DO UPDATE SET total_granted=excluded.total_granted
+        `).run(referral.inviter_id, shouldHave);
+      }
+    }
+  }
+
+  const updatedUser = refreshEnergy(
+    getUserById(user.id)
+  );
+
+  res.json({
+    user: publicUser(updatedUser),
+    reward
+  });
+});
+
+/* =========================
+   DAILY BONUS
+========================= */
+
+app.post("/api/bonus/daily", auth, requireUser, (req, res) => {
+  const key = "daily_" + req.user.id;
+  const last = getSetting.get(key);
+  const today = new Date().toISOString().slice(0, 10);
+
+  if (last && last.value === today) {
+    return res.status(400).json({
+      error: "Daily bonus already claimed today."
+    });
+  }
+
+  const settings = getSettings();
+
+  setSetting.run(key, today);
+
+  db.prepare(`
+    UPDATE users SET balance=balance+? WHERE id=?
+  `).run(settings.dailyBonus, req.user.id);
+
+  recordEarning(
+    req.user.id,
+    settings.dailyBonus,
+    "daily_bonus"
+  );
+
+  res.json({
+    reward: settings.dailyBonus,
+    user: publicUser(getUserById(req.user.id))
+  });
+});
+
+/* =========================
+   TASK CLAIM
+========================= */
+
+app.post(
+  "/api/tasks/:id/claim",
+  auth,
+  requireUser,
+  (req, res) => {
+    const task = db.prepare(`
+      SELECT *
+      FROM tasks
+      WHERE id=? AND enabled=1
+    `).get(Number(req.params.id));
+
+    if (!task) {
+      return res.status(404).json({
+        error: "Task not found."
+      });
+    }
+
+    /*
+     * This prototype records the claim after the client
+     * visits the URL. Actual social-task verification
+     * requires the platform's verification APIs.
+     */
+    try {
+      db.prepare(`
+        INSERT INTO task_claims
+        (user_id, task_id, claimed_at)
+        VALUES (?, ?, ?)
+      `).run(req.user.id, task.id, now());
+    } catch {
+      return res.status(409).json({
+        error: "Task already claimed."
+      });
+    }
+
+    db.prepare(`
+      UPDATE users SET balance=balance+? WHERE id=?
+    `).run(task.reward, req.user.id);
+
+    recordEarning(req.user.id, task.reward, "task");
+
+    res.json({
+      reward: task.reward,
+      user: publicUser(getUserById(req.user.id))
+    });
+  }
+);
+
+/* =========================
+   LUCKY SPIN
+========================= */
+
+app.post("/api/spin", auth, requireUser, (req, res) => {
+  const settings = getSettings();
+
+  if (!settings.spinEnabled) {
+    return res.status(403).json({
+      error: "Lucky Spin is currently disabled."
+    });
+  }
+
+  const user = getUserById(req.user.id);
+
+  if ((user.spins_available || 0) < 1) {
+    return res.status(400).json({
+      error:
+        "No spins available. Invite qualified friends to earn spins."
+    });
+  }
+
+  const rewards = (settings.spinRewards || [])
+    .map(Number)
+    .filter(value =>
+      Number.isSafeInteger(value) && value >= 0
+    );
+
+  if (!rewards.length) {
+    return res.status(503).json({
+      error: "Spin rewards are not configured."
+    });
+  }
+
+  const reward = rewards[
+    crypto.randomInt(rewards.length)
+  ];
+
+  const transaction = db.transaction(() => {
+    const changed = db.prepare(`
+      UPDATE users
+      SET
+        spins_available=spins_available-1,
+        balance=balance+?
+      WHERE id=? AND spins_available>0
+    `).run(reward, user.id);
+
+    if (!changed.changes) {
+      throw new Error("No spins available.");
+    }
+
+    db.prepare(`
+      INSERT INTO spin_history(user_id, reward, created_at)
+      VALUES (?, ?, ?)
+    `).run(user.id, reward, now());
+
+    recordEarning(user.id, reward, "spin");
+  });
+
+  try {
+    transaction();
+
+    res.json({
+      reward,
+      user: publicUser(getUserById(user.id))
+    });
+  } catch (error) {
+    res.status(400).json({
+      error: error.message
+    });
+  }
+});
+
+/* =========================
+   COMMISSION API
+========================= */
+
+app.get(
+  "/api/commissions",
+  auth,
+  requireUser,
+  (req, res) => {
+    const userId = req.user.id;
+
+    const todayTotal = db.prepare(`
+      SELECT COALESCE(SUM(amount), 0) n
+      FROM commission_payouts
+      WHERE beneficiary_id=?
+      AND created_at>=?
+      AND created_at<?
+    `).get(
+      userId,
+      dayStartBd(),
+      dayStartBd() + 86400000
+    ).n;
+
+    const history = db.prepare(`
+      SELECT
+        day,
+        level,
         amount,
-        networkName,
-        fee,
-        netAmount,
-        'POINTS'
-      ).lastInsertRowid;
-    })();
+        base_amount baseAmount,
+        rate,
+        created_at createdAt
+      FROM commission_payouts
+      WHERE beneficiary_id=?
+      ORDER BY id DESC
+      LIMIT 50
+    `).all(userId);
+
+    const settings = getSettings();
+
+    res.json({
+      today: bdDate(),
+      total: todayTotal,
+      levels: teamStats(userId),
+      history,
+      rates: settings.commissionRates || [
+        10, 5, 3, 2, 1, 1
+      ],
+      enabled: !!settings.commissionEnabled
+    });
+  }
+);
+
+/* =========================
+   WALLET OPTIONS
+========================= */
+
+app.get(
+  "/api/wallet/options",
+  auth,
+  requireUser,
+  (req, res) => {
+    const settings = getSettings();
+
+    res.json({
+      methods: settings.paymentMethods.filter(
+        method => method.enabled
+      ),
+      minWithdraw: settings.minWithdraw,
+      referralRequired: settings.referralRequired
+    });
+  }
+);
+
+/* =========================
+   WITHDRAWAL REQUEST
+========================= */
+
+app.post("/api/withdraw", auth, requireUser, (req, res) => {
+  const settings = getSettings();
+
+  const methodId = cleanText(req.body?.method, 40);
+  const address = cleanText(req.body?.address, 180);
+  const amount = Math.floor(Number(req.body?.amount));
+
+  const method = settings.paymentMethods.find(
+    item => item.id === methodId && item.enabled
+  );
+
+  if (!method) {
+    return res.status(400).json({
+      error: "Choose an available withdrawal method."
+    });
+  }
+
+  if (
+    !Number.isSafeInteger(amount) ||
+    amount < settings.minWithdraw
+  ) {
+    return res.status(400).json({
+      error: `Minimum withdrawal is ${settings.minWithdraw} coins.`
+    });
+  }
+
+  if (address.length < 5) {
+    return res.status(400).json({
+      error: "Enter a valid destination number or wallet address."
+    });
+  }
+
+  if (req.user.balance < amount) {
+    return res.status(400).json({
+      error: "Insufficient balance."
+    });
+  }
+
+  const qualified = countQualifiedReferrals(req.user.id);
+
+  if (qualified < settings.referralRequired) {
+    return res.status(400).json({
+      error:
+        `You need ${settings.referralRequired} qualified referral(s). Current: ${qualified}.`
+    });
+  }
+
+  const transaction = db.transaction(() => {
+    const changed = db.prepare(`
+      UPDATE users
+      SET balance=balance-?
+      WHERE id=? AND balance>=?
+    `).run(amount, req.user.id, amount);
+
+    if (!changed.changes) {
+      throw new Error("Insufficient balance.");
+    }
+
+    return db.prepare(`
+      INSERT INTO withdrawals
+      (
+        user_id,
+        method,
+        address,
+        amount,
+        status,
+        created_at,
+        updated_at
+      )
+      VALUES (?, ?, ?, ?, 'pending', ?, ?)
+    `).run(
+      req.user.id,
+      methodId,
+      address,
+      amount,
+      now(),
+      now()
+    ).lastInsertRowid;
+  });
+
+  try {
+    const id = transaction();
 
     res.json({
       ok: true,
-      withdrawalId,
-      amount,
-      fee,
-      netAmount,
-      message: 'Withdrawal request submitted for admin review.'
+      id,
+      message:
+        "Request sent for admin review. Payment is not automatic.",
+      user: publicUser(getUserById(req.user.id))
     });
   } catch (error) {
-    if (error.message === 'INSUFFICIENT_BALANCE') {
-      return res.status(400).json({
-        ok: false,
-        error: 'Insufficient balance.'
-      });
-    }
-
-    throw error;
+    res.status(400).json({
+      error: error.message
+    });
   }
 });
 
 /* =========================
-   ADMIN LOGIN AND LOGOUT
+   ADMIN API
 ========================= */
 
-app.post('/api/admin/login', adminLimiter, (req, res) => {
-  const password = String(req.body && req.body.password || '');
-
-  if (!ADMIN_PASSWORD || !safeEqual(password, ADMIN_PASSWORD)) {
-    return res.status(401).json({
-      ok: false,
-      error: 'Incorrect admin password.'
-    });
-  }
-
-  const token = newToken();
-
-  db.prepare(`
-    INSERT INTO admin_sessions(token_hash, expires_at)
-    VALUES (?, ?)
-  `).run(
-    hashToken(token),
-    Date.now() + 8 * 60 * 60 * 1000
-  );
-
-  sendSessionCookie(
-    res,
-    'cn_admin',
-    token,
-    8 * 60 * 60 * 1000
-  );
-
-  res.json({
-    ok: true,
-    message: 'Admin login successful.'
-  });
-});
-
-app.post('/api/admin/logout', requireAdmin, (req, res) => {
-  const token = readSignedCookie(req, 'cn_admin');
-
-  if (token) {
-    db.prepare(
-      'DELETE FROM admin_sessions WHERE token_hash = ?'
-    ).run(hashToken(token));
-  }
-
-  res.clearCookie('cn_admin', { path: '/' });
+app.post("/api/admin/login-check", adminAuth, (req, res) => {
   res.json({ ok: true });
 });
 
-/* =========================
-   ADMIN OVERVIEW AND USERS
-========================= */
+app.get("/api/admin/overview", adminAuth, (req, res) => {
+  const counts = {
+    users: db.prepare(`
+      SELECT COUNT(*) n FROM users
+    `).get().n,
 
-app.get('/api/admin/overview', requireAdmin, (req, res) => {
-  const users = db.prepare(
-    'SELECT COUNT(*) AS total FROM users'
-  ).get().total;
+    banned: db.prepare(`
+      SELECT COUNT(*) n
+      FROM users
+      WHERE is_banned=1
+    `).get().n,
 
-  const pendingWithdrawals = db.prepare(`
-    SELECT COUNT(*) AS total
-    FROM withdrawals
-    WHERE status = 'pending'
-  `).get().total;
+    withdrawPending: db.prepare(`
+      SELECT COUNT(*) n
+      FROM withdrawals
+      WHERE status='pending'
+    `).get().n,
 
-  const totalUserBalance = db.prepare(`
-    SELECT COALESCE(SUM(balance), 0) AS total
-    FROM users
-  `).get().total;
+    withdrawTotal: db.prepare(`
+      SELECT COALESCE(SUM(amount), 0) n
+      FROM withdrawals
+    `).get().n,
 
-  res.json({
-    ok: true,
-    stats: {
-      users,
-      pendingWithdrawals,
-      totalUserBalance
-    },
-    settings: publicSettings()
-  });
-});
+    coins: db.prepare(`
+      SELECT COALESCE(SUM(balance), 0) n
+      FROM users
+    `).get().n,
 
-app.get('/api/admin/users', requireAdmin, (req, res) => {
-  const page = integer(req.query.page, 1, 1, 100000);
-  const limit = integer(req.query.limit, 50, 1, 100);
+    taps: db.prepare(`
+      SELECT COALESCE(SUM(total_taps), 0) n
+      FROM users
+    `).get().n
+  };
+
+  const withdrawals = db.prepare(`
+    SELECT
+      w.*,
+      u.name userName,
+      u.tg_id tgId
+    FROM withdrawals w
+    JOIN users u ON u.id=w.user_id
+    ORDER BY w.id DESC
+    LIMIT 100
+  `).all();
 
   const users = db.prepare(`
     SELECT
       id,
-      tg_id AS telegramId,
-      first_name AS firstName,
-      last_name AS lastName,
+      tg_id,
+      name,
       username,
-      photo_url AS photoUrl,
       balance,
-      total_mined AS totalMined,
-      referrals,
-      created_at AS createdAt
+      energy,
+      created_at,
+      is_banned,
+      total_taps
     FROM users
     ORDER BY id DESC
-    LIMIT ? OFFSET ?
-  `).all(limit, (page - 1) * limit);
-
-  res.json({ ok: true, page, limit, users });
-});
-
-/* =========================
-   ADMIN WITHDRAWAL REQUESTS
-========================= */
-
-app.get('/api/admin/withdrawals', requireAdmin, (req, res) => {
-  const status = cleanText(req.query.status, 20);
-
-  const allowedStatuses = ['pending', 'approved', 'paid', 'rejected'];
-
-  if (status && !allowedStatuses.includes(status)) {
-    return res.status(400).json({
-      ok: false,
-      error: 'Invalid withdrawal status filter.'
-    });
-  }
-
-  const query = `
-    SELECT
-      w.*,
-      u.tg_id AS telegramId,
-      u.username,
-      u.first_name AS firstName,
-      u.last_name AS lastName
-    FROM withdrawals w
-    JOIN users u ON u.id = w.user_id
-    ${status ? 'WHERE w.status = ?' : ''}
-    ORDER BY w.id DESC
     LIMIT 200
-  `;
+  `).all();
 
-  const withdrawals = status
-    ? db.prepare(query).all(status)
-    : db.prepare(query).all();
+  counts.spinAvailable = db.prepare(`
+    SELECT COALESCE(SUM(spins_available), 0) n
+    FROM users
+  `).get().n;
+
+  counts.commissionToday = db.prepare(`
+    SELECT COALESCE(SUM(amount), 0) n
+    FROM commission_payouts
+    WHERE created_at>=? AND created_at<?
+  `).get(
+    dayStartBd(),
+    dayStartBd() + 86400000
+  ).n;
 
   res.json({
-    ok: true,
-    withdrawals
+    counts,
+    settings: getSettings(),
+    tasks: db.prepare(`
+      SELECT * FROM tasks ORDER BY id DESC
+    `).all(),
+    withdrawals,
+    users
   });
 });
 
-app.post('/api/admin/withdrawals/:id/status', requireAdmin, (req, res) => {
-  const id = integer(req.params.id, 0, 1, 2147483647);
-  const status = cleanText(req.body && req.body.status, 20);
-  const adminNote = cleanText(req.body && req.body.adminNote, 500);
+/* Update app and spin/commission settings */
 
-  const allowedStatuses = ['pending', 'approved', 'paid', 'rejected'];
+app.put(
+  "/api/admin/settings",
+  adminAuth,
+  (req, res) => {
+    const oldSettings = getSettings();
+    const incoming = req.body || {};
+    const next = { ...oldSettings };
 
-  if (!allowedStatuses.includes(status)) {
-    return res.status(400).json({
-      ok: false,
-      error: 'Invalid withdrawal status.'
-    });
-  }
-
-  const existing = db.prepare(
-    'SELECT * FROM withdrawals WHERE id = ?'
-  ).get(id);
-
-  if (!existing) {
-    return res.status(404).json({
-      ok: false,
-      error: 'Withdrawal request not found.'
-    });
-  }
-
-  if (existing.status === 'paid' && status !== 'paid') {
-    return res.status(400).json({
-      ok: false,
-      error: 'A paid withdrawal cannot be changed.'
-    });
-  }
-
-  if (existing.status === 'rejected' && status !== 'rejected') {
-    return res.status(400).json({
-      ok: false,
-      error: 'A rejected withdrawal cannot be reopened.'
-    });
-  }
-
-  db.transaction(() => {
-    if (status === 'rejected' && existing.status !== 'rejected') {
-      db.prepare(`
-        UPDATE users
-        SET balance = balance + ?,
-            updated_at = CURRENT_TIMESTAMP
-        WHERE id = ?
-      `).run(existing.amount, existing.user_id);
-    }
-
-    db.prepare(`
-      UPDATE withdrawals
-      SET status = ?,
-          admin_note = ?,
-          updated_at = CURRENT_TIMESTAMP
-      WHERE id = ?
-    `).run(status, adminNote, id);
-  })();
-
-  res.json({
-    ok: true,
-    message: 'Withdrawal status updated.'
-  });
-});
-
-/* =========================
-   ADMIN APP SETTINGS
-========================= */
-
-app.put('/api/admin/settings', requireAdmin, (req, res) => {
-  const input = req.body && req.body.settings;
-
-  if (!input || typeof input !== 'object' || Array.isArray(input)) {
-    return res.status(400).json({
-      ok: false,
-      error: 'A settings object is required.'
-    });
-  }
-
-  const numericKeys = [
-    'miningReward',
-    'dailyReward',
-    'referralReward',
-    'minimumWithdrawal',
-    'referralRequirement'
-  ];
-
-  const booleanKeys = [
-    'miningEnabled',
-    'registrationEnabled',
-    'withdrawalEnabled',
-    'maintenanceMode'
-  ];
-
-  const textKeys = ['appName', 'welcomeText'];
-  const urlKeys = ['supportUrl', 'telegramUrl'];
-
-  for (const key of numericKeys) {
-    if (!Object.prototype.hasOwnProperty.call(input, key)) continue;
-
-    const max = key === 'referralRequirement'
-      ? 100
-      : 1000000000;
-
-    setSetting(
-      key,
-      String(integer(input[key], 0, 0, max))
-    );
-  }
-
-  for (const key of booleanKeys) {
-    if (!Object.prototype.hasOwnProperty.call(input, key)) continue;
-
-    const value = input[key] === true || input[key] === 'true';
-
-    setSetting(key, value ? 'true' : 'false');
-  }
-
-  for (const key of textKeys) {
-    if (!Object.prototype.hasOwnProperty.call(input, key)) continue;
-
-    setSetting(
-      key,
-      cleanText(input[key], key === 'welcomeText' ? 2000 : 100)
-    );
-  }
-
-  for (const key of urlKeys) {
-    if (!Object.prototype.hasOwnProperty.call(input, key)) continue;
-
-    setSetting(key, validHttpUrl(input[key]));
-  }
-
-  res.json({
-    ok: true,
-    settings: publicSettings()
-  });
-});
-
-/* =========================
-   ADMIN WALLET MANAGEMENT
-========================= */
-
-/*
- * GET /api/admin/wallets
- * Returns wallet configuration for the Admin Panel.
- */
-app.get('/api/admin/wallets', requireAdmin, (req, res) => {
-  res.json({
-    ok: true,
-    wallets: publicWalletConfig()
-  });
-});
-
-/*
- * PUT /api/admin/wallets
- *
- * Example request body:
- * {
- *   "wallets": {
- *     "USDT": {
- *       "enabled": true,
- *       "name": "Binance USDT",
- *       "logo": "https://example.com/logo.png",
- *       "description": "Withdraw crypto",
- *       "feePercent": 10,
- *       "minimum": 10,
- *       "networks": [
- *         {
- *           "id": "TRX",
- *           "name": "TRX (TRC20)",
- *           "enabled": true,
- *           "feePercent": 10,
- *           "minimum": 10
- *         }
- *       ]
- *     }
- *   }
- * }
- */
-app.put('/api/admin/wallets', requireAdmin, (req, res) => {
-  const input = req.body && req.body.wallets;
-
-  if (!input || typeof input !== 'object' || Array.isArray(input)) {
-    return res.status(400).json({
-      ok: false,
-      error: 'A wallets object is required.'
-    });
-  }
-
-  const allowedWallets = ['USDT', 'bKash', 'Nagad', 'Rocket'];
-  const current = parseWalletConfig();
-
-  for (const method of allowedWallets) {
-    if (!Object.prototype.hasOwnProperty.call(input, method)) continue;
-
-    const item = input[method];
-
-    if (!item || typeof item !== 'object' || Array.isArray(item)) {
-      return res.status(400).json({
-        ok: false,
-        error: `Invalid wallet configuration: ${method}`
-      });
-    }
-
-    const networks = [];
-
-    if (Array.isArray(item.networks)) {
-      if (item.networks.length > 30) {
-        return res.status(400).json({
-          ok: false,
-          error: 'Too many networks.'
-        });
-      }
-
-      const networkIds = new Set();
-
-      for (const network of item.networks) {
-        const id = cleanText(network && network.id, 30);
-        const name = cleanText(network && network.name, 80);
-
-        if (!id || !name) {
-          return res.status(400).json({
-            ok: false,
-            error: `Each ${method} network needs an ID and name.`
-          });
-        }
-
-        if (networkIds.has(id)) {
-          return res.status(400).json({
-            ok: false,
-            error: `Duplicate network ID: ${id}`
-          });
-        }
-
-        networkIds.add(id);
-
-        networks.push({
-          id,
-          name,
-          description: cleanText(network.description, 200),
-          enabled: network.enabled === true,
-          feePercent: decimal(network.feePercent, 0, 0, 100),
-          minimum: decimal(network.minimum, 0, 0, 1000000000)
-        });
+    for (const key of ["appName", "tagline"]) {
+      if (typeof incoming[key] === "string") {
+        next[key] = cleanText(incoming[key], 80);
       }
     }
 
-    current[method] = {
-      enabled: item.enabled === true,
-      name: cleanText(item.name, 80) || method,
-      logo: validHttpUrl(item.logo || ''),
-      description: cleanText(item.description, 500),
-      feePercent: decimal(item.feePercent, 0, 0, 100),
-      minimum: decimal(item.minimum, 0, 0, 1000000000),
-      networks
-    };
+    const numericKeys = [
+      "tapReward",
+      "maxEnergy",
+      "energyPerSecond",
+      "dailyBonus",
+      "minWithdraw",
+      "referralRequired",
+      "referralBonus",
+      "referralsPerSpin"
+    ];
+
+    for (const key of numericKeys) {
+      if (Number.isFinite(Number(incoming[key]))) {
+        next[key] = Math.max(
+          0,
+          Math.min(
+            100000000,
+            Math.floor(Number(incoming[key]))
+          )
+        );
+      }
+    }
+
+    if (typeof incoming.spinEnabled === "boolean") {
+      next.spinEnabled = incoming.spinEnabled;
+    }
+
+    if (typeof incoming.commissionEnabled === "boolean") {
+      next.commissionEnabled = incoming.commissionEnabled;
+    }
+
+    if (Array.isArray(incoming.spinRewards)) {
+      const rewards = incoming.spinRewards
+        .map(Number)
+        .filter(value =>
+          Number.isSafeInteger(value) &&
+          value >= 0 &&
+          value <= 100000000
+        )
+        .slice(0, 20);
+
+      if (rewards.length) {
+        next.spinRewards = rewards;
+      }
+    }
+
+    if (Array.isArray(incoming.commissionRates)) {
+      next.commissionRates = Array.from(
+        { length: 6 },
+        (_, index) => Math.max(
+          0,
+          Math.min(
+            100,
+            Number(incoming.commissionRates[index]) || 0
+          )
+        )
+      );
+    }
+
+    if (typeof incoming.maintenance === "boolean") {
+      next.maintenance = incoming.maintenance;
+    }
+
+    if (typeof incoming.sound === "boolean") {
+      next.sound = incoming.sound;
+    }
+
+    if (Array.isArray(incoming.paymentMethods)) {
+      next.paymentMethods = incoming.paymentMethods
+        .slice(0, 30)
+        .map(method => ({
+          id: cleanText(method.id, 40).replace(
+            /[^a-zA-Z0-9_-]/g,
+            ""
+          ),
+          name: cleanText(method.name, 60),
+          type: method.type === "crypto"
+            ? "crypto"
+            : "mobile",
+          enabled: !!method.enabled,
+          logo: validUrl(method.logo)
+            ? method.logo
+            : ""
+        }))
+        .filter(method => method.id && method.name);
+    }
+
+    saveSettings(next);
+
+    res.json({ settings: next });
   }
-
-  setSetting('walletConfig', JSON.stringify(current));
-
-  res.json({
-    ok: true,
-    wallets: publicWalletConfig(),
-    message: 'Wallet settings saved.'
-  });
-});
+);
 
 /* =========================
    ADMIN TASK MANAGEMENT
 ========================= */
 
-app.get('/api/admin/tasks', requireAdmin, (req, res) => {
-  const tasks = db.prepare(
-    'SELECT * FROM tasks ORDER BY id DESC'
-  ).all();
+app.post("/api/admin/tasks", adminAuth, (req, res) => {
+  const title = cleanText(req.body?.title, 100);
+  const platform = cleanText(req.body?.platform, 40);
+  const url = cleanText(req.body?.url, 500);
+  const reward = Math.floor(Number(req.body?.reward));
 
-  res.json({ ok: true, tasks });
-});
-
-app.post('/api/admin/tasks', requireAdmin, (req, res) => {
-  const title = cleanText(req.body && req.body.title, 120);
-  const description = cleanText(req.body && req.body.description, 500);
-  const url = validHttpUrl(req.body && req.body.url);
-  const reward = integer(req.body && req.body.reward, 0, 0, 100000000);
-  const active = req.body && req.body.active === false ? 0 : 1;
-
-  if (!title) {
+  if (
+    !title ||
+    !platform ||
+    !validUrl(url) ||
+    !Number.isSafeInteger(reward) ||
+    reward < 0 ||
+    reward > 10000000
+  ) {
     return res.status(400).json({
-      ok: false,
-      error: 'Task title is required.'
+      error:
+        "Provide a title, platform, valid http(s) URL and reward."
     });
   }
 
-  const result = db.prepare(`
-    INSERT INTO tasks(title, description, url, reward, active)
-    VALUES (?, ?, ?, ?, ?)
-  `).run(title, description, url, reward, active);
+  const id = db.prepare(`
+    INSERT INTO tasks
+    (title, platform, url, reward, enabled, created_at)
+    VALUES (?, ?, ?, ?, 1, ?)
+  `).run(
+    title,
+    platform,
+    url,
+    reward,
+    now()
+  ).lastInsertRowid;
 
-  res.json({
-    ok: true,
-    task: db.prepare(
-      'SELECT * FROM tasks WHERE id = ?'
-    ).get(result.lastInsertRowid)
-  });
+  res.json({ id });
 });
 
-app.put('/api/admin/tasks/:id', requireAdmin, (req, res) => {
-  const id = integer(req.params.id, 0, 1, 2147483647);
+app.patch(
+  "/api/admin/tasks/:id",
+  adminAuth,
+  (req, res) => {
+    const task = db.prepare(`
+      SELECT * FROM tasks WHERE id=?
+    `).get(Number(req.params.id));
 
-  const existing = db.prepare(
-    'SELECT * FROM tasks WHERE id = ?'
-  ).get(id);
+    if (!task) {
+      return res.status(404).json({
+        error: "Task not found."
+      });
+    }
 
-  if (!existing) {
-    return res.status(404).json({
-      ok: false,
-      error: 'Task not found.'
-    });
+    const title = cleanText(
+      req.body?.title ?? task.title,
+      100
+    );
+
+    const platform = cleanText(
+      req.body?.platform ?? task.platform,
+      40
+    );
+
+    const url = cleanText(
+      req.body?.url ?? task.url,
+      500
+    );
+
+    const reward = Math.floor(
+      Number(req.body?.reward ?? task.reward)
+    );
+
+    const enabled =
+      req.body?.enabled === undefined
+        ? task.enabled
+        : (req.body.enabled ? 1 : 0);
+
+    if (
+      !title ||
+      !platform ||
+      !validUrl(url) ||
+      !Number.isSafeInteger(reward) ||
+      reward < 0
+    ) {
+      return res.status(400).json({
+        error: "Invalid task data."
+      });
+    }
+
+    db.prepare(`
+      UPDATE tasks
+      SET title=?, platform=?, url=?, reward=?, enabled=?
+      WHERE id=?
+    `).run(
+      title,
+      platform,
+      url,
+      reward,
+      enabled,
+      task.id
+    );
+
+    res.json({ ok: true });
   }
+);
 
-  const input = req.body || {};
+app.delete(
+  "/api/admin/tasks/:id",
+  adminAuth,
+  (req, res) => {
+    const taskId = Number(req.params.id);
 
-  const title = Object.prototype.hasOwnProperty.call(input, 'title')
-    ? cleanText(input.title, 120)
-    : existing.title;
+    db.prepare(`
+      DELETE FROM task_claims WHERE task_id=?
+    `).run(taskId);
 
-  const description = Object.prototype.hasOwnProperty.call(input, 'description')
-    ? cleanText(input.description, 500)
-    : existing.description;
+    db.prepare(`
+      DELETE FROM tasks WHERE id=?
+    `).run(taskId);
 
-  const url = Object.prototype.hasOwnProperty.call(input, 'url')
-    ? validHttpUrl(input.url)
-    : existing.url;
-
-  const reward = Object.prototype.hasOwnProperty.call(input, 'reward')
-    ? integer(input.reward, existing.reward, 0, 100000000)
-    : existing.reward;
-
-  const active = Object.prototype.hasOwnProperty.call(input, 'active')
-    ? (input.active === true || input.active === 'true' ? 1 : 0)
-    : existing.active;
-
-  if (!title) {
-    return res.status(400).json({
-      ok: false,
-      error: 'Task title is required.'
-    });
+    res.json({ ok: true });
   }
-
-  db.prepare(`
-    UPDATE tasks
-    SET title = ?,
-        description = ?,
-        url = ?,
-        reward = ?,
-        active = ?
-    WHERE id = ?
-  `).run(title, description, url, reward, active, id);
-
-  res.json({ ok: true });
-});
-
-app.delete('/api/admin/tasks/:id', requireAdmin, (req, res) => {
-  const id = integer(req.params.id, 0, 1, 2147483647);
-
-  const result = db.prepare(
-    'DELETE FROM tasks WHERE id = ?'
-  ).run(id);
-
-  if (!result.changes) {
-    return res.status(404).json({
-      ok: false,
-      error: 'Task not found.'
-    });
-  }
-
-  res.json({ ok: true });
-});
+);
 
 /* =========================
-   STATIC FILES
+   ADMIN WITHDRAWAL MANAGEMENT
 ========================= */
 
-const publicDir = path.join(__dirname, 'public');
+app.patch(
+  "/api/admin/withdrawals/:id",
+  adminAuth,
+  (req, res) => {
+    const status = String(req.body?.status || "");
 
-app.use(express.static(publicDir, {
-  index: 'index.html',
-  extensions: ['html']
-}));
+    if (
+      !["pending", "approved", "paid", "rejected"]
+        .includes(status)
+    ) {
+      return res.status(400).json({
+        error: "Invalid status."
+      });
+    }
 
-app.get('/admin', (req, res) => {
-  res.sendFile(path.join(publicDir, 'Admin.html'));
-});
+    const txid = cleanText(req.body?.txid, 160);
+    const note = cleanText(req.body?.note, 250);
 
-app.get('/admin/', (req, res) => {
-  res.sendFile(path.join(publicDir, 'Admin.html'));
-});
+    const withdrawal = db.prepare(`
+      SELECT * FROM withdrawals WHERE id=?
+    `).get(Number(req.params.id));
 
-app.use((req, res) => {
-  res.status(404).json({
-    ok: false,
-    error: 'Not found. Ensure index.html and Admin.html are inside the public folder.'
-  });
-});
+    if (!withdrawal) {
+      return res.status(404).json({
+        error: "Request not found."
+      });
+    }
 
-/* =========================
-   ERROR HANDLER
-========================= */
+    const transaction = db.transaction(() => {
+      if (
+        status === "rejected" &&
+        withdrawal.status !== "rejected" &&
+        withdrawal.status !== "paid"
+      ) {
+        db.prepare(`
+          UPDATE users
+          SET balance=balance+?
+          WHERE id=?
+        `).run(
+          withdrawal.amount,
+          withdrawal.user_id
+        );
+      }
 
-app.use((error, req, res, next) => {
-  console.error('Request failed:', error.message);
+      db.prepare(`
+        UPDATE withdrawals
+        SET
+          status=?,
+          txid=?,
+          note=?,
+          updated_at=?
+        WHERE id=?
+      `).run(
+        status,
+        txid,
+        note,
+        now(),
+        withdrawal.id
+      );
+    });
 
-  if (res.headersSent) {
-    return next(error);
+    transaction();
+
+    res.json({ ok: true });
   }
-
-  res.status(500).json({
-    ok: false,
-    error: 'Internal server error.'
-  });
-});
+);
 
 /* =========================
-   START SERVER
+   ADMIN USER MANAGEMENT
 ========================= */
 
-const server = app.listen(PORT, '0.0.0.0', () => {
-  console.log(`CoinNova server listening on port ${PORT}`);
+app.patch(
+  "/api/admin/users/:id",
+  adminAuth,
+  (req, res) => {
+    const user = getUserById(
+      Number(req.params.id)
+    );
+
+    if (!user) {
+      return res.status(404).json({
+        error: "User not found."
+      });
+    }
+
+    const balance =
+      req.body?.balance === undefined
+        ? user.balance
+        : Math.floor(Number(req.body.balance));
+
+    if (
+      !Number.isSafeInteger(balance) ||
+      balance < 0 ||
+      balance > 1e12
+    ) {
+      return res.status(400).json({
+        error: "Invalid balance."
+      });
+    }
+
+    const banned =
+      req.body?.banned === undefined
+        ? user.is_banned
+        : (req.body.banned ? 1 : 0);
+
+    db.prepare(`
+      UPDATE users
+      SET balance=?, is_banned=?
+      WHERE id=?
+    `).run(balance, banned, user.id);
+
+    res.json({ ok: true });
+  }
+);
+
+/* =========================
+   FALLBACK / START SERVER
+========================= */
+
+app.get("*", (req, res) => {
+  res.sendFile(
+    path.join(__dirname, "public", "index.html")
+  );
 });
 
-function shutdown() {
-  server.close(() => {
-    try {
-      db.close();
-    } catch {}
-
-    process.exit(0);
-  });
-}
-
-process.on('SIGTERM', shutdown);
-process.on('SIGINT', shutdown);
+app.listen(PORT, () => {
+  console.log(`CoinNova server listening on ${PORT}`);
+});
