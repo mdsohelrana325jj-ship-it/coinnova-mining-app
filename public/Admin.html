@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<meta name="theme-color" content="#0b1020">
+<title>CoinNova • Admin Panel</title>
+<style>
+:root{
+  --bg:#0b1020;--card:#151d32;--card2:#1d2942;
+  --purple:#865cff;--cyan:#38e4db;--gold:#ffd76a;
+  --text:#f5f7ff;--muted:#a6b0c8;--line:#303a54;
+  --green:#46e6a0;--red:#ff617b
+}
+*{box-sizing:border-box}
+body{margin:0;background:radial-gradient(ellipse at top,#222348,#0b1020 60%);color:var(--text);font-family:system-ui,-apple-system,Arial,sans-serif;min-height:100vh}
+button,input,select,textarea{font:inherit}
+button{cursor:pointer}
+.app{max-width:1000px;margin:auto;padding:20px 14px 50px}
+header{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:22px}
+.brand{font-weight:950;font-size:22px;display:flex;align-items:center;gap:10px}
+.logo{width:42px;height:42px;display:grid;place-items:center;border-radius:14px;background:linear-gradient(135deg,#a58aff,#6744e9);font-size:24px}
+.badge{font-size:10px;letter-spacing:1px;padding:5px 9px;background:#2c2452;color:#cdbfff;border:1px solid #4c3c7e;border-radius:20px}
+.card{background:linear-gradient(145deg,#19243c,#121a2d);border:1px solid #ffffff10;border-radius:18px;padding:18px;margin:13px 0}
+h2{font-size:17px;margin:0 0 16px}
+h3{font-size:14px;margin:0 0 10px}
+.muted{color:var(--muted);font-size:12px;line-height:1.6}
+.grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.stat{background:#0c1425;border:1px solid var(--line);border-radius:14px;padding:14px;overflow-wrap:anywhere}
+.stat span{font-size:11px;color:var(--muted)}
+.stat strong{display:block;font-size:23px;margin-top:6px}
+label{font-size:12px;color:var(--muted);display:block;margin:10px 0 5px}
+input,select,textarea{width:100%;padding:11px 12px;border:1px solid #34415e;background:#0b1324;color:white;border-radius:11px;outline:none}
+input:focus,select:focus,textarea:focus{border-color:#9b81ff}
+textarea{min-height:85px;resize:vertical}
+button{border:0}
+.btn{padding:11px 14px;background:linear-gradient(100deg,#8a61ff,#6544e7);color:white;border-radius:11px;font-weight:800}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.btn.secondary{background:#293550}
+.btn.green{background:#176f53}
+.btn.red{background:#592a3a;color:#ffcad3}
+.btn.gold{background:linear-gradient(100deg,#ffe28e,#f2b73c);color:#342305}
+.btn.full{width:100%;margin-top:14px}
+.formgrid{display:grid;grid-template-columns:1fr 1fr;gap:0 12px}
+.switchrow{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--line)}
+.switchrow:last-child{border-bottom:0}
+.switchrow label{margin:0;color:var(--text);font-size:13px}
+.toggle{width:44px;height:25px;position:relative;flex:0 0 44px}
+.toggle input{display:none}
+.track{position:absolute;inset:0;border-radius:20px;background:#3b455d;transition:.2s}
+.track:before{content:"";position:absolute;width:19px;height:19px;left:3px;top:3px;border-radius:50%;background:#fff;transition:.2s}
+.toggle input:checked+.track{background:#7755f5}
+.toggle input:checked+.track:before{transform:translateX(19px)}
+.tabs{display:flex;gap:8px;overflow-x:auto;padding-bottom:7px;margin:10px 0}
+.tab{flex:0 0 auto;padding:10px 13px;background:#19243b;color:#aeb9d2;border:1px solid #303b54;border-radius:11px;font-size:12px;font-weight:800}
+.tab.active{background:#34275e;color:#d9ceff;border-color:#7456c9}
+.panel{display:none}.panel.active{display:block}
+.row{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;padding:13px 0;border-bottom:1px solid var(--line)}
+.row:last-child{border-bottom:0}
+.rowinfo{min-width:0;overflow-wrap:anywhere}
+.rowtitle{font-size:13px;font-weight:800}
+.rowdesc{font-size:11px;color:var(--muted);margin-top:5px;line-height:1.5}
+.actions{display:flex;flex-wrap:wrap;gap:6px;justify-content:flex-end}
+.small{padding:7px 9px;border-radius:8px;font-size:11px;font-weight:800;background:#30405e;color:white}
+.small.purple{background:#6044c8}.small.green{background:#176f53}.small.red{background:#592a3a}
+.notice{padding:11px 12px;border:1px solid #384665;background:#1a2841;color:#c4d0e9;border-radius:11px;font-size:12px;line-height:1.5;margin:10px 0}
+.toast{display:none;position:fixed;z-index:20;top:15px;left:50%;transform:translateX(-50%);background:#273550;border:1px solid #4b5b7b;border-radius:12px;padding:11px 15px;max-width:92%;font-size:13px}
+.login{max-width:410px;margin:12vh auto}
+.hidden{display:none!important}
+@media(max-width:520px){.grid{grid-template-columns:1fr 1fr}.stat strong{font-size:19px}.formgrid{grid-template-columns:1fr}.app{padding-left:11px;padding-right:11px}.card{padding:14px}.brand{font-size:19px}}
+</style>
+</head>
+<body>
+<div class="toast" id="toast"></div>
+<div class="app">
+<header>
+  <div class="brand"><div class="logo">₵</div><div>CoinNova<div class="muted">ADMIN CONTROL CENTER</div></div></div>
+  <span class="badge">ADMIN</span>
+</header>
+
+<section id="loginSection" class="card login">
+  <h2>🔐 Admin Login</h2>
+  <p class="muted">Enter the ADMIN_PASSWORD configured in your hosting environment.</p>
+  <form id="loginForm">
+    <label for="adminPassword">Admin Password</label>
+    <input id="adminPassword" type="password" required autocomplete="current-password" placeholder="Enter admin password">
+    <button class="btn full" type="submit">Secure Login</button>
+  </form>
+</section>
+
+<section id="dashboard" class="hidden">
+  <div class="grid">
+    <div class="stat"><span>Total Users</span><strong id="totalUsers">0</strong></div>
+    <div class="stat"><span>Pending Withdrawals</span><strong id="pendingCount">0</strong></div>
+    <div class="stat"><span>Total User Points</span><strong id="totalBalance">0</strong></div>
+  </div>
+
+  <div class="tabs">
+    <button class="tab active" data-tab="settings">⚙️ Settings</button>
+    <button class="tab" data-tab="tasks">🎯 Tasks</button>
+    <button class="tab" data-tab="withdrawals">💳 Withdrawals</button>
+    <button class="tab" data-tab="users">👥 Users</button>
+  </div>
+
+  <section class="panel active" id="panel-settings">
+    <div class="card">
+      <h2>⚙️ App Settings</h2>
+      <p class="muted">These settings are stored in the server database.</p>
+      <form id="settingsForm">
+        <label for="appName">App Name</label>
+        <input id="appName" maxlength="100" required>
+
+        <label for="welcomeText">Welcome Text</label>
+        <textarea id="welcomeText" maxlength="2000"></textarea>
+
+        <div class="formgrid">
+          <div><label for="miningReward">Reward per Tap</label><input id="miningReward" type="number" min="0" step="1"></div>
+          <div><label for="dailyReward">Daily Reward</label><input id="dailyReward" type="number" min="0" step="1"></div>
+          <div><label for="referralReward">Referral Reward</label><input id="referralReward" type="number" min="0" step="1"></div>
+          <div><label for="minimumWithdrawal">Minimum Withdrawal</label><input id="minimumWithdrawal" type="number" min="0" step="1"></div>
+          <div><label for="referralRequirement">Required Referrals</label><input id="referralRequirement" type="number" min="0" max="100" step="1"></div>
+          <div><label for="supportUrl">Support URL</label><input id="supportUrl" type="url" placeholder="https://t.me/your_support"></div>
+        </div>
+
+        <label for="telegramUrl">Official Telegram URL</label>
+        <input id="telegramUrl" type="url" placeholder="https://t.me/your_channel">
+
+        <div class="switchrow">
+          <label for="miningEnabled">Mining Enabled</label>
+          <label class="toggle"><input id="miningEnabled" type="checkbox"><span class="track"></span></label>
+        </div>
+        <div class="switchrow">
+          <label for="registrationEnabled">New Registration Enabled</label>
+          <label class="toggle"><input id="registrationEnabled" type="checkbox"><span class="track"></span></label>
+        </div>
+        <div class="switchrow">
+          <label for="withdrawalEnabled">Withdrawal Requests Enabled</label>
+          <label class="toggle"><input id="withdrawalEnabled" type="checkbox"><span class="track"></span></label>
+        </div>
+        <div class="switchrow">
+          <label for="maintenanceMode">Maintenance Mode</label>
+          <label class="toggle"><input id="maintenanceMode" type="checkbox"><span class="track"></span></label>
+        </div>
+        <button class="btn full" type="submit">💾 Save Settings</button>
+      </form>
+    </div>
+    <div class="card">
+      <h2>🛡️ Session</h2>
+      <p class="muted">Log out when you finish managing the app.</p>
+      <button class="btn red" id="logoutButton">Logout Admin</button>
+    </div>
+  </section>
+
+  <section class="panel" id="panel-tasks">
+    <div class="card">
+      <h2>➕ Add New Task</h2>
+      <form id="taskForm">
+        <label for="taskTitle">Task Title</label><input id="taskTitle" required maxlength="120">
+        <label for="taskDescription">Description</label><textarea id="taskDescription" maxlength="500"></textarea>
+        <label for="taskUrl">Task URL (optional)</label><input id="taskUrl" type="url" placeholder="https://example.com">
+        <label for="taskReward">Reward Points</label><input id="taskReward" type="number" min="0" step="1" value="100" required>
+        <div class="switchrow"><label for="taskActive">Task Active</label><label class="toggle"><input id="taskActive" type="checkbox" checked><span class="track"></span></label></div>
+        <button class="btn full" type="submit">Create Task</button>
+      </form>
+    </div>
+    <div class="card"><h2>📋 Existing Tasks</h2><div id="taskAdminList" class="muted">Loading…</div></div>
+  </section>
+
+  <section class="panel" id="panel-withdrawals">
+    <div class="card">
+      <h2>💳 Withdrawal Requests</h2>
+      <div class="formgrid">
+        <div><label for="withdrawFilter">Filter by Status</label>
+          <select id="withdrawFilter">
+            <option value="">All requests</option>
+            <option value="pending">Pending</option>
+            <option value="approved">Approved</option>
+            <option value="paid">Paid</option>
+            <option value="rejected">Rejected</option>
+          </select>
+        </div>
+        <div style="display:flex;align-items:end"><button class="btn full" id="refreshWithdrawals" type="button">Refresh</button></div>
+      </div>
+      <div class="notice">Changing a request to Paid only updates its status. It does not transfer real money.</div>
+      <div id="withdrawAdminList" class="muted">Loading…</div>
+    </div>
+  </section>
+
+  <section class="panel" id="panel-users">
+    <div class="card">
+      <h2>👥 Registered Users</h2>
+      <button class="btn secondary" id="refreshUsers" type="button">Refresh Users</button>
+      <div id="userAdminList" class="muted" style="margin-top:12px">Loading…</div>
+    </div>
+  </section>
+</section>
+</div>
+
+<script>
+(() => {
+'use strict';
+const $=id=>document.getElementById(id);
+function toast(msg){
+  const t=$('toast');t.textContent=msg;t.style.display='block';
+  clearTimeout(toast.timer);toast.timer=setTimeout(()=>t.style.display='none',3200);
+}
+async function api(url,options={}){
+  const r=await fetch(url,{
+    credentials:'same-origin',
+    ...options,
+    headers:{'Content-Type':'application/json',...(options.headers||{})}
+  });
+  let data;
+  try{data=await r.json()}catch{throw new Error('Invalid server response.')}
+  if(!r.ok||data.ok===false)throw new Error(data.error||`Request failed (${r.status})`);
+  return data;
+}
+function esc(value){
+  return String(value??'').replace(/[&<>"']/g,c=>({
+    '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
+  })[c]);
+}
+function num(value){return Number(value||0).toLocaleString()}
+function showDashboard(){
+  $('loginSection').classList.add('hidden');
+  $('dashboard').classList.remove('hidden');
+}
+function showLogin(){
+  $('dashboard').classList.add('hidden');
+  $('loginSection').classList.remove('hidden');
+}
+async function loginCheck(){
+  try{await loadOverview();showDashboard();await loadSettings();await refreshAll();}
+  catch{showLogin();}
+}
+async function loadOverview(){
+  const d=await api('/api/admin/overview');
+  $('totalUsers').textContent=num(d.stats.users);
+  $('pendingCount').textContent=num(d.stats.pendingWithdrawals);
+  $('totalBalance').textContent=num(d.stats.totalUserBalance);
+}
+function fillSettings(s){
+  const keys=['appName','welcomeText','miningReward','dailyReward','referralReward','minimumWithdrawal','referralRequirement','supportUrl','telegramUrl'];
+  keys.forEach(k=>$(k).value=s[k]??'');
+  ['miningEnabled','registrationEnabled','withdrawalEnabled','maintenanceMode']
+    .forEach(k=>$(k).checked=!!s[k]);
+}
+async function loadSettings(){
+  const d=await api('/api/admin/overview');
+  fillSettings(d.settings);
+}
+async function saveSettings(e){
+  e.preventDefault();
+  const settings={
+    appName:$('appName').value.trim(),
+    welcomeText:$('welcomeText').value,
+    miningReward:Number($('miningReward').value),
+    dailyReward:Number($('dailyReward').value),
+    referralReward:Number($('referralReward').value),
+    minimumWithdrawal:Number($('minimumWithdrawal').value),
+    referralRequirement:Number($('referralRequirement').value),
+    supportUrl:$('supportUrl').value.trim(),
+    telegramUrl:$('telegramUrl').value.trim(),
+    miningEnabled:$('miningEnabled').checked,
+    registrationEnabled:$('registrationEnabled').checked,
+    withdrawalEnabled:$('withdrawalEnabled').checked,
+    maintenanceMode:$('maintenanceMode').checked
+  };
+  for(const k of ['miningReward','dailyReward','referralReward','minimumWithdrawal','referralRequirement']){
+    if(!Number.isSafeInteger(settings[k])||settings[k]<0){toast('Enter valid whole numbers for rewards and limits.');return;}
+  }
+  try{
+    const d=await api('/api/admin/settings',{method:'PUT',body:JSON.stringify({settings})});
+    fillSettings(d.settings);toast('Settings saved successfully.');await loadOverview();
+  }catch(err){toast(err.message);}
+}
+async function refreshAll(){
+  await Promise.allSettled([loadTasks(),loadWithdrawals(),loadUsers()]);
+}
+async function loadTasks(){
+  const d=await api('/api/admin/tasks');
+  const list=$('taskAdminList');list.replaceChildren();
+  if(!d.tasks.length){list.textContent='No tasks created yet.';return;}
+  d.tasks.forEach(task=>{
+    const box=document.createElement('div');box.className='row';
+    box.innerHTML=`<div class="rowinfo"><div class="rowtitle">${esc(task.title)}</div><div class="rowdesc">${esc(task.description||'')}<br>Reward: ${num(task.reward)} points · ${task.active?'Active':'Inactive'}<br>${esc(task.url||'No URL')}</div></div>
+    <div class="actions"><button class="small purple" data-edit="${task.id}">Edit</button><button class="small red" data-delete="${task.id}">Delete</button></div>`;
+    list.append(box);
+  });
+  list.querySelectorAll('[data-edit]').forEach(btn=>btn.addEventListener('click',async()=>{
+    const task=d.tasks.find(t=>t.id===Number(btn.dataset.edit));if(!task)return;
+    const title=prompt('Task title:',task.title);if(title===null)return;
+    const description=prompt('Description:',task.description||'');if(description===null)return;
+    const url=prompt('Task URL (leave empty for none):',task.url||'');if(url===null)return;
+    const reward=prompt('Reward points:',String(task.reward));if(reward===null)return;
+    const active=confirm('Press OK to set Active. Press Cancel to set Inactive.');
+    try{
+      await api('/api/admin/tasks/'+task.id,{method:'PUT',body:JSON.stringify({
+        title,description,url,reward:Number(reward),active
+      })});toast('Task updated.');await loadTasks();
+    }catch(e){toast(e.message);}
+  }));
+  list.querySelectorAll('[data-delete]').forEach(btn=>btn.addEventListener('click',async()=>{
+    if(!confirm('Delete this task? Existing claims for this task will also be removed.'))return;
+    try{await api('/api/admin/tasks/'+btn.dataset.delete,{method:'DELETE'});toast('Task deleted.');await loadTasks();}
+    catch(e){toast(e.message);}
+  }));
+}
+async function loadWithdrawals(){
+  const status=$('withdrawFilter').value;
+  const d=await api('/api/admin/withdrawals'+(status?'?status='+encodeURIComponent(status):''));
+  const list=$('withdrawAdminList');list.replaceChildren();
+  if(!d.withdrawals.length){list.textContent='No withdrawal requests found.';return;}
+  d.withdrawals.forEach(w=>{
+    const box=document.createElement('div');box.className='row';
+    box.innerHTML=`<div class="rowinfo"><div class="rowtitle">Request #${w.id} · ${num(w.amount)} points</div>
+    <div class="rowdesc">User: ${esc(w.telegramId)} ${w.username?'(@'+esc(w.username)+')':''}<br>Method: ${esc(w.method)}<br>Account: ${esc(w.wallet)}<br>Status: ${esc(w.status)}<br>${esc(w.created_at||'')}</div></div>
+    <div style="min-width:112px"><label>Status</label><select data-status="${w.id}" style="padding:7px;font-size:11px"><option value="pending">Pending</option><option value="approved">Approved</option><option value="paid">Paid</option><option value="rejected">Rejected</option></select><button class="small purple" data-save-status="${w.id}" style="margin-top:7px;width:100%">Save</button></div>`;
+    list.append(box);
+    box.querySelector('select').value=w.status;
+  });
+  list.querySelectorAll('[data-save-status]').forEach(btn=>btn.addEventListener('click',async()=>{
+    const id=btn.dataset.saveStatus;
+    const status=list.querySelector(`[data-status="${id}"]`).value;
+    if(status==='paid'&&!confirm('Confirm this request has actually been paid outside this app?'))return;
+    try{
+      await api('/api/admin/withdrawals/'+id+'/status',{method:'POST',body:JSON.stringify({status})});
+      toast('Withdrawal status updated.');await loadWithdrawals();await loadOverview();
+    }catch(e){toast(e.message);}
+  }));
+}
+async function loadUsers(){
+  const d=await api('/api/admin/users?limit=100&page=1');
+  const list=$('userAdminList');list.replaceChildren();
+  if(!d.users.length){list.textContent='No users registered yet.';return;}
+  d.users.forEach(u=>{
+    const row=document.createElement('div');row.className='row';
+    row.innerHTML=`<div class="rowinfo"><div class="rowtitle">${esc([u.firstName,u.lastName].filter(Boolean).join(' ')||'Telegram User')}</div><div class="rowdesc">Telegram ID: ${esc(u.telegramId)}<br>${u.username?'@'+esc(u.username)+'<br>':''}Balance: ${num(u.balance)} points · Mined: ${num(u.totalMined)}<br>Referrals: ${num(u.referrals)}</div></div><span class="badge">#${u.id}</span>`;
+    list.append(row);
+  });
+}
+$('loginForm').addEventListener('submit',async e=>{
+  e.preventDefault();
+  try{
+    await api('/api/admin/login',{method:'POST',body:JSON.stringify({password:$('adminPassword').value})});
+    $('adminPassword').value='';showDashboard();await loadOverview();await loadSettings();await refreshAll();toast('Admin login successful.');
+  }catch(err){toast(err.message);}
+});
+$('settingsForm').addEventListener('submit',saveSettings);
+$('taskForm').addEventListener('submit',async e=>{
+  e.preventDefault();
+  try{
+    await api('/api/admin/tasks',{method:'POST',body:JSON.stringify({
+      title:$('taskTitle').value.trim(),
+      description:$('taskDescription').value.trim(),
+      url:$('taskUrl').value.trim(),
+      reward:Number($('taskReward').value),
+      active:$('taskActive').checked
+    })});
+    $('taskForm').reset();$('taskReward').value='100';$('taskActive').checked=true;
+    toast('Task created.');await loadTasks();
+  }catch(err){toast(err.message);}
+});
+document.querySelectorAll('.tab').forEach(btn=>btn.addEventListener('click',()=>{
+  document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('active',t===btn));
+  document.querySelectorAll('.panel').forEach(p=>p.classList.toggle('active',p.id==='panel-'+btn.dataset.tab));
+  if(btn.dataset.tab==='tasks')loadTasks().catch(e=>toast(e.message));
+  if(btn.dataset.tab==='withdrawals')loadWithdrawals().catch(e=>toast(e.message));
+  if(btn.dataset.tab==='users')loadUsers().catch(e=>toast(e.message));
+}));
+$('refreshWithdrawals').addEventListener('click',()=>loadWithdrawals().catch(e=>toast(e.message)));
+$('withdrawFilter').addEventListener('change',()=>loadWithdrawals().catch(e=>toast(e.message)));
+$('refreshUsers').addEventListener('click',()=>loadUsers().catch(e=>toast(e.message)));
+$('logoutButton').addEventListener('click',async()=>{
+  try{await api('/api/admin/logout',{method:'POST',body:'{}'});}catch{}
+  showLogin();toast('Logged out.');
+});
+loginCheck();
+})();
+</script>
+</body>
+</html>
