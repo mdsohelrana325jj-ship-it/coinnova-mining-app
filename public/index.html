@@ -384,429 +384,1111 @@ label{font-size:12px;color:var(--muted)}
 
 const $ = id => document.getElementById(id);
 const tg = window.Telegram?.WebApp;
+
 if (tg) {
- try { tg.ready(); tg.expand(); tg.setHeaderColor("#080b15"); tg.setBackgroundColor("#080b15"); } catch {}
+  try {
+    tg.ready();
+    tg.expand();
+    tg.setHeaderColor("#080b15");
+    tg.setBackgroundColor("#080b15");
+  } catch {}
 }
 
 let state = {
- user:null,
- settings:{},
- tasks:[],
- withdrawals:[],
- spinHistory:[],
- commissionLevels:[],
- commissionToday:0,
- referrals:0,
- referralUrl:"",
- busy:false
+  user: null,
+  settings: {},
+  tasks: [],
+  withdrawals: [],
+  spinHistory: [],
+  commissionLevels: [],
+  commissionHistory: [],
+  commissionToday: 0,
+  referrals: 0,
+  referralUrl: "",
+  busy: false
 };
 
 let selectedCategory = "";
 let selectedMethod = null;
+
 let tapPending = 0;
+let tapInFlight = 0;
 let tapTimer = null;
+let sendingTaps = false;
 let lastServerSync = 0;
+let refreshing = false;
 
-function fmt(n){return Number(n||0).toLocaleString("en-US")}
-function esc(s){return String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
-function safeUrl(s){try{const u=new URL(s);return ["https:","http:"].includes(u.protocol)?u.href:""}catch{return""}}
-function toast(message){
- const el=$("toast");el.textContent=String(message||"");el.classList.add("show");
- clearTimeout(el._timer);el._timer=setTimeout(()=>el.classList.remove("show"),2600);
+function fmt(n) {
+  return Number(n || 0).toLocaleString("en-US");
 }
-function api(path,options={}){
- return fetch(path,{
-  credentials:"same-origin",
-  ...options,
-  headers:{"Content-Type":"application/json",...(options.headers||{})}
- }).then(async r=>{
-  const data=await r.json().catch(()=>({}));
-  if(!r.ok)throw new Error(data.error||`Request failed (${r.status})`);
-  return data;
- });
-}
-function showLoading(done=true){
- if(done)$("loadingScreen").classList.add("done");
- else $("loadingScreen").classList.remove("done");
-}
-function setImageOrText(container,url,fallback){
- const clean=safeUrl(url);
- if(clean){
-  container.innerHTML=`<img src="${esc(clean)}" alt="" onerror="this.remove();this.parentElement.textContent='${esc(fallback)}'">`;
- }else container.textContent=fallback;
-}
-function applyBranding(settings){
- const s=settings||{};
- document.title=(s.appName||"CoinNova")+" • Mining";
- $("appName").textContent=s.appName||"CoinNova";
- $("tagline").textContent=s.tagline||"TAP • MINE • EARN";
- $("loadingTitle").textContent=s.loadingTitle||s.appName||"COINNOVA";
- setImageOrText($("brandIcon"),s.appLogo,"C");
- setImageOrText($("loadingArt"),s.loadingImage||s.appLogo,"C");
- if(s.appLogo){
-  const icon=new Image();icon.src=safeUrl(s.appLogo);
-  icon.onload=()=>{const link=document.querySelector('link[rel="icon"]')||document.createElement("link");link.rel="icon";link.href=icon.src;document.head.appendChild(link)};
- }
-}
-function showPage(name){
- document.querySelectorAll(".page").forEach(p=>p.classList.toggle("active",p.id===name));
- document.querySelectorAll(".nav button").forEach(b=>b.classList.toggle("active",b.dataset.page===name));
- window.scrollTo({top:0,behavior:"smooth"});
-}
-document.querySelectorAll(".nav button").forEach(b=>b.addEventListener("click",()=>showPage(b.dataset.page)));
 
-function playTone(kind="tap"){
- if(state.settings?.sound===false)return;
- try{
-  const AudioCtx=window.AudioContext||window.webkitAudioContext;
-  if(!AudioCtx)return;
-  const ctx=new AudioCtx();
-  const notes=kind==="spin"?[440,660,880]:kind==="win"?[660,880,1100]:[650];
-  notes.forEach((hz,i)=>{
-   const osc=ctx.createOscillator(),gain=ctx.createGain();
-   const start=ctx.currentTime+i*.09;
-   osc.type=kind==="tap"?"sine":"triangle";osc.frequency.value=hz;
-   gain.gain.setValueAtTime(.0001,start);
-   gain.gain.exponentialRampToValueAtTime(.04,start+.02);
-   gain.gain.exponentialRampToValueAtTime(.0001,start+.13);
-   osc.connect(gain);gain.connect(ctx.destination);osc.start(start);osc.stop(start+.14);
+function esc(s) {
+  return String(s ?? "").replace(/[&<>"']/g, c => ({
+    "&": "&amp;",
+    "<": "&lt;",
+    ">": "&gt;",
+    '"': "&quot;",
+    "'": "&#39;"
+  }[c]));
+}
+
+function safeUrl(s) {
+  try {
+    const u = new URL(String(s || ""));
+    return ["https:", "http:"].includes(u.protocol) ? u.href : "";
+  } catch {
+    return "";
+  }
+}
+
+function toast(message) {
+  const el = $("toast");
+  el.textContent = String(message || "");
+  el.classList.add("show");
+
+  clearTimeout(el._timer);
+  el._timer = setTimeout(() => el.classList.remove("show"), 2600);
+}
+
+async function api(path, options = {}) {
+  const response = await fetch(path, {
+    credentials: "same-origin",
+    ...options,
+    headers: {
+      "Content-Type": "application/json",
+      ...(options.headers || {})
+    }
   });
-  setTimeout(()=>ctx.close(),600);
- }catch{}
-}
-function animationClass(animation){
- const map={pulse:"anim-pulse",bounce:"anim-bounce",glow:"anim-glow",shake:"anim-shake"};
- return map[animation]||"";
-}
-function logoMarkup(url,name,color="#45e8ff"){
- const clean=safeUrl(url);
- const first=esc((name||"C").slice(0,1).toUpperCase());
- if(clean)return `<div class="logo" style="color:${esc(color)}"><img src="${esc(clean)}" alt="" onerror="this.remove();this.parentElement.innerHTML='<span class=\\'fallback\\'>${first}</span>'"></div>`;
- return `<div class="logo"><span class="fallback" style="color:${esc(color)}">${first}</span></div>`;
+
+  const data = await response.json().catch(() => ({}));
+
+  if (!response.ok) {
+    throw new Error(data.error || `Request failed (${response.status})`);
+  }
+
+  return data;
 }
 
-function renderCustomButtons(){
- const buttons=(state.settings.buttons||[]).filter(b=>b.enabled);
- $("customButtons").innerHTML=buttons.length
- ? `<div class="section-title"><h2>Quick Links</h2><span class="muted">Explore</span></div>`+
- buttons.map(b=>{
-  const url=safeUrl(b.url);
-  return `<a class="custom-button ${animationClass(b.animation)}" href="${url||"#"}" ${url?'target="_blank" rel="noopener noreferrer"':""} style="border-color:${esc(b.color||"#283651")};color:${esc(b.color||"#f5f7ff")}" data-custom="${esc(b.id)}">
-  ${logoMarkup(b.logo,b.name,b.color)}
-  <div class="row-info"><b>${esc(b.name)}</b><small>${url?"Open link":"No link configured"}</small></div><span>↗</span></a>`;
- }).join("")
- : "";
+function showLoading(done = true) {
+  $("loadingScreen").classList.toggle("done", done);
 }
 
-function render(){
- if(!state.user)return;
- const u=state.user,s=state.settings||{};
- applyBranding(s);
- $("balance").textContent=fmt(u.balance);
- $("totalTaps").textContent=fmt(u.totalTaps);
- $("refCount").textContent=fmt(state.referrals||0);
- $("tapRate").textContent="+"+fmt(s.tapReward||1);
- $("profileName").textContent=u.name||"Miner";
- $("userPill").textContent="Verified";
- $("profileFallback").textContent=(u.name||"C").slice(0,1).toUpperCase();
+function setImageOrText(container, url, fallback) {
+  const clean = safeUrl(url);
 
- if(u.photoUrl&&safeUrl(u.photoUrl)){
-  $("profilePhoto").src=safeUrl(u.photoUrl);
-  $("profilePhoto").classList.remove("hidden");
-  $("profileFallback").classList.add("hidden");
-  $("profilePhoto").onerror=()=>{$("profilePhoto").classList.add("hidden");$("profileFallback").classList.remove("hidden")};
- }else{
-  $("profilePhoto").classList.add("hidden");
-  $("profileFallback").classList.remove("hidden");
- }
- $("energy").textContent=fmt(u.energy);
- $("maxEnergy").textContent=fmt(s.maxEnergy||1000);
- $("energyBar").style.width=Math.max(0,Math.min(100,(u.energy/(s.maxEnergy||1000))*100))+"%";
- $("dailyAmount").textContent="+"+fmt(s.dailyBonus||0);
- $("refBonus").textContent=fmt(s.referralBonus||0);
- $("refRule").textContent=`Your friend qualifies after completing 10 taps. Withdrawals require ${s.referralRequired||0} qualified referral(s).`;
- $("refLink").value=state.referralUrl||"Open this app from your Telegram bot to get a referral link.";
+  if (!clean) {
+    container.textContent = fallback;
+    return;
+  }
 
- $("spinAvailable").textContent=fmt(u.spinsAvailable||0);
- $("spinBtn").disabled=!s.spinEnabled||Number(u.spinsAvailable||0)<1;
- $("spinRules").textContent=`Every ${s.referralsPerSpin||1} qualified referral(s) gives 1 spin. Possible rewards: ${(s.spinRewards||[]).join(", ")} CNV.`;
- $("spinBtn").style.opacity=$("spinBtn").disabled?".5":"1";
+  const img = document.createElement("img");
+  img.src = clean;
+  img.alt = "";
+  img.onerror = () => {
+    container.replaceChildren();
+    container.textContent = fallback;
+  };
 
- $("taskList").innerHTML=(state.tasks||[]).map(t=>`
-  <div class="card row">
-   ${logoMarkup("",t.platform)}
-   <div class="row-info"><b>${esc(t.title)}</b><small>${esc(t.platform)} · <span class="reward">+${fmt(t.reward)} CNV</span></small></div>
-   <button class="btn ${t.claimed?"":"gold"}" data-task="${Number(t.id)}" ${t.claimed?"disabled":""}>${t.claimed?"CLAIMED":"OPEN"}</button>
-  </div>`).join("")||'<div class="empty">No tasks available right now.</div>';
-
- $("spinHistory").innerHTML=(state.spinHistory||[]).map(x=>`
-  <div class="history"><div class="history-info"><b>✦ Spin reward</b><small>${new Date(x.createdAt).toLocaleString()}</small></div><strong class="reward">+${fmt(x.reward)} CNV</strong></div>
- `).join("")||'<div class="empty">No spin history yet. Invite friends to earn spins.</div>';
-
- $("commissionTotal").textContent=fmt(state.commissionToday||0);
- $("commissionLevels").innerHTML=(state.commissionLevels||[]).map(l=>`
-  <div class="level-row"><div class="level-badge">L${l.level}</div><div class="level-info"><b>Level ${l.level}</b><small>${fmt(l.members)} team members · ${fmt(l.todayCoins)} CNV team earnings today</small></div><div style="text-align:right"><b class="reward">${Number((s.commissionRates||[])[l.level-1]||0)}%</b><small class="muted" style="display:block">+${fmt(l.commissionToday)} today</small></div></div>
- `).join("")||'<div class="empty">Team data will appear here.</div>';
-
- $("teamSummary").innerHTML=(state.commissionLevels||[]).map(l=>`
-  <div class="history"><div class="history-info"><b>Level ${l.level}</b><small>${fmt(l.members)} members · ${fmt(l.todayMembers)} joined today</small></div><strong class="reward">${fmt(l.commissionToday)} CNV</strong></div>
- `).join("");
-
- $("commissionHistory").innerHTML=(state.commissionHistory||[]).map(h=>`
-  <div class="history"><div class="history-info"><b>Level ${h.level} commission</b><small>${esc(h.day)} · ${h.rate}% of ${fmt(h.baseAmount)} CNV</small></div><strong class="reward">+${fmt(h.amount)} CNV</strong></div>
- `).join("")||'<div class="empty">Commission history will appear after payout.</div>';
-
- renderWalletHistory();
- renderCustomButtons();
- updateFeePreview();
- $("taskList").querySelectorAll("[data-task]").forEach(btn=>btn.onclick=()=>openTask(Number(btn.dataset.task)));
+  container.replaceChildren(img);
 }
 
-async function refresh(){
- const d=await api("/api/me");
- state={...state,...d};
- try{
-  const c=await api("/api/commission");
-  state.commissionLevels=c.levels||state.commissionLevels;
-  state.commissionToday=c.today||0;
-  state.commissionHistory=c.history||[];
- }catch{}
- try{
-  const r=await api("/api/referrals");
-  state.referrals=r.referrals??state.referrals;
-  state.referralUrl=r.referralUrl||state.referralUrl;
-  state.commissionLevels=r.commissionLevels||state.commissionLevels;
- }catch{}
- render();
+function applyBranding(settings) {
+  const s = settings || {};
+
+  document.title = (s.appName || "CoinNova") + " • Mining";
+
+  $("appName").textContent = s.appName || "CoinNova";
+  $("tagline").textContent = s.tagline || "TAP • MINE • EARN";
+  $("loadingTitle").textContent =
+    s.loadingTitle || s.appName || "COINNOVA";
+
+  setImageOrText($("brandIcon"), s.appLogo, "C");
+  setImageOrText($("loadingArt"), s.loadingImage || s.appLogo, "C");
+
+  if (safeUrl(s.appLogo)) {
+    const icon = new Image();
+    icon.src = safeUrl(s.appLogo);
+
+    icon.onload = () => {
+      let link = document.querySelector('link[rel="icon"]');
+
+      if (!link) {
+        link = document.createElement("link");
+        link.rel = "icon";
+        document.head.appendChild(link);
+      }
+
+      link.href = icon.src;
+    };
+  }
 }
 
-async function openTask(id){
- const task=state.tasks.find(t=>Number(t.id)===id);
- if(!task)return;
- if(safeUrl(task.url))window.open(task.url,"_blank","noopener,noreferrer");
- if(!confirm("After visiting the task, claim the reward? This starter version does not automatically verify social follows."))return;
- try{
-  const d=await api(`/api/tasks/${id}/claim`,{method:"POST",body:"{}"});
-  state.user=d.user;await refresh();toast(`+${fmt(d.reward)} CNV added`);
- }catch(e){toast(e.message)}
+function showPage(name) {
+  document.querySelectorAll(".page").forEach(page => {
+    page.classList.toggle("active", page.id === name);
+  });
+
+  document.querySelectorAll(".nav button").forEach(button => {
+    button.classList.toggle("active", button.dataset.page === name);
+  });
+
+  window.scrollTo({ top: 0, behavior: "smooth" });
 }
 
-$("coin").addEventListener("pointerdown",e=>{
- e.preventDefault();
- if(state.busy||!state.user||state.user.energy<1)return;
- const rect=$("coinStage").getBoundingClientRect();
- const f=document.createElement("span");
- f.className="float-text";f.textContent="+"+(state.settings.tapReward||1);
- f.style.left=(e.clientX-rect.left-10)+"px";
- f.style.top=(e.clientY-rect.top-10)+"px";
- $("coinStage").appendChild(f);setTimeout(()=>f.remove(),850);
- playTone("tap");
- $("coin").style.transform="scale(.92)";
- setTimeout(()=>$("coin").style.transform="",100);
- tapPending++;
- state.user.energy=Math.max(0,state.user.energy-1);
- state.user.balance+=Number(state.settings.tapReward||1);
- state.user.totalTaps=(state.user.totalTaps||0)+1;
- render();
- if(tapPending>=10)sendTaps();
- else{clearTimeout(tapTimer);tapTimer=setTimeout(sendTaps,220)}
+document.querySelectorAll(".nav button").forEach(button => {
+  button.addEventListener("click", () => showPage(button.dataset.page));
 });
 
-async function sendTaps(){
- if(!tapPending)return;
- const count=Math.min(20,tapPending);tapPending-=count;
- try{
-  const d=await api("/api/tap",{method:"POST",body:JSON.stringify({count})});
-  state.user=d.user;lastServerSync=Date.now();render();
- }catch(e){toast(e.message);await refresh().catch(()=>{})}
- if(tapPending)sendTaps();
+function playTone(kind = "tap") {
+  if (state.settings?.sound === false) return;
+
+  try {
+    const AudioCtx = window.AudioContext || window.webkitAudioContext;
+    if (!AudioCtx) return;
+
+    const ctx = new AudioCtx();
+
+    const notes =
+      kind === "spin" ? [440, 660, 880] :
+      kind === "win" ? [660, 880, 1100] :
+      [650];
+
+    notes.forEach((hz, i) => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      const start = ctx.currentTime + i * 0.09;
+
+      osc.type = kind === "tap" ? "sine" : "triangle";
+      osc.frequency.value = hz;
+
+      gain.gain.setValueAtTime(0.0001, start);
+      gain.gain.exponentialRampToValueAtTime(0.04, start + 0.02);
+      gain.gain.exponentialRampToValueAtTime(0.0001, start + 0.13);
+
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+
+      osc.start(start);
+      osc.stop(start + 0.14);
+    });
+
+    setTimeout(() => ctx.close(), 600);
+  } catch {}
 }
 
-$("spinBtn").onclick=async()=>{
- if($("spinBtn").disabled)return;
- playTone("spin");
- const wheel=$("spinWheel");
- wheel.style.transform=`rotate(${1800+Math.floor(Math.random()*720)}deg)`;
- $("spinBtn").disabled=true;
- try{
-  const d=await api("/api/spin",{method:"POST",body:"{}"});
-  setTimeout(async()=>{
-   playTone("win");state.user=d.user;await refresh();toast(`You won ${fmt(d.reward)} CNV!`);
-  },4200);
- }catch(e){wheel.style.transform="";toast(e.message);await refresh().catch(()=>{})}
- setTimeout(()=>{if(state.user)$("spinBtn").disabled=!state.settings.spinEnabled||Number(state.user.spinsAvailable||0)<1},4400);
-};
-
-$("dailyBtn").onclick=async()=>{
- try{
-  const d=await api("/api/bonus/daily",{method:"POST",body:"{}"});
-  state.user=d.user;await refresh();playTone("win");toast(`Daily bonus +${fmt(d.reward)} CNV`);
- }catch(e){toast(e.message)}
-};
-
-$("copyRef").onclick=async()=>{
- if(!state.referralUrl)return toast("Open this app through your Telegram bot to generate a referral link.");
- try{await navigator.clipboard.writeText(state.referralUrl);toast("Invite link copied")}
- catch{$("refLink").select();document.execCommand("copy");toast("Invite link copied")}
-};
-$("openCommission").onclick=async()=>{await refresh().catch(()=>{});showPage("commission")};
-
-// ======================================================
-// SEPARATE WITHDRAWAL CATEGORIES AND PAGES
-// ======================================================
-
-function openWalletCategory(category){
- selectedCategory=category;selectedMethod=null;
- $("walletCategories").classList.add("hidden");
- $("walletFormPage").classList.add("hidden");
- $("walletMethodPage").classList.remove("hidden");
- $("walletMethodTitle").textContent=category==="ewallet"?"E-Wallet":"Select Network";
- $("walletBackCategory").onclick=()=>{
-  $("walletMethodPage").classList.add("hidden");
-  $("walletCategories").classList.remove("hidden");
- };
- renderMethodCards();
-}
-function renderMethodCards(){
- const all=(state.settings.paymentMethods||[]).filter(m=>m.enabled);
- const list=all.filter(m=>{
-  if(selectedCategory==="ewallet")return m.category==="ewallet"||(!m.category&&m.type!=="crypto");
-  return m.category==="network"||m.category==="crypto"||m.type==="crypto";
- });
- $("walletMethodCount").textContent=`${list.length} available`;
- $("methodList").innerHTML=list.map(m=>`
-  <button class="method-card ${selectedMethod?.id===m.id?"selected":""} ${animationClass(m.animation)}" data-method="${esc(m.id)}" style="border-color:${selectedMethod?.id===m.id?esc(m.color||"#ffd66b"):"var(--line)"}">
-   <span class="check">${selectedMethod?.id===m.id?"●":"○"}</span>
-   ${logoMarkup(m.logo,m.name,m.color)}
-   <b>${esc(m.name)}</b>
-   <small>${m.category==="ewallet"||(!m.category&&m.type!=="crypto")?"Mobile money":"Crypto wallet / network"}</small>
-  </button>
- `).join("")||'<div class="empty" style="grid-column:1/-1">No methods enabled in this category. Ask the admin to add one.</div>';
- $("methodList").querySelectorAll("[data-method]").forEach(btn=>{
-  btn.onclick=()=>{
-   selectedMethod=list.find(m=>m.id===btn.dataset.method)||null;
-   if(!selectedMethod)return;
-   openWithdrawForm();
+function animationClass(animation) {
+  const map = {
+    pulse: "anim-pulse",
+    bounce: "anim-bounce",
+    glow: "anim-glow",
+    shake: "anim-shake"
   };
- });
+
+  return map[animation] || "";
 }
-function openWithdrawForm(){
- $("walletMethodPage").classList.add("hidden");
- $("walletFormPage").classList.remove("hidden");
- $("selectedMethodTitle").textContent="Withdraw";
- $("selectedMethodName").textContent=selectedMethod.name;
- $("selectedMethodType").textContent=selectedCategory==="ewallet"?"E-WALLET":"NETWORK";
- $("selectedMethodHint").textContent=selectedCategory==="ewallet"?"Mobile money destination":"Enter the exact wallet address for this network";
- $("destinationLabel").textContent=selectedCategory==="ewallet"?"Mobile number":"Wallet address";
- $("address").placeholder=selectedCategory==="ewallet"?"Enter mobile number":"Enter wallet address";
- setImageOrText($("selectedMethodLogo"),selectedMethod.logo,selectedMethod.name.slice(0,1));
- $("selectedMethodLogo").style.color=selectedMethod.color||"var(--cyan)";
- $("amount").min=Number(state.settings.minWithdraw||1);
- $("amount").placeholder=`Minimum ${fmt(state.settings.minWithdraw||1)} CNV`;
- $("walletBackMethods").onclick=()=>{
+
+function logoMarkup(url, name, color = "#45e8ff") {
+  const clean = safeUrl(url);
+  const first = esc((name || "C").slice(0, 1).toUpperCase());
+
+  if (clean) {
+    return `
+      <div class="logo" style="color:${esc(color)}">
+        <img src="${esc(clean)}" alt=""
+          onerror="this.remove();this.parentElement.textContent='${first}'">
+      </div>`;
+  }
+
+  return `
+    <div class="logo">
+      <span class="fallback" style="color:${esc(color)}">${first}</span>
+    </div>`;
+}
+
+function renderCustomButtons() {
+  const buttons = (state.settings.buttons || [])
+    .filter(button => button.enabled);
+
+  $("customButtons").innerHTML = buttons.length
+    ? `
+      <div class="section-title">
+        <h2>Quick Links</h2>
+        <span class="muted">Explore</span>
+      </div>
+      ${buttons.map(button => {
+        const url = safeUrl(button.url);
+
+        return `
+          <a class="custom-button ${animationClass(button.animation)}"
+             href="${url || "#"}"
+             ${url ? 'target="_blank" rel="noopener noreferrer"' : ""}
+             style="border-color:${esc(button.color || "#283651")};
+                    color:${esc(button.color || "#f5f7ff")}"
+             data-custom="${esc(button.id)}">
+
+            ${logoMarkup(button.logo, button.name, button.color)}
+
+            <div class="row-info">
+              <b>${esc(button.name)}</b>
+              <small>${url ? "Open link" : "No link configured"}</small>
+            </div>
+
+            <span>↗</span>
+          </a>`;
+      }).join("")}`
+    : "";
+}
+
+function render() {
+  if (!state.user) return;
+
+  const u = state.user;
+  const s = state.settings || {};
+
+  applyBranding(s);
+
+  $("balance").textContent = fmt(u.balance);
+  $("totalTaps").textContent = fmt(u.totalTaps);
+  $("refCount").textContent = fmt(state.referrals || 0);
+  $("tapRate").textContent = "+" + fmt(s.tapReward || 1);
+
+  $("profileName").textContent = u.name || "Miner";
+  $("userPill").textContent = "Verified";
+  $("profileFallback").textContent =
+    (u.name || "C").slice(0, 1).toUpperCase();
+
+  if (safeUrl(u.photoUrl)) {
+    $("profilePhoto").src = safeUrl(u.photoUrl);
+    $("profilePhoto").classList.remove("hidden");
+    $("profileFallback").classList.add("hidden");
+
+    $("profilePhoto").onerror = () => {
+      $("profilePhoto").classList.add("hidden");
+      $("profileFallback").classList.remove("hidden");
+    };
+  } else {
+    $("profilePhoto").classList.add("hidden");
+    $("profileFallback").classList.remove("hidden");
+  }
+
+  const maxEnergy = Math.max(1, Number(s.maxEnergy || 1000));
+  const energy = Math.max(0, Number(u.energy || 0));
+
+  $("energy").textContent = fmt(energy);
+  $("maxEnergy").textContent = fmt(maxEnergy);
+  $("energyBar").style.width =
+    Math.max(0, Math.min(100, energy / maxEnergy * 100)) + "%";
+
+  $("dailyAmount").textContent = "+" + fmt(s.dailyBonus || 0);
+  $("refBonus").textContent = fmt(s.referralBonus || 0);
+
+  $("refRule").textContent =
+    `Your friend qualifies after completing 10 taps. Withdrawals require ${s.referralRequired || 0} qualified referral(s).`;
+
+  $("refLink").value = state.referralUrl ||
+    "Open this app from your Telegram bot to get a referral link.";
+
+  $("spinAvailable").textContent = fmt(u.spinsAvailable || 0);
+
+  $("spinBtn").disabled =
+    s.spinEnabled === false || Number(u.spinsAvailable || 0) < 1;
+
+  $("spinRules").textContent =
+    `Every ${s.referralsPerSpin || 1} qualified referral(s) gives 1 spin. Possible rewards: ${(s.spinRewards || []).join(", ")} CNV.`;
+
+  $("spinBtn").style.opacity = $("spinBtn").disabled ? ".5" : "1";
+
+  $("coin").disabled =
+    !!s.maintenance || energy < 1;
+
+  if (s.maintenance) {
+    $("coin").title = "Mining is temporarily under maintenance.";
+  } else {
+    $("coin").title = "Tap to mine";
+  }
+
+  $("taskList").innerHTML = (state.tasks || []).map(task => `
+    <div class="card row">
+      ${logoMarkup("", task.platform)}
+
+      <div class="row-info">
+        <b>${esc(task.title)}</b>
+        <small>
+          ${esc(task.platform)} ·
+          <span class="reward">+${fmt(task.reward)} CNV</span>
+        </small>
+      </div>
+
+      <button class="btn ${task.claimed ? "" : "gold"}"
+              data-task="${Number(task.id)}"
+              ${task.claimed ? "disabled" : ""}>
+        ${task.claimed ? "CLAIMED" : "OPEN"}
+      </button>
+    </div>
+  `).join("") || '<div class="empty">No tasks available right now.</div>';
+
+  $("spinHistory").innerHTML = (state.spinHistory || []).map(item => `
+    <div class="history">
+      <div class="history-info">
+        <b>✦ Spin reward</b>
+        <small>${new Date(item.createdAt).toLocaleString()}</small>
+      </div>
+      <strong class="reward">+${fmt(item.reward)} CNV</strong>
+    </div>
+  `).join("") ||
+    '<div class="empty">No spin history yet. Invite friends to earn spins.</div>';
+
+  $("commissionTotal").textContent = fmt(state.commissionToday || 0);
+
+  $("commissionLevels").innerHTML =
+    (state.commissionLevels || []).map(level => `
+      <div class="level-row">
+        <div class="level-badge">L${level.level}</div>
+
+        <div class="level-info">
+          <b>Level ${level.level}</b>
+          <small>
+            ${fmt(level.members)} team members ·
+            ${fmt(level.todayCoins)} CNV team earnings today
+          </small>
+        </div>
+
+        <div style="text-align:right">
+          <b class="reward">
+            ${Number((s.commissionRates || [])[level.level - 1] || 0)}%
+          </b>
+          <small class="muted" style="display:block">
+            +${fmt(level.commissionToday)} today
+          </small>
+        </div>
+      </div>
+    `).join("") ||
+    '<div class="empty">Team data will appear here.</div>';
+
+  $("teamSummary").innerHTML =
+    (state.commissionLevels || []).map(level => `
+      <div class="history">
+        <div class="history-info">
+          <b>Level ${level.level}</b>
+          <small>
+            ${fmt(level.members)} members ·
+            ${fmt(level.todayMembers)} joined today
+          </small>
+        </div>
+        <strong class="reward">${fmt(level.commissionToday)} CNV</strong>
+      </div>
+    `).join("") ||
+    '<div class="empty">No team members yet.</div>';
+
+  $("commissionHistory").innerHTML =
+    (state.commissionHistory || []).map(item => `
+      <div class="history">
+        <div class="history-info">
+          <b>Level ${item.level} commission</b>
+          <small>
+            ${esc(item.day)} · ${fmt(item.rate)}% of
+            ${fmt(item.baseAmount)} CNV
+          </small>
+        </div>
+        <strong class="reward">+${fmt(item.amount)} CNV</strong>
+      </div>
+    `).join("") ||
+    '<div class="empty">Commission history will appear after payout.</div>';
+
+  renderWalletHistory();
+  renderCustomButtons();
+  updateFeePreview();
+
+  $("taskList").querySelectorAll("[data-task]").forEach(button => {
+    button.onclick = () => openTask(Number(button.dataset.task));
+  });
+}
+
+/* ==========================================
+   LOAD ACCOUNT DATA
+========================================== */
+
+async function refresh(force = false) {
+  if (refreshing) return;
+
+  // Do not overwrite locally queued mining activity.
+  if (!force && (tapPending > 0 || tapInFlight > 0)) return;
+
+  refreshing = true;
+
+  try {
+    const data = await api("/api/me");
+
+    state = { ...state, ...data };
+
+    // Correct API path: server.js uses /api/commissions.
+    try {
+      const commission = await api("/api/commissions");
+
+      state.commissionLevels =
+        commission.levels || state.commissionLevels;
+
+      // In server.js, "today" is a date string.
+      // "total" is the actual commission amount.
+      state.commissionToday =
+        Number(commission.total ?? state.commissionToday ?? 0);
+
+      state.commissionHistory = commission.history || [];
+    } catch (error) {
+      console.warn("Commission data unavailable:", error.message);
+    }
+
+    // Referral data is already supplied by /api/me.
+    // There is no separate /api/referrals route in this server.js.
+
+    lastServerSync = Date.now();
+    render();
+
+  } finally {
+    refreshing = false;
+  }
+}
+
+/* ==========================================
+   TASK SYSTEM
+========================================== */
+
+async function openTask(id) {
+  const task = (state.tasks || []).find(
+    item => Number(item.id) === Number(id)
+  );
+
+  if (!task) return;
+
+  const url = safeUrl(task.url);
+
+  if (url) {
+    window.open(url, "_blank", "noopener,noreferrer");
+  }
+
+  if (!confirm(
+    "After visiting the task, claim the reward? This version does not automatically verify social follows."
+  )) {
+    return;
+  }
+
+  try {
+    const data = await api(`/api/tasks/${id}/claim`, {
+      method: "POST",
+      body: "{}"
+    });
+
+    state.user = data.user;
+
+    await refresh(true);
+
+    playTone("win");
+    toast(`+${fmt(data.reward)} CNV added`);
+
+  } catch (error) {
+    toast(error.message);
+    await refresh(true).catch(() => {});
+  }
+}
+
+/* ==========================================
+   MINING SYSTEM
+========================================== */
+
+$("coin").addEventListener("pointerdown", event => {
+  event.preventDefault();
+
+  if (!state.user || state.busy || state.settings.maintenance) {
+    return;
+  }
+
+  const availableEnergy =
+    Number(state.user.energy || 0) - tapPending - tapInFlight;
+
+  if (availableEnergy < 1) {
+    toast("Not enough energy.");
+    return;
+  }
+
+  const rect = $("coinStage").getBoundingClientRect();
+
+  const floating = document.createElement("span");
+  floating.className = "float-text";
+  floating.textContent = "+" + fmt(state.settings.tapReward || 1);
+
+  floating.style.left =
+    (event.clientX - rect.left - 10) + "px";
+
+  floating.style.top =
+    (event.clientY - rect.top - 10) + "px";
+
+  $("coinStage").appendChild(floating);
+
+  setTimeout(() => floating.remove(), 850);
+
+  playTone("tap");
+
+  $("coin").style.transform = "scale(.92)";
+  setTimeout(() => {
+    $("coin").style.transform = "";
+  }, 100);
+
+  tapPending++;
+
+  // Show energy feedback immediately.
+  state.user.energy = Math.max(
+    0,
+    Number(state.user.energy || 0) - 1
+  );
+
+  render();
+
+  if (tapPending >= 10) {
+    clearTimeout(tapTimer);
+    sendTaps();
+  } else {
+    clearTimeout(tapTimer);
+    tapTimer = setTimeout(sendTaps, 220);
+  }
+});
+
+async function sendTaps() {
+  if (sendingTaps || tapPending <= 0) return;
+
+  sendingTaps = true;
+
+  try {
+    while (tapPending > 0) {
+      const count = Math.min(20, tapPending);
+
+      tapPending -= count;
+      tapInFlight = count;
+
+      const data = await api("/api/tap", {
+        method: "POST",
+        body: JSON.stringify({ count })
+      });
+
+      // Always use the server-confirmed balance and energy.
+      state.user = data.user;
+      tapInFlight = 0;
+
+      lastServerSync = Date.now();
+      render();
+    }
+
+  } catch (error) {
+    tapPending = 0;
+    tapInFlight = 0;
+
+    toast(error.message);
+
+    await refresh(true).catch(() => {});
+
+  } finally {
+    tapInFlight = 0;
+    sendingTaps = false;
+
+    if (tapPending > 0) {
+      sendTaps();
+    }
+  }
+}
+
+/* ==========================================
+   LUCKY SPIN
+========================================== */
+
+$("spinBtn").onclick = async () => {
+  if ($("spinBtn").disabled || state.busy) return;
+
+  state.busy = true;
+  $("spinBtn").disabled = true;
+
+  playTone("spin");
+
+  const wheel = $("spinWheel");
+
+  wheel.style.transition =
+    "transform 4.2s cubic-bezier(.12,.65,.12,1)";
+
+  wheel.style.transform =
+    `rotate(${1800 + Math.floor(Math.random() * 720)}deg)`;
+
+  try {
+    const data = await api("/api/spin", {
+      method: "POST",
+      body: "{}"
+    });
+
+    setTimeout(async () => {
+      try {
+        state.user = data.user;
+
+        await refresh(true);
+
+        playTone("win");
+        toast(`You won ${fmt(data.reward)} CNV!`);
+
+      } finally {
+        state.busy = false;
+        render();
+      }
+    }, 4200);
+
+  } catch (error) {
+    state.busy = false;
+
+    wheel.style.transform = "";
+    toast(error.message);
+
+    await refresh(true).catch(() => {});
+  }
+};
+
+/* ==========================================
+   DAILY BONUS
+========================================== */
+
+$("dailyBtn").onclick = async () => {
+  if ($("dailyBtn").disabled) return;
+
+  $("dailyBtn").disabled = true;
+
+  try {
+    const data = await api("/api/bonus/daily", {
+      method: "POST",
+      body: "{}"
+    });
+
+    state.user = data.user;
+
+    await refresh(true);
+
+    playTone("win");
+    toast(`Daily bonus +${fmt(data.reward)} CNV`);
+
+  } catch (error) {
+    toast(error.message);
+
+  } finally {
+    $("dailyBtn").disabled = false;
+  }
+};
+
+/* ==========================================
+   REFERRAL SYSTEM
+========================================== */
+
+$("copyRef").onclick = async () => {
+  if (!state.referralUrl) {
+    return toast(
+      "Open this app through your Telegram bot to generate a referral link."
+    );
+  }
+
+  try {
+    await navigator.clipboard.writeText(state.referralUrl);
+    toast("Invite link copied");
+
+  } catch {
+    $("refLink").select();
+
+    try {
+      document.execCommand("copy");
+      toast("Invite link copied");
+    } catch {
+      toast("Unable to copy the link.");
+    }
+  }
+};
+
+$("openCommission").onclick = async () => {
+  await refresh(true).catch(() => {});
+  showPage("commission");
+};
+
+/* ==========================================
+   WITHDRAWAL CATEGORY SYSTEM
+========================================== */
+
+function openWalletCategory(category) {
+  selectedCategory = category;
+  selectedMethod = null;
+
+  $("walletCategories").classList.add("hidden");
   $("walletFormPage").classList.add("hidden");
   $("walletMethodPage").classList.remove("hidden");
+
+  $("walletMethodTitle").textContent =
+    category === "ewallet" ? "E-Wallet" : "Select Network";
+
+  $("walletBackCategory").onclick = () => {
+    $("walletMethodPage").classList.add("hidden");
+    $("walletCategories").classList.remove("hidden");
+  };
+
   renderMethodCards();
- };
- updateFeePreview();
 }
-$("walletCategories").querySelectorAll("button").forEach(btn=>btn.addEventListener("click",()=>{}));
 
-function updateFeePreview(){
- const amount=Math.max(0,Math.floor(Number($("amount")?.value)||0));
- const percent=Math.max(0,Math.min(100,Number(state.settings.withdrawalFeePercent)||0));
- const fee=Math.min(amount,Math.floor(amount*percent/100));
- $("feeGross").textContent=fmt(amount)+" CNV";
- $("feePercent").textContent=String(percent);
- $("feeAmount").textContent=fmt(fee)+" CNV";
- $("feeNet").textContent=fmt(amount-fee)+" CNV";
-}
-$("amount").addEventListener("input",updateFeePreview);
+function renderMethodCards() {
+  const all = (state.settings.paymentMethods || [])
+    .filter(method => method.enabled);
 
-$("withdrawForm").onsubmit=async e=>{
- e.preventDefault();
- if(!selectedMethod)return toast("Please select a wallet or network first.");
- const amount=Math.floor(Number($("amount").value));
- const address=$("address").value.trim();
- if(!address)return toast("Enter your destination details.");
- if(amount<Number(state.settings.minWithdraw||1))return toast(`Minimum withdrawal is ${fmt(state.settings.minWithdraw)} CNV.`);
- try{
-  const d=await api("/api/withdraw",{
-   method:"POST",
-   body:JSON.stringify({method:selectedMethod.id,address,amount})
+  const list = all.filter(method => {
+    if (selectedCategory === "ewallet") {
+      return method.category === "ewallet" ||
+        (!method.category && method.type !== "crypto");
+    }
+
+    return method.category === "network" ||
+      method.category === "crypto" ||
+      method.type === "crypto";
   });
-  $("address").value="";$("amount").value="";
-  await refresh();
-  toast(`Request submitted. Fee ${fmt(d.feeAmount)} CNV · You receive ${fmt(d.netAmount)} CNV`);
-  $("walletFormPage").classList.add("hidden");
+
+  $("walletMethodCount").textContent =
+    `${list.length} available`;
+
+  $("methodList").innerHTML = list.map(method => `
+    <button class="method-card ${selectedMethod?.id === method.id ? "selected" : ""} ${animationClass(method.animation)}"
+            data-method="${esc(method.id)}"
+            style="border-color:${selectedMethod?.id === method.id
+              ? esc(method.color || "#ffd66b")
+              : "var(--line)"}">
+
+      <span class="check">
+        ${selectedMethod?.id === method.id ? "●" : "○"}
+      </span>
+
+      ${logoMarkup(method.logo, method.name, method.color)}
+
+      <b>${esc(method.name)}</b>
+
+      <small>
+        ${method.category === "ewallet" ||
+          (!method.category && method.type !== "crypto")
+          ? "Mobile money"
+          : "Crypto wallet / network"}
+      </small>
+    </button>
+  `).join("") ||
+    '<div class="empty" style="grid-column:1/-1">No methods enabled in this category. Ask the admin to add one.</div>';
+
+  $("methodList").querySelectorAll("[data-method]").forEach(button => {
+    button.onclick = () => {
+      selectedMethod = list.find(
+        method => method.id === button.dataset.method
+      ) || null;
+
+      if (selectedMethod) {
+        openWithdrawForm();
+      }
+    };
+  });
+}
+
+function openWithdrawForm() {
+  if (!selectedMethod) return;
+
   $("walletMethodPage").classList.add("hidden");
-  $("walletCategories").classList.remove("hidden");
-  selectedMethod=null;
- }catch(err){toast(err.message)}
+  $("walletFormPage").classList.remove("hidden");
+
+  $("selectedMethodTitle").textContent = "Withdraw";
+  $("selectedMethodName").textContent = selectedMethod.name;
+
+  $("selectedMethodType").textContent =
+    selectedCategory === "ewallet" ? "E-WALLET" : "NETWORK";
+
+  $("selectedMethodHint").textContent =
+    selectedCategory === "ewallet"
+      ? "Mobile money destination"
+      : "Enter the exact wallet address for this network";
+
+  $("destinationLabel").textContent =
+    selectedCategory === "ewallet"
+      ? "Mobile number"
+      : "Wallet address";
+
+  $("address").placeholder =
+    selectedCategory === "ewallet"
+      ? "Enter mobile number"
+      : "Enter wallet address";
+
+  setImageOrText(
+    $("selectedMethodLogo"),
+    selectedMethod.logo,
+    selectedMethod.name.slice(0, 1)
+  );
+
+  $("selectedMethodLogo").style.color =
+    selectedMethod.color || "var(--cyan)";
+
+  const minimum = Number(state.settings.minWithdraw || 1);
+
+  $("amount").min = minimum;
+  $("amount").placeholder = `Minimum ${fmt(minimum)} CNV`;
+
+  $("walletBackMethods").onclick = () => {
+    $("walletFormPage").classList.add("hidden");
+    $("walletMethodPage").classList.remove("hidden");
+    renderMethodCards();
+  };
+
+  updateFeePreview();
+}
+
+function updateFeePreview() {
+  const amount = Math.max(
+    0,
+    Math.floor(Number($("amount")?.value) || 0)
+  );
+
+  const percent = Math.max(
+    0,
+    Math.min(100, Number(state.settings.withdrawalFeePercent) || 0)
+  );
+
+  const fee = Math.min(
+    amount,
+    Math.floor(amount * percent / 100)
+  );
+
+  $("feeGross").textContent = fmt(amount) + " CNV";
+  $("feePercent").textContent = String(percent);
+  $("feeAmount").textContent = fmt(fee) + " CNV";
+  $("feeNet").textContent = fmt(amount - fee) + " CNV";
+}
+
+$("amount").addEventListener("input", updateFeePreview);
+
+$("withdrawForm").onsubmit = async event => {
+  event.preventDefault();
+
+  if (!selectedMethod) {
+    return toast("Please select a wallet or network first.");
+  }
+
+  const amount = Math.floor(Number($("amount").value));
+  const address = $("address").value.trim();
+  const minimum = Number(state.settings.minWithdraw || 1);
+
+  if (!address || address.length < 5) {
+    return toast("Enter valid destination details.");
+  }
+
+  if (!Number.isSafeInteger(amount) || amount < minimum) {
+    return toast(`Minimum withdrawal is ${fmt(minimum)} CNV.`);
+  }
+
+  const submitButton =
+    $("withdrawForm").querySelector('[type="submit"]');
+
+  submitButton.disabled = true;
+
+  try {
+    const data = await api("/api/withdraw", {
+      method: "POST",
+      body: JSON.stringify({
+        method: selectedMethod.id,
+        address,
+        amount
+      })
+    });
+
+    $("address").value = "";
+    $("amount").value = "";
+
+    state.user = data.user || state.user;
+
+    await refresh(true);
+
+    toast(
+      `Request submitted. Fee ${fmt(data.feeAmount)} CNV · You receive ${fmt(data.netAmount)} CNV`
+    );
+
+    $("walletFormPage").classList.add("hidden");
+    $("walletMethodPage").classList.add("hidden");
+    $("walletCategories").classList.remove("hidden");
+
+    selectedMethod = null;
+    selectedCategory = "";
+
+  } catch (error) {
+    toast(error.message);
+
+  } finally {
+    submitButton.disabled = false;
+  }
 };
 
-function renderWalletHistory(){
- $("withdrawHistory").innerHTML=(state.withdrawals||[]).map(w=>{
-  const method=(state.settings.paymentMethods||[]).find(m=>m.id===w.method);
-  const name=method?.name||w.method;
-  const status=String(w.status||"pending");
-  return `<div class="history"><div class="history-info"><b>#${w.id} · ${esc(name)}</b><small>${new Date(w.createdAt).toLocaleString()}<br>${esc(w.address)}<br>Fee ${fmt(w.feeAmount)} CNV · Net ${fmt(w.netAmount||Math.max(0,w.amount-(w.feeAmount||0)))} CNV</small></div><div style="text-align:right"><strong class="reward">${fmt(w.amount)} CNV</strong><small style="display:block;color:${status==="paid"?"var(--green)":status==="rejected"?"var(--red)":"var(--gold)"};margin-top:5px">${esc(status.toUpperCase())}</small></div></div>`;
- }).join("")||'<div class="empty">No withdrawal requests yet.</div>';
+/* ==========================================
+   WITHDRAWAL HISTORY
+========================================== */
+
+function renderWalletHistory() {
+  $("withdrawHistory").innerHTML =
+    (state.withdrawals || []).map(withdrawal => {
+      const method = (state.settings.paymentMethods || [])
+        .find(item => item.id === withdrawal.method);
+
+      const name = method?.name || withdrawal.method;
+      const status = String(withdrawal.status || "pending");
+
+      const statusColor =
+        status === "paid" ? "var(--green)" :
+        status === "rejected" ? "var(--red)" :
+        "var(--gold)";
+
+      const netAmount = withdrawal.netAmount ??
+        Math.max(0, withdrawal.amount - (withdrawal.feeAmount || 0));
+
+      return `
+        <div class="history">
+          <div class="history-info">
+            <b>#${withdrawal.id} · ${esc(name)}</b>
+
+            <small>
+              ${new Date(withdrawal.createdAt).toLocaleString()}<br>
+              ${esc(withdrawal.address)}<br>
+              Fee ${fmt(withdrawal.feeAmount)} CNV ·
+              Net ${fmt(netAmount)} CNV
+            </small>
+          </div>
+
+          <div style="text-align:right">
+            <strong class="reward">
+              ${fmt(withdrawal.amount)} CNV
+            </strong>
+
+            <small style="display:block;color:${statusColor};margin-top:5px">
+              ${esc(status.toUpperCase())}
+            </small>
+          </div>
+        </div>`;
+    }).join("") ||
+    '<div class="empty">No withdrawal requests yet.</div>';
 }
 
-// ======================================================
-// TELEGRAM AUTO LOGIN AND LOADING
-// ======================================================
+/* ==========================================
+   TELEGRAM LOGIN
+========================================== */
 
-function showLoginError(message){
- $("modalTitle").textContent="Telegram verification required";
- $("modalBody").innerHTML=`<p class="muted">${esc(message)}</p><p class="muted">Open this Mini App using your Telegram bot. Telegram account verification is required to access your balance and wallet.</p>`;
- $("modalBg").classList.add("show");
+function showLoginError(message) {
+  $("modalTitle").textContent = "Telegram verification required";
+
+  $("modalBody").innerHTML = `
+    <p class="muted">${esc(message)}</p>
+    <p class="muted">
+      Open this Mini App using your Telegram bot.
+      Telegram account verification is required to access your balance and wallet.
+    </p>
+  `;
+
+  $("modalBg").classList.add("show");
 }
-async function boot(){
- try{
-  if(!tg?.initData){
-   // Existing session may still be valid on same browser.
-   const d=await api("/api/me");
-   state={...state,...d};
-   await refresh();
-   $("loadingSub").textContent="ACCOUNT READY";
-   setTimeout(()=>showLoading(true),450);
-   return;
+
+async function boot() {
+  try {
+    if (tg?.initData) {
+      $("loadingSub").textContent =
+        "VERIFYING TELEGRAM ACCOUNT";
+
+      const startParam =
+        tg.initDataUnsafe?.start_param || "";
+
+      const data = await api("/api/auth/telegram", {
+        method: "POST",
+        body: JSON.stringify({
+          initData: tg.initData,
+          startParam
+        })
+      });
+
+      state = { ...state, ...data };
+
+      $("loadingSub").textContent = "LOADING YOUR ACCOUNT";
+
+      await refresh(true);
+
+      setTimeout(() => showLoading(true), 500);
+      return;
+    }
+
+    // Allow an existing valid browser session.
+    $("loadingSub").textContent = "CHECKING SAVED SESSION";
+
+    await refresh(true);
+
+    $("loadingSub").textContent = "ACCOUNT READY";
+
+    setTimeout(() => showLoading(true), 450);
+
+  } catch (error) {
+    showLoading(true);
+    showLoginError(
+      error.message || "Could not verify your account."
+    );
   }
-  $("loadingSub").textContent="VERIFYING TELEGRAM ACCOUNT";
-  const startParam=tg.initDataUnsafe?.start_param||"";
-  const d=await api("/api/auth/telegram",{
-   method:"POST",
-   body:JSON.stringify({initData:tg.initData,startParam})
-  });
-  state={...state,...d};
-  $("loadingSub").textContent="LOADING YOUR ACCOUNT";
-  await refresh();
-  setTimeout(()=>showLoading(true),500);
- }catch(error){
-  showLoading(true);
-  showLoginError(error.message||"Could not verify your Telegram account.");
- }
 }
-$("closeModal").onclick=()=>$("modalBg").classList.remove("show");
 
-setInterval(()=>{
- if(!state.user||!state.settings)return;
- const max=Number(state.settings.maxEnergy||1000);
- const rate=Number(state.settings.energyPerSecond||0);
- state.user.energy=Math.min(max,Number(state.user.energy||0)+rate);
- render();
-},1000);
+$("closeModal").onclick = () => {
+  $("modalBg").classList.remove("show");
+};
 
-setInterval(()=>{
- if(state.user&&Date.now()-lastServerSync>12000){
-  refresh().catch(()=>{});
-  lastServerSync=Date.now();
- }
-},15000);
+/* ==========================================
+   ENERGY REGENERATION
+========================================== */
+
+setInterval(() => {
+  if (!state.user || !state.settings) return;
+
+  // Do not regenerate locally while a tap batch is waiting
+  // for the server's authoritative response.
+  if (tapPending > 0 || tapInFlight > 0) return;
+
+  const max = Math.max(
+    1,
+    Number(state.settings.maxEnergy || 1000)
+  );
+
+  const rate = Math.max(
+    0,
+    Number(state.settings.energyPerSecond || 0)
+  );
+
+  state.user.energy = Math.min(
+    max,
+    Number(state.user.energy || 0) + rate
+  );
+
+  render();
+}, 1000);
+
+/* ==========================================
+   AUTOMATIC SERVER SYNC
+========================================== */
+
+setInterval(() => {
+  if (!state.user) return;
+
+  if (tapPending > 0 || tapInFlight > 0 || sendingTaps) {
+    return;
+  }
+
+  if (Date.now() - lastServerSync > 12000) {
+    refresh().catch(error => {
+      console.warn("Background sync failed:", error.message);
+    });
+  }
+}, 15000);
+
+/* ==========================================
+   START APPLICATION
+========================================== */
 
 boot();
+
+</script>
 </script>
 </body>
 </html>
