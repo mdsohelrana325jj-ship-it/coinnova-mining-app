@@ -18,7 +18,6 @@ const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "";
 const SESSION_SECRET = process.env.SESSION_SECRET || "";
 const BOT_USERNAME = (process.env.BOT_USERNAME || "").replace(/^@/, "");
 
-// সমস্যা সমাধান: ব্রাউজার বা লোকাল টেস্টের জন্য ডেমো লগইন ডিফল্টভাবে অন রাখা হয়েছে
 const ALLOW_DEMO_LOGIN = true;
 
 const dbPath =
@@ -222,7 +221,7 @@ WHERE net_amount = 0 AND amount > 0
 `);
 
 // ======================================================
-// DEFAULT SETTINGS
+// DEFAULT SETTINGS (Updated with customizable texts & category settings)
 // ======================================================
 
 const now = () => Date.now();
@@ -234,6 +233,17 @@ const defaultSettings = {
   appLogo: "",
   loadingImage: "",
   loadingTitle: "Preparing your CoinNova account…",
+
+  // ইউজার প্যানেল টেক্সট ও নোটিশ কন্ট্রোল
+  homeNotice: "Keep your Telegram account secure. Never share your wallet seed phrase or password.",
+  withdrawNotice: "Select a withdrawal category first. E-Wallet and Crypto Network use separate selection screens. Verify the destination carefully before submitting.",
+  spinRulesText: "Invite qualified friends to unlock spins.",
+
+  // ক্যাটাগরি নাম ও লোগো কন্ট্রোল
+  ewalletCategoryName: "E-Wallet",
+  ewalletCategoryLogo: "",
+  networkCategoryName: "Select Network",
+  networkCategoryLogo: "",
 
   tapReward: 1,
   maxEnergy: 1000,
@@ -258,6 +268,39 @@ const defaultSettings = {
   buttons: [],
 
   paymentMethods: [
+    {
+      id: "binance",
+      name: "Binance Pay / Wallet",
+      type: "crypto",
+      category: "network",
+      color: "#F0B90B",
+      animation: "pulse",
+      url: "",
+      enabled: true,
+      logo: "https://cdn.simpleicons.org/binance/F0B90B"
+    },
+    {
+      id: "usdt_trc20",
+      name: "USDT · TRC20",
+      type: "crypto",
+      category: "network",
+      color: "#26A17B",
+      animation: "pulse",
+      url: "",
+      enabled: true,
+      logo: "https://cdn.simpleicons.org/tether/26A17B"
+    },
+    {
+      id: "usdt_bep20",
+      name: "USDT · BEP20",
+      type: "crypto",
+      category: "network",
+      color: "#26A17B",
+      animation: "pulse",
+      url: "",
+      enabled: true,
+      logo: "https://cdn.simpleicons.org/tether/26A17B"
+    },
     {
       id: "bkash",
       name: "bKash",
@@ -290,61 +333,6 @@ const defaultSettings = {
       url: "",
       enabled: true,
       logo: "https://cdn.simpleicons.org/dutchbanglabank/8B1E8B"
-    },
-    {
-      id: "usdt_trc20",
-      name: "USDT · TRC20",
-      type: "crypto",
-      category: "network",
-      color: "#26A17B",
-      animation: "pulse",
-      url: "",
-      enabled: true,
-      logo: "https://cdn.simpleicons.org/tether/26A17B"
-    },
-    {
-      id: "usdt_bep20",
-      name: "USDT · BEP20",
-      type: "crypto",
-      category: "network",
-      color: "#26A17B",
-      animation: "pulse",
-      url: "",
-      enabled: true,
-      logo: "https://cdn.simpleicons.org/tether/26A17B"
-    },
-    {
-      id: "binance",
-      name: "Binance Pay / Wallet",
-      type: "crypto",
-      category: "network",
-      color: "#F0B90B",
-      animation: "pulse",
-      url: "",
-      enabled: true,
-      logo: "https://cdn.simpleicons.org/binance/F0B90B"
-    },
-    {
-      id: "trustwallet",
-      name: "Trust Wallet",
-      type: "crypto",
-      category: "network",
-      color: "#3375BB",
-      animation: "pulse",
-      url: "",
-      enabled: true,
-      logo: "https://cdn.simpleicons.org/trustwallet/3375BB"
-    },
-    {
-      id: "bitget",
-      name: "Bitget Wallet",
-      type: "crypto",
-      category: "network",
-      color: "#00F0FF",
-      animation: "pulse",
-      url: "",
-      enabled: true,
-      logo: "https://cdn.simpleicons.org/bitget/00F0FF"
     }
   ],
 
@@ -508,7 +496,6 @@ function auth(req, res, next) {
   const cookies = parseCookie(req.headers.cookie || "");
   let payload = verify(cookies.cn_auth);
 
-  // ফিক্স: কুকি না থাকলে বা ভ্যালিড না হলে ডেমো মোডে স্বয়ংক্রিয়ভাবে একটি ফলব্যাক ইউজার তৈরি বা সেট করে দেওয়া
   if (!payload && ALLOW_DEMO_LOGIN) {
     let demoUser = db.prepare("SELECT * FROM users WHERE tg_id = ?").get("demo-miner");
     if (!demoUser) {
@@ -603,7 +590,7 @@ function verifyTelegramInitData(initData) {
 // USER HELPERS
 // ======================================================
 
-function cleanText(value, max = 100) {
+function cleanText(value, max = 500) {
   return String(value || "").trim().slice(0, max);
 }
 
@@ -1795,7 +1782,7 @@ app.get("/api/admin/overview", adminAuth, (req, res) => {
 });
 
 // ======================================================
-// ADMIN SETTINGS
+// ADMIN SETTINGS (Updated to save all customizable texts & category names/logos)
 // ======================================================
 
 app.put("/api/admin/settings", adminAuth, (req, res) => {
@@ -1803,13 +1790,17 @@ app.put("/api/admin/settings", adminAuth, (req, res) => {
   const incoming = req.body || {};
   const next = { ...oldSettings };
 
-  for (const key of ["appName", "tagline", "loadingTitle"]) {
+  for (const key of [
+    "appName", "tagline", "loadingTitle", 
+    "homeNotice", "withdrawNotice", "spinRulesText",
+    "ewalletCategoryName", "networkCategoryName"
+  ]) {
     if (typeof incoming[key] === "string") {
-      next[key] = cleanText(incoming[key], 100);
+      next[key] = cleanText(incoming[key], 500);
     }
   }
 
-  for (const key of ["appLogo", "loadingImage"]) {
+  for (const key of ["appLogo", "loadingImage", "ewalletCategoryLogo", "networkCategoryLogo"]) {
     if (typeof incoming[key] === "string") {
       next[key] = validUrl(incoming[key])
         ? incoming[key].slice(0, 1000)
