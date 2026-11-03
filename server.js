@@ -234,18 +234,6 @@ const defaultSettings = {
   appLogo: "",
   loadingImage: "",
   loadingTitle: "Preparing your CoinNova account…",
-  loadingText: "VERIFYING TELEGRAM ACCOUNT",
-
-  // User Panel Custom Text Fields defaults
-  txtHomeTitle: "CoinNova Mining",
-  txtBalanceTitle: "Total Balance",
-  txtTapButton: "TAP TO MINE",
-  txtEnergyLabel: "Energy",
-  txtWithdrawBtn: "Withdraw Funds",
-  txtNetworkBtn: "🌐 Select Network",
-  txtEwalletBtn: "৳ E-Wallet",
-  txtReferralTitle: "Invite Friends & Earn",
-  txtNotice: "Welcome to CoinNova! Complete tasks and invite friends to boost earnings.",
 
   tapReward: 1,
   maxEnergy: 1000,
@@ -256,7 +244,6 @@ const defaultSettings = {
   referralRequired: 1,
   referralBonus: 100,
   withdrawalFeePercent: 0,
-  withdrawalNotice: "",
 
   maintenance: false,
   sound: true,
@@ -1803,24 +1790,9 @@ app.put("/api/admin/settings", adminAuth, (req, res) => {
   const incoming = req.body || {};
   const next = { ...oldSettings };
 
-  for (const key of [
-    "appName",
-    "tagline",
-    "loadingTitle",
-    "loadingText",
-    "txtHomeTitle",
-    "txtBalanceTitle",
-    "txtTapButton",
-    "txtEnergyLabel",
-    "txtWithdrawBtn",
-    "txtNetworkBtn",
-    "txtEwalletBtn",
-    "txtReferralTitle",
-    "txtNotice",
-    "withdrawalNotice"
-  ]) {
+  for (const key of ["appName", "tagline", "loadingTitle"]) {
     if (typeof incoming[key] === "string") {
-      next[key] = cleanText(incoming[key], 1000);
+      next[key] = cleanText(incoming[key], 100);
     }
   }
 
