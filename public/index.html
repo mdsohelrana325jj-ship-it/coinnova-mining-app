@@ -175,12 +175,16 @@ label{font-size:12px;color:var(--muted)}
 .fee-line{display:flex;justify-content:space-between;gap:10px;font-size:11px;padding:5px 0;color:var(--muted)}
 .fee-line strong{color:var(--text);text-align:right}
 .fee-line.total{border-top:1px solid var(--line);padding-top:10px;margin-top:5px;font-size:12px}
-.subnav{display:flex;gap:8px;margin:14px 0}
-.subnav button{flex:1;border:1px solid var(--line);border-radius:11px;padding:11px 4px;background:#111a2c;color:var(--muted);font-size:11px;font-weight:850}
-.subnav button.active{background:#292d35;border-color:var(--gold);color:var(--gold)}
 .custom-button{display:flex;align-items:center;gap:10px;padding:12px;border:1px solid var(--line);border-radius:15px;background:#131d31;margin:9px 0;color:var(--text);text-decoration:none}
 .custom-button .logo{width:42px;height:42px}
 .custom-button b{font-size:12px}
+
+/* Popup Modal CSS for Select Network sub-selection */
+.popup-overlay{position:fixed;inset:0;background:rgba(2,5,11,0.85);z-index:1500;display:none;align-items:center;justify-content:center;padding:15px}
+.popup-overlay.show{display:flex}
+.popup-box{width:100%;max-width:420px;background:#111a2c;border:1px solid #33435f;border-radius:20px;padding:20px;animation:slide .25s}
+.popup-box h3{margin:0 0 15px;font-size:18px}
+
 @keyframes rotate{to{transform:rotate(360deg)}}
 @keyframes fade{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:translateY(0)}}
 @keyframes float{50%{transform:translateY(-5px)}}
@@ -206,6 +210,18 @@ label{font-size:12px;color:var(--muted)}
 </div>
 
 <div id="toast" class="toast"></div>
+
+<!-- Network selection popup modal -->
+<div id="networkPopup" class="popup-overlay">
+ <div class="popup-box">
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+   <h3 id="popupHeaderTitle">🌐 Select Network</h3>
+   <button onclick="closeNetworkPopup()" style="background:#26334a;border:0;color:white;border-radius:9px;padding:5px 9px;">✕</button>
+  </div>
+  <p class="muted" style="margin-bottom:15px;font-size:12px;">Choose your crypto network or wallet option:</p>
+  <div id="popupNetworkList" class="method-grid" style="grid-template-columns:1fr;"></div>
+ </div>
+</div>
 
 <main class="app">
  <header class="header">
@@ -317,7 +333,7 @@ label{font-size:12px;color:var(--muted)}
   <div class="section-title"><h2 id="lblWithdrawTitle">Withdraw</h2><span class="reward">Secure payout</span></div>
   <div class="notice" id="withdrawalNoticeText">Select a withdrawal category first. E-Wallet and Crypto Network use separate selection screens. Verify the destination carefully before submitting.</div>
 
-  <!-- Wallet Categories (Dynamic E-Wallet & Select Network with logos) -->
+  <!-- Wallet Categories -->
   <div id="walletCategories" class="method-grid">
    <button class="method-card" onclick="openWalletCategory('ewallet')">
     <div class="logo" id="ewalletCatLogo"><span class="fallback">৳</span></div>
@@ -329,7 +345,7 @@ label{font-size:12px;color:var(--muted)}
    </button>
   </div>
 
-  <!-- Binance Popup / Method Selection Page -->
+  <!-- Method Selection Page (For E-Wallet or secondary lists) -->
   <div id="walletMethodPage" class="hidden">
    <button id="walletBackCategory" class="secondary">← Back to Withdraw</button>
    <div class="section-title"><h2 id="walletMethodTitle">Select method</h2><span class="muted" id="walletMethodCount"></span></div>
@@ -450,7 +466,6 @@ function applyBranding(settings){
  $("loadingTitle").textContent=s.loadingTitle||s.appName||"COINNOVA";
  $("loadingSub").textContent=s.loadingText||"VERIFYING TELEGRAM ACCOUNT";
  
- // Full Background Image for Loading Screen
  const loadImg = safeUrl(s.loadingImage || s.appLogo);
  if(loadImg){
   $("loadingScreen").style.backgroundImage = `url('${loadImg}')`;
@@ -468,12 +483,9 @@ function applyBranding(settings){
   icon.onload=()=>{const link=document.querySelector('link[rel="icon"]')||document.createElement("link");link.rel="icon";link.href=icon.src;document.head.appendChild(link)};
  }
 
- // Apply User Panel Custom Text Fields from Admin Settings
  if(s.txtHomeTitle) $("lblBalanceTitle").textContent = s.txtHomeTitle;
- if(s.txtBalanceTitle) { /* dynamic balance label */ }
  if(s.txtTapButton) $("lblTapHint").textContent = s.txtTapButton;
  if(s.txtEnergyLabel) $("lblEnergyLabel").textContent = "⚡ " + s.txtEnergyLabel;
- if(s.txtWithdrawBtn) { /* withdraw button texts */ }
  if(s.txtNetworkBtn) $("networkCatTitle").textContent = s.txtNetworkBtn;
  if(s.txtEwalletBtn) $("ewalletCatTitle").textContent = s.txtEwalletBtn;
  if(s.txtReferralTitle) $("lblFriendsTitle").textContent = s.txtReferralTitle;
@@ -565,7 +577,6 @@ function render(){
  $("spinRules").textContent=`Every ${s.referralsPerSpin||1} qualified referral(s) gives 1 spin. Possible rewards: ${(s.spinRewards||[]).join(", ")} CNV.`;
  $("spinBtn").style.opacity=$("spinBtn").disabled?".5":"1";
 
- // Render dynamic E-Wallet & Network card logos if available in settings
  const ewalletMethod = (s.paymentMethods||[]).find(m => m.category === "ewallet" || (!m.category && m.type !== "crypto"));
  const networkMethod = (s.paymentMethods||[]).find(m => m.category === "network" || m.type === "crypto");
  if(ewalletMethod) {
@@ -629,7 +640,7 @@ async function openTask(id){
  const task=state.tasks.find(t=>Number(t.id)===id);
  if(!task)return;
  if(safeUrl(task.url))window.open(task.url,"_blank","noopener,noreferrer");
- if(!confirm("After visiting the task, claim the reward? This starter version does not automatically verify social follows."))return;
+ if(!confirm("After visiting the task, claim the reward?"))return;
  try{
   const d=await api(`/api/tasks/${id}/claim`,{method:"POST",body:"{}"});
   state.user=d.user;await refresh();toast(`+${fmt(d.reward)} CNV added`);
@@ -697,26 +708,61 @@ $("copyRef").onclick=async()=>{
 $("openCommission").onclick=async()=>{await refresh().catch(()=>{});showPage("commission")};
 
 // ======================================================
-// SEPARATE WITHDRAWAL CATEGORIES & BINANCE POPUP / WALLET SELECTION
+// NEW WITHDRAWAL LOGIC: BINANCE / SELECT NETWORK POPUP FLOW
 // ======================================================
 
 function openWalletCategory(category){
- selectedCategory=category;selectedMethod=null;
- $("walletCategories").classList.add("hidden");
- $("walletFormPage").classList.add("hidden");
- $("walletMethodPage").classList.remove("hidden");
- 
- if(category==="ewallet") {
-  $("walletMethodTitle").textContent = state.settings.txtEwalletBtn || "E-Wallet";
- } else {
-  $("walletMethodTitle").textContent = state.settings.txtNetworkBtn || "Select Network";
- }
+ selectedCategory = category; 
+ selectedMethod = null;
 
- $("walletBackCategory").onclick=()=>{
-  $("walletMethodPage").classList.add("hidden");
-  $("walletCategories").classList.remove("hidden");
- };
- renderMethodCards();
+ if(category === 'network') {
+  // Binance / Select Network clicked -> Show Network Popup first
+  openNetworkPopup();
+ } else {
+  // E-Wallet clicked -> Go to standard methods list page
+  $("walletCategories").classList.add("hidden");
+  $("walletFormPage").classList.add("hidden");
+  $("walletMethodPage").classList.remove("hidden");
+  $("walletMethodTitle").textContent = state.settings.txtEwalletBtn || "E-Wallet";
+  $("walletBackCategory").onclick = () => {
+   $("walletMethodPage").classList.add("hidden");
+   $("walletCategories").classList.remove("hidden");
+  };
+  renderMethodCards();
+ }
+}
+
+function openNetworkPopup() {
+ const all = (state.settings.paymentMethods || []).filter(m => m.enabled);
+ const networkList = all.filter(m => m.category === "network" || m.category === "crypto" || m.type === "crypto");
+ 
+ $("popupHeaderTitle").textContent = state.settings.txtNetworkBtn || "🌐 Select Network";
+ $("popupNetworkList").innerHTML = networkList.map(m => `
+  <button class="method-card ${animationClass(m.animation)}" onclick="selectNetworkAndProceed('${esc(m.id)}')" style="display:flex;align-items:center;gap:12px;padding:12px;">
+   ${logoMarkup(m.logo, m.name, m.color)}
+   <div style="text-align:left;flex:1;">
+    <b>${esc(m.name)}</b>
+    <small>Click to select network & wallet</small>
+   </div>
+   <span style="color:var(--gold)">➔</span>
+  </button>
+ `).join("") || '<div class="empty">No network or crypto methods enabled.</div>';
+
+ $("networkPopup").classList.add("show");
+}
+
+function closeNetworkPopup() {
+ $("networkPopup").classList.remove("show");
+}
+
+function selectNetworkAndProceed(methodId) {
+ const all = (state.settings.paymentMethods || []).filter(m => m.enabled);
+ selectedMethod = all.find(m => m.id === methodId) || null;
+ closeNetworkPopup();
+
+ if(selectedMethod) {
+  openWithdrawForm();
+ }
 }
 
 function renderMethodCards(){
@@ -731,9 +777,9 @@ function renderMethodCards(){
    <span class="check">${selectedMethod?.id===m.id?"●":"○"}</span>
    ${logoMarkup(m.logo,m.name,m.color)}
    <b>${esc(m.name)}</b>
-   <small>${m.category==="ewallet"||(!m.category&&m.type!=="crypto")?"Mobile money":"Select wallet & network"}</small>
+   <small>Mobile money</small>
   </button>
- `).join("")||'<div class="empty" style="grid-column:1/-1">No methods enabled in this category. Ask the admin to add one.</div>';
+ `).join("")||'<div class="empty" style="grid-column:1/-1">No methods enabled in this category.</div>';
  
  $("methodList").querySelectorAll("[data-method]").forEach(btn=>{
   btn.onclick=()=>{
@@ -745,23 +791,31 @@ function renderMethodCards(){
 }
 
 function openWithdrawForm(){
+ $("walletCategories").classList.add("hidden");
  $("walletMethodPage").classList.add("hidden");
  $("walletFormPage").classList.remove("hidden");
- $("selectedMethodTitle").textContent="Withdraw";
- $("selectedMethodName").textContent=selectedMethod.name;
- $("selectedMethodType").textContent=selectedCategory==="ewallet"?"E-WALLET":"SELECT NETWORK";
- $("selectedMethodHint").textContent=selectedCategory==="ewallet"?"Mobile money destination":"Enter wallet address for this network";
- $("destinationLabel").textContent=selectedCategory==="ewallet"?"Mobile number":"Wallet address";
- $("address").placeholder=selectedCategory==="ewallet"?"Enter mobile number":"Enter wallet address";
- setImageOrText($("selectedMethodLogo"),selectedMethod.logo,selectedMethod.name.slice(0,1));
- $("selectedMethodLogo").style.color=selectedMethod.color||"var(--cyan)";
- $("amount").min=Number(state.settings.minWithdraw||1);
- $("amount").placeholder=`Minimum ${fmt(state.settings.minWithdraw||1)} CNV`;
  
- $("walletBackMethods").onclick=()=>{
+ $("selectedMethodTitle").textContent = "Withdraw";
+ $("selectedMethodName").textContent = selectedMethod.name;
+ $("selectedMethodType").textContent = selectedCategory==="ewallet" ? "E-WALLET" : "SELECT NETWORK";
+ $("selectedMethodHint").textContent = selectedCategory==="ewallet" ? "Mobile money destination" : "Enter wallet address for this network";
+ $("destinationLabel").textContent = selectedCategory==="ewallet" ? "Mobile number" : "Wallet address";
+ $("address").placeholder = selectedCategory==="ewallet" ? "Enter mobile number" : "Enter wallet address";
+ 
+ setImageOrText($("selectedMethodLogo"), selectedMethod.logo, selectedMethod.name.slice(0,1));
+ $("selectedMethodLogo").style.color = selectedMethod.color || "var(--cyan)";
+ $("amount").min = Number(state.settings.minWithdraw || 1);
+ $("amount").placeholder = `Minimum ${fmt(state.settings.minWithdraw || 1)} CNV`;
+ 
+ $("walletBackMethods").onclick = () => {
   $("walletFormPage").classList.add("hidden");
-  $("walletMethodPage").classList.remove("hidden");
-  renderMethodCards();
+  if(selectedCategory === 'network') {
+   $("walletCategories").classList.remove("hidden");
+   openNetworkPopup();
+  } else {
+   $("walletMethodPage").classList.remove("hidden");
+   renderMethodCards();
+  }
  };
  updateFeePreview();
 }
@@ -814,7 +868,7 @@ function renderWalletHistory(){
 
 function showLoginError(message){
  $("modalTitle").textContent="Telegram verification required";
- $("modalBody").innerHTML=`<p class="muted">${esc(message)}</p><p class="muted">Open this Mini App using your Telegram bot. Telegram account verification is required to access your balance and wallet.</p>`;
+ $("modalBody").innerHTML=`<p class="muted">${esc(message)}</p><p class="muted">Open this Mini App using your Telegram bot.</p>`;
  $("modalBg").classList.add("show");
 }
 
