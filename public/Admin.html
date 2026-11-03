@@ -547,7 +547,8 @@ function api(path,opts={}){
  return fetch(path,{credentials:"same-origin",...opts,headers:{"Content-Type":"application/json",...(opts.headers||{})}})
  .then(async r=>{const d=await r.json().catch(()=>({}));if(!r.ok)throw Error(d.error||`Request failed (${r.status})`);return d});
 }
-function payload(method,data){return api(method,{method:"PUT",body:JSON.stringify(data)})}
+function payload(method,data){return api(method,{method:"PUT",body:JSON.stringify(data)})
+}
 function checked(id){return $(id).checked}
 function number(id,def=0){const n=Number($(id).value);return Number.isFinite(n)?n:def}
 function setVal(id,v){if($(id))$(id).value=v??""}
