@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
 <meta name="theme-color" content="#080b15">
-<title>CoinNova Mining</title>
+<title id="htmlTitle">CoinNova Mining</title>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 
 <style>
@@ -29,14 +29,12 @@ button:active{transform:scale(.97)}
 .hidden{display:none!important}
 .loading{
  position:fixed;inset:0;z-index:1000;background:#080b15;
- background-size:cover;background-position:center;background-repeat:no-repeat;
  display:flex;align-items:center;justify-content:center;flex-direction:column;gap:17px;
  transition:opacity .45s,visibility .45s;
+ background-size:cover;background-position:center;background-repeat:no-repeat;
 }
-.loading::before{
- content:"";position:absolute;inset:0;background:rgba(8, 11, 21, 0.85);z-index:1;
-}
-.loading > *{position:relative;z-index:2;}
+.loading.has-bg::before{content:"";position:absolute;inset:0;background:rgba(8,11,21,0.85);z-index:1}
+.loading > *{position:relative;z-index:2}
 .loading.done{opacity:0;visibility:hidden;pointer-events:none}
 .loading-art{
  width:112px;height:112px;border-radius:30px;
@@ -230,7 +228,7 @@ label{font-size:12px;color:var(--muted)}
 
  <section id="home" class="page active">
   <div class="balance-card">
-   <div class="label">TOTAL COINS</div>
+   <div class="label" id="lblBalanceTitle">TOTAL COINS</div>
    <div class="balance"><span id="balance">0</span> <small>CNV</small></div>
    <div class="stats">
     <div class="stat"><strong id="totalTaps">0</strong><small>Total taps</small></div>
@@ -242,11 +240,11 @@ label{font-size:12px;color:var(--muted)}
   <div class="coin-stage" id="coinStage">
    <div class="orbit"></div><div class="orbit two"></div>
    <button id="coin" class="coin" aria-label="Tap to mine"><span class="coin-core">C</span></button>
-   <div class="tap-hint">TAP THE COIN TO MINE</div>
+   <div class="tap-hint" id="lblTapHint">TAP THE COIN TO MINE</div>
   </div>
 
   <div class="energy-card">
-   <div class="energy-row"><span>⚡ Energy</span><b><span id="energy">1000</span> / <span id="maxEnergy">1000</span></b></div>
+   <div class="energy-row"><span id="lblEnergyLabel">⚡ Energy</span><b><span id="energy">1000</span> / <span id="maxEnergy">1000</span></b></div>
    <div class="bar"><i id="energyBar"></i></div>
   </div>
 
@@ -258,16 +256,16 @@ label{font-size:12px;color:var(--muted)}
 
   <div id="customButtons"></div>
 
-  <div class="notice" id="homeNoticeText">Keep your Telegram account secure. Never share your wallet seed phrase or password.</div>
+  <div class="notice" id="homeNotice">Keep your Telegram account secure. Never share your wallet seed phrase or password.</div>
  </section>
 
  <section id="tasks" class="page">
-  <div class="section-title"><h2>Daily Tasks</h2><span class="muted">Earn CNV</span></div>
+  <div class="section-title"><h2 id="lblTasksTitle">Daily Tasks</h2><span class="muted">Earn CNV</span></div>
   <div id="taskList"></div>
   <div class="card">
    <div class="row">
     <div class="logo"><span class="fallback">☀</span></div>
-    <div class="row-info"><b>Daily Bonus</b><small>Claim your daily reward.</small></div>
+    <div class="row-info"><b id="lblDailyBonusTitle">Daily Bonus</b><small id="lblDailyBonusDesc">Claim your daily reward.</small></div>
     <strong id="dailyAmount" class="reward">+50</strong>
    </div>
    <button id="dailyBtn" class="primary" style="margin-top:13px">CLAIM DAILY BONUS</button>
@@ -275,67 +273,70 @@ label{font-size:12px;color:var(--muted)}
  </section>
 
  <section id="spin" class="page">
-  <div class="section-title"><h2>Lucky Spin</h2><span class="reward"><span id="spinAvailable">0</span> spins</span></div>
+  <div class="section-title"><h2 id="lblSpinTitle">Lucky Spin</h2><span class="reward"><span id="spinAvailable">0</span> spins</span></div>
   <div class="card">
    <div class="wheel-pointer">▼</div>
    <div class="wheel-wrap"><div id="spinWheel" class="wheel"></div></div>
    <button id="spinBtn" class="primary">✦ SPIN NOW</button>
    <p class="muted" id="spinRules" style="text-align:center">Invite qualified friends to unlock spins.</p>
   </div>
-  <div class="section-title"><h2>Spin History</h2></div>
+  <div class="section-title"><h2 id="lblSpinHistoryTitle">Spin History</h2></div>
   <div id="spinHistory"></div>
  </section>
 
  <section id="friends" class="page">
-  <div class="section-title"><h2>Invite Friends</h2><span class="reward">Referral</span></div>
+  <div class="section-title"><h2 id="lblFriendsTitle">Invite Friends</h2><span class="reward">Referral</span></div>
   <div class="card">
    <div class="row">
     <div class="logo"><span class="fallback">↗</span></div>
-    <div class="row-info"><b>Invite & Earn</b><small>Earn <span id="refBonus">100</span> CNV when your friend qualifies.</small></div>
+    <div class="row-info"><b id="lblInviteEarn">Invite & Earn</b><small>Earn <span id="refBonus">100</span> CNV when your friend qualifies.</small></div>
    </div>
    <div class="notice" id="refRule">Your invited friend qualifies after completing 10 taps.</div>
-   <label>Your personal referral link</label>
+   <label id="lblRefLinkTitle">Your personal referral link</label>
    <input id="refLink" class="field" readonly value="Loading referral link">
    <button id="copyRef" class="primary">COPY INVITE LINK</button>
    <button id="openCommission" class="secondary" style="margin-top:10px">VIEW TEAM & COMMISSIONS</button>
   </div>
-  <div class="section-title"><h2>Your Team</h2></div>
+  <div class="section-title"><h2 id="lblTeamTitle">Your Team</h2></div>
   <div id="teamSummary"></div>
  </section>
 
  <section id="commission" class="page">
-  <div class="section-title"><h2>Team Commission</h2><span class="reward">6 Levels</span></div>
+  <div class="section-title"><h2 id="lblCommissionTitle">Team Commission</h2><span class="reward">6 Levels</span></div>
   <div class="balance-card">
-   <div class="label">COMMISSION TODAY</div>
+   <div class="label" id="lblCommissionTodayTitle">COMMISSION TODAY</div>
    <div class="balance"><span id="commissionTotal">0</span> <small>CNV</small></div>
-   <div class="muted">Commission payouts are processed after 1:00 AM Bangladesh time.</div>
+   <div class="muted" id="lblCommissionNote">Commission payouts are processed after 1:00 AM Bangladesh time.</div>
   </div>
   <div id="commissionLevels"></div>
-  <div class="section-title"><h2>Commission History</h2></div>
+  <div class="section-title"><h2 id="lblCommissionHistoryTitle">Commission History</h2></div>
   <div id="commissionHistory"></div>
  </section>
 
  <section id="wallet" class="page">
-  <div class="section-title"><h2>Withdraw</h2><span class="reward">Secure payout</span></div>
-  <div class="notice" id="withdrawNoticeText">Select a withdrawal category first. E-Wallet and Crypto Network use separate selection screens. Verify the destination carefully before submitting.</div>
+  <div class="section-title"><h2 id="lblWithdrawTitle">Withdraw</h2><span class="reward">Secure payout</span></div>
+  <div class="notice" id="withdrawalNoticeText">Select a withdrawal category first. E-Wallet and Crypto Network use separate selection screens. Verify the destination carefully before submitting.</div>
 
+  <!-- Wallet Categories (Dynamic E-Wallet & Select Network with logos) -->
   <div id="walletCategories" class="method-grid">
    <button class="method-card" onclick="openWalletCategory('ewallet')">
-    <div class="logo" id="ewalletLogoBox"><span class="fallback">৳</span></div>
-    <b id="ewalletTitleText">E-Wallet</b><small>bKash · Nagad · Rocket</small>
+    <div class="logo" id="ewalletCatLogo"><span class="fallback">৳</span></div>
+    <b id="ewalletCatTitle">৳ E-Wallet</b><small id="ewalletCatDesc">bKash · Nagad · Rocket</small>
    </button>
    <button class="method-card" onclick="openWalletCategory('network')">
-    <div class="logo" id="networkLogoBox"><span class="fallback">🌐</span></div>
-    <b id="networkTitleText">Select Network</b><small>USDT · TRC20 · BEP20 · Wallets</small>
+    <div class="logo" id="networkCatLogo"><span class="fallback">🌐</span></div>
+    <b id="networkCatTitle">🌐 Select Network</b><small id="networkCatDesc">USDT · TRC20 · BEP20 · Wallets</small>
    </button>
   </div>
 
+  <!-- Binance Popup / Method Selection Page -->
   <div id="walletMethodPage" class="hidden">
    <button id="walletBackCategory" class="secondary">← Back to Withdraw</button>
    <div class="section-title"><h2 id="walletMethodTitle">Select method</h2><span class="muted" id="walletMethodCount"></span></div>
    <div id="methodList" class="method-grid"></div>
   </div>
 
+  <!-- Withdrawal Form Page -->
   <div id="walletFormPage" class="hidden">
    <button id="walletBackMethods" class="secondary">← Back to methods</button>
    <div class="section-title"><h2 id="selectedMethodTitle">Withdraw</h2><span class="reward" id="selectedMethodType"></span></div>
@@ -363,7 +364,7 @@ label{font-size:12px;color:var(--muted)}
    </form>
   </div>
 
-  <div class="section-title"><h2>Withdrawal History</h2></div>
+  <div class="section-title"><h2 id="lblWithdrawHistoryTitle">Withdrawal History</h2></div>
   <div id="withdrawHistory"></div>
  </section>
 </main>
@@ -440,29 +441,46 @@ function setImageOrText(container,url,fallback){
   container.innerHTML=`<img src="${esc(clean)}" alt="" onerror="this.remove();this.parentElement.textContent='${esc(fallback)}'">`;
  }else container.textContent=fallback;
 }
+
 function applyBranding(settings){
  const s=settings||{};
- document.title=(s.appName||"CoinNova")+" • Mining";
+ $("htmlTitle").textContent=(s.appName||"CoinNova")+" • Mining";
  $("appName").textContent=s.appName||"CoinNova";
  $("tagline").textContent=s.tagline||"TAP • MINE • EARN";
  $("loadingTitle").textContent=s.loadingTitle||s.appName||"COINNOVA";
- setImageOrText($("brandIcon"),s.appLogo,"C");
-
- // লোডিং স্ক্রিন ব্যাকগ্রাউন্ড ইমেজ ফুল স্ক্রিন সেট করা
- if(s.loadingImage && safeUrl(s.loadingImage)){
-  $("loadingScreen").style.backgroundImage = `url('${safeUrl(s.loadingImage)}')`;
-  $("loadingArt").style.display = "none";
+ $("loadingSub").textContent=s.loadingText||"VERIFYING TELEGRAM ACCOUNT";
+ 
+ // Full Background Image for Loading Screen
+ const loadImg = safeUrl(s.loadingImage || s.appLogo);
+ if(loadImg){
+  $("loadingScreen").style.backgroundImage = `url('${loadImg}')`;
+  $("loadingScreen").classList.add("has-bg");
  } else {
-  $("loadingScreen").style.backgroundImage = "none";
-  $("loadingArt").style.display = "grid";
-  setImageOrText($("loadingArt"),s.appLogo,"C");
+  $("loadingScreen").style.backgroundImage = "";
+  $("loadingScreen").classList.remove("has-bg");
  }
+
+ setImageOrText($("brandIcon"),s.appLogo,"C");
+ setImageOrText($("loadingArt"),s.appLogo,"C");
 
  if(s.appLogo){
   const icon=new Image();icon.src=safeUrl(s.appLogo);
   icon.onload=()=>{const link=document.querySelector('link[rel="icon"]')||document.createElement("link");link.rel="icon";link.href=icon.src;document.head.appendChild(link)};
  }
+
+ // Apply User Panel Custom Text Fields from Admin Settings
+ if(s.txtHomeTitle) $("lblBalanceTitle").textContent = s.txtHomeTitle;
+ if(s.txtBalanceTitle) { /* dynamic balance label */ }
+ if(s.txtTapButton) $("lblTapHint").textContent = s.txtTapButton;
+ if(s.txtEnergyLabel) $("lblEnergyLabel").textContent = "⚡ " + s.txtEnergyLabel;
+ if(s.txtWithdrawBtn) { /* withdraw button texts */ }
+ if(s.txtNetworkBtn) $("networkCatTitle").textContent = s.txtNetworkBtn;
+ if(s.txtEwalletBtn) $("ewalletCatTitle").textContent = s.txtEwalletBtn;
+ if(s.txtReferralTitle) $("lblFriendsTitle").textContent = s.txtReferralTitle;
+ if(s.txtNotice) $("homeNotice").textContent = s.txtNotice;
+ if(s.withdrawalNotice) $("withdrawalNoticeText").textContent = s.withdrawalNotice;
 }
+
 function showPage(name){
  document.querySelectorAll(".page").forEach(p=>p.classList.toggle("active",p.id===name));
  document.querySelectorAll(".nav button").forEach(b=>b.classList.toggle("active",b.dataset.page===name));
@@ -517,18 +535,6 @@ function render(){
  if(!state.user)return;
  const u=state.user,s=state.settings||{};
  applyBranding(s);
-
- // এডমিন প্যানেল থেকে টেক্সট ও নোটিশ ডাইনামিক সেট করা
- if($("homeNoticeText")) $("homeNoticeText").textContent = s.homeNotice || "Keep your Telegram account secure. Never share your wallet seed phrase or password.";
- if($("withdrawNoticeText")) $("withdrawNoticeText").textContent = s.withdrawNotice || "Select a withdrawal category first. E-Wallet and Crypto Network use separate selection screens.";
-
- // ক্যাটাগরি নাম ও লোগো ডাইনামিক রেন্ডার
- if($("ewalletTitleText")) $("ewalletTitleText").textContent = s.ewalletCategoryName || "E-Wallet";
- setImageOrText($("ewalletLogoBox"), s.ewalletCategoryLogo, "৳");
-
- if($("networkTitleText")) $("networkTitleText").textContent = s.networkCategoryName || "Select Network";
- setImageOrText($("networkLogoBox"), s.networkCategoryLogo, "🌐");
-
  $("balance").textContent=fmt(u.balance);
  $("totalTaps").textContent=fmt(u.totalTaps);
  $("refCount").textContent=fmt(state.referrals||0);
@@ -556,8 +562,20 @@ function render(){
 
  $("spinAvailable").textContent=fmt(u.spinsAvailable||0);
  $("spinBtn").disabled=!s.spinEnabled||Number(u.spinsAvailable||0)<1;
- $("spinRules").textContent=s.spinRulesText || `Every ${s.referralsPerSpin||1} qualified referral(s) gives 1 spin.`;
+ $("spinRules").textContent=`Every ${s.referralsPerSpin||1} qualified referral(s) gives 1 spin. Possible rewards: ${(s.spinRewards||[]).join(", ")} CNV.`;
  $("spinBtn").style.opacity=$("spinBtn").disabled?".5":"1";
+
+ // Render dynamic E-Wallet & Network card logos if available in settings
+ const ewalletMethod = (s.paymentMethods||[]).find(m => m.category === "ewallet" || (!m.category && m.type !== "crypto"));
+ const networkMethod = (s.paymentMethods||[]).find(m => m.category === "network" || m.type === "crypto");
+ if(ewalletMethod) {
+  setImageOrText($("ewalletCatLogo"), ewalletMethod.logo, "৳");
+  $("ewalletCatDesc").textContent = ewalletMethod.name + " · Mobile money";
+ }
+ if(networkMethod) {
+  setImageOrText($("networkCatLogo"), networkMethod.logo, "🌐");
+  $("networkCatDesc").textContent = networkMethod.name + " · Crypto / Network";
+ }
 
  $("taskList").innerHTML=(state.tasks||[]).map(t=>`
   <div class="card row">
@@ -611,7 +629,7 @@ async function openTask(id){
  const task=state.tasks.find(t=>Number(t.id)===id);
  if(!task)return;
  if(safeUrl(task.url))window.open(task.url,"_blank","noopener,noreferrer");
- if(!confirm("After visiting the task, claim the reward?"))return;
+ if(!confirm("After visiting the task, claim the reward? This starter version does not automatically verify social follows."))return;
  try{
   const d=await api(`/api/tasks/${id}/claim`,{method:"POST",body:"{}"});
   state.user=d.user;await refresh();toast(`+${fmt(d.reward)} CNV added`);
@@ -679,7 +697,7 @@ $("copyRef").onclick=async()=>{
 $("openCommission").onclick=async()=>{await refresh().catch(()=>{});showPage("commission")};
 
 // ======================================================
-// WITHDRAWAL CATEGORIES AND POPUP NETWORK SYSTEM
+// SEPARATE WITHDRAWAL CATEGORIES & BINANCE POPUP / WALLET SELECTION
 // ======================================================
 
 function openWalletCategory(category){
@@ -688,11 +706,10 @@ function openWalletCategory(category){
  $("walletFormPage").classList.add("hidden");
  $("walletMethodPage").classList.remove("hidden");
  
- const s = state.settings || {};
  if(category==="ewallet") {
-  $("walletMethodTitle").textContent = s.ewalletCategoryName || "E-Wallet";
+  $("walletMethodTitle").textContent = state.settings.txtEwalletBtn || "E-Wallet";
  } else {
-  $("walletMethodTitle").textContent = s.networkCategoryName || "Select Network";
+  $("walletMethodTitle").textContent = state.settings.txtNetworkBtn || "Select Network";
  }
 
  $("walletBackCategory").onclick=()=>{
@@ -714,9 +731,9 @@ function renderMethodCards(){
    <span class="check">${selectedMethod?.id===m.id?"●":"○"}</span>
    ${logoMarkup(m.logo,m.name,m.color)}
    <b>${esc(m.name)}</b>
-   <small>${m.category==="ewallet"||(!m.category&&m.type!=="crypto")?"Mobile money":"Crypto wallet / network"}</small>
+   <small>${m.category==="ewallet"||(!m.category&&m.type!=="crypto")?"Mobile money":"Select wallet & network"}</small>
   </button>
- `).join("")||'<div class="empty" style="grid-column:1/-1">No methods enabled in this category.</div>';
+ `).join("")||'<div class="empty" style="grid-column:1/-1">No methods enabled in this category. Ask the admin to add one.</div>';
  
  $("methodList").querySelectorAll("[data-method]").forEach(btn=>{
   btn.onclick=()=>{
@@ -732,14 +749,15 @@ function openWithdrawForm(){
  $("walletFormPage").classList.remove("hidden");
  $("selectedMethodTitle").textContent="Withdraw";
  $("selectedMethodName").textContent=selectedMethod.name;
- $("selectedMethodType").textContent=selectedCategory==="ewallet"?"E-WALLET":"NETWORK";
- $("selectedMethodHint").textContent=selectedCategory==="ewallet"?"Mobile money destination":"Enter the exact wallet address for this network";
+ $("selectedMethodType").textContent=selectedCategory==="ewallet"?"E-WALLET":"SELECT NETWORK";
+ $("selectedMethodHint").textContent=selectedCategory==="ewallet"?"Mobile money destination":"Enter wallet address for this network";
  $("destinationLabel").textContent=selectedCategory==="ewallet"?"Mobile number":"Wallet address";
  $("address").placeholder=selectedCategory==="ewallet"?"Enter mobile number":"Enter wallet address";
  setImageOrText($("selectedMethodLogo"),selectedMethod.logo,selectedMethod.name.slice(0,1));
  $("selectedMethodLogo").style.color=selectedMethod.color||"var(--cyan)";
  $("amount").min=Number(state.settings.minWithdraw||1);
  $("amount").placeholder=`Minimum ${fmt(state.settings.minWithdraw||1)} CNV`;
+ 
  $("walletBackMethods").onclick=()=>{
   $("walletFormPage").classList.add("hidden");
   $("walletMethodPage").classList.remove("hidden");
@@ -796,60 +814,35 @@ function renderWalletHistory(){
 
 function showLoginError(message){
  $("modalTitle").textContent="Telegram verification required";
- $("modalBody").innerHTML=`<p class="muted">${esc(message)}</p><p class="muted">Open this Mini App using your Telegram bot.</p>`;
+ $("modalBody").innerHTML=`<p class="muted">${esc(message)}</p><p class="muted">Open this Mini App using your Telegram bot. Telegram account verification is required to access your balance and wallet.</p>`;
  $("modalBg").classList.add("show");
 }
 
 async function boot(){
  try{
   if(!tg?.initData){
-   try {
-    const d=await api("/api/auth/demo",{method:"POST",body:JSON.stringify({name:"Miner"})});
-    state={...state,...d};
-    await refresh();
-    $("loadingSub").textContent="ACCOUNT READY";
-    setTimeout(()=>showLoading(true),450);
-    return;
-   } catch(e) {
-    const d=await api("/api/me");
-    state={...state,...d};
-    await refresh();
-    $("loadingSub").textContent="ACCOUNT READY";
-    setTimeout(()=>showLoading(true),450);
-    return;
-   }
+   const d=await api("/api/me");
+   state={...state,...d};
+   await refresh();
+   $("loadingSub").textContent="ACCOUNT READY";
+   setTimeout(()=>showLoading(true),450);
+   return;
   }
-
   $("loadingSub").textContent="VERIFYING TELEGRAM ACCOUNT";
   const startParam=tg.initDataUnsafe?.start_param||"";
-  
-  try {
-   const d=await api("/api/auth/telegram",{
-    method:"POST",
-    body:JSON.stringify({initData:tg.initData,startParam})
-   });
-   state={...state,...d};
-  } catch(telegramErr) {
-   const demoRes = await api("/api/auth/demo",{method:"POST",body:JSON.stringify({name:"Miner"})});
-   state={...state,...demoRes};
-  }
-
+  const d=await api("/api/auth/telegram",{
+   method:"POST",
+   body:JSON.stringify({initData:tg.initData,startParam})
+  });
+  state={...state,...d};
   $("loadingSub").textContent="LOADING YOUR ACCOUNT";
   await refresh();
   setTimeout(()=>showLoading(true),500);
  }catch(error){
-  try {
-   const demoRes = await api("/api/auth/demo",{method:"POST",body:JSON.stringify({name:"Miner"})});
-   state={...state,...demoRes};
-   await refresh();
-   setTimeout(()=>showLoading(true),500);
-  } catch(e) {
-   showLoading(true);
-   showLoginError(error.message||"Could not verify your Telegram account.");
-  }
+  showLoading(true);
+  showLoginError(error.message||"Could not verify your Telegram account.");
  }
 }
-
 $("closeModal").onclick=()=>$("modalBg").classList.remove("show");
 
 setInterval(()=>{
