@@ -311,29 +311,29 @@ tr:last-child td{border-bottom:0}
   <section id="page-wallets" class="page">
    <div class="panel">
     <div class="section-head" style="margin-top:0"><h2>Withdrawal Method Manager</h2><span class="badge">SEPARATE CATEGORIES</span></div>
-    <p class="panel-desc">E-Wallet and Select Network are managed independently. Add any number of methods. Each method can have its own name, logo, button color, animation and active status.</p>
+    <p class="panel-desc">E-Wallet and Binance Pay / Wallet are managed independently. Add any number of methods. Each method can have its own name, logo, button color, animation and active status.</p>
     <div class="tabs">
      <button class="active" data-wallet-tab="ewallet">৳ E-Wallet</button>
-     <button data-wallet-tab="network">🌐 Select Network</button>
+     <button data-wallet-tab="network">🌐 Binance Pay / Wallet</button>
     </div>
     <div id="walletList"></div>
-    <button class="btn primary" id="addWallet">＋ Add Wallet / Network</button>
+    <button class="btn primary" id="addWallet">＋ Add Method</button>
     <button class="btn" id="saveWallets">SAVE ALL METHODS ✓</button>
    </div>
 
    <div class="panel">
-    <h3 id="walletEditorTitle">Add E-Wallet</h3><p class="panel-desc">Fill in the details and save. Choose the category carefully so the method appears on the correct withdrawal page.</p>
+    <h3 id="walletEditorTitle">Add Method</h3><p class="panel-desc">Fill in the details and save. Choose the category carefully so the method appears on the correct withdrawal page.</p>
     <form id="walletForm">
      <input type="hidden" id="walletId">
      <div class="form-grid">
-      <div class="form-group"><label>Method Name</label><input id="walletName" required placeholder="bKash / USDT TRC20"></div>
-      <div class="form-group"><label>Category</label><select id="walletCategory"><option value="ewallet">E-Wallet</option><option value="network">Select Network</option></select></div>
+      <div class="form-group"><label>Method Name</label><input id="walletName" required placeholder="bKash / Binance Pay / Wallet"></div>
+      <div class="form-group"><label>Category</label><select id="walletCategory"><option value="ewallet">E-Wallet</option><option value="network">Binance Pay / Wallet</option></select></div>
       <div class="form-group full"><label>Logo Image URL</label><input id="walletLogo" type="url" placeholder="https://example.com/wallet-logo.png"></div>
       <div class="form-group"><label>Button Color</label><input id="walletColor" type="color" value="#45e8ff"></div>
       <div class="form-group"><label>Animation</label><select id="walletAnimation"><option value="none">None</option><option value="pulse">Pulse</option><option value="bounce">Bounce</option><option value="glow">Glow</option><option value="shake">Shake</option></select></div>
       <div class="form-group"><label>Withdrawal Fee (%)</label><input id="walletFee" type="number" min="0" max="100" step=".01" value="0"></div>
       <div class="form-group"><label>Minimum Withdrawal (CNV)</label><input id="walletMin" type="number" min="1" step="1" value="1000"></div>
-      <div class="form-group full"><label>Instructions / Network Details</label><textarea id="walletHint" placeholder="Enter payout instructions or supported network details"></textarea></div>
+      <div class="form-group full"><label>Instructions / Subtitle Details</label><textarea id="walletHint" placeholder="Mobile money or Select wallet & network"></textarea></div>
       <div class="form-group full"><label>Method Status</label><select id="walletEnabled"><option value="true">Enabled</option><option value="false">Disabled</option></select></div>
      </div>
      <div class="form-actions"><button class="btn" type="button" id="clearWalletForm">Clear Form</button><button class="btn primary" type="submit">SAVE METHOD ✓</button></div>
@@ -546,7 +546,7 @@ const pageInfo={
  dashboard:["Dashboard","Your app performance at a glance."],
  branding:["App Branding","Control app name, logo and loading screen."],
  buttons:["Custom Buttons","Build custom links and buttons for the user app."],
- wallets:["E-Wallet & Network","Manage each withdrawal category independently."],
+ wallets:["E-Wallet & Binance Pay","Manage each withdrawal category independently."],
  withdrawSettings:["Withdrawal Settings","Configure withdrawal minimums and fees."],
  spin:["Lucky Spin","Configure spin rewards and referral requirements."],
  commission:["Referral Commission","Manage all six commission levels."],
@@ -809,12 +809,15 @@ document.querySelectorAll("[data-wallet-tab]").forEach(b=>b.onclick=()=>{
  document.querySelectorAll("[data-wallet-tab]").forEach(x=>x.classList.toggle("active",x===b));
  setVal("walletCategory",S.walletTab);renderWallets();
 });
+
 function clearWalletForm(){
  S.editingWallet=null;$("walletForm").reset();setVal("walletId","");
  setVal("walletCategory",S.walletTab);setVal("walletColor",S.walletTab==="ewallet"?"#45e8ff":"#a78bfa");
  setVal("walletFee",S.settings.withdrawalFeePercent??0);setVal("walletMin",S.settings.minimumWithdrawal??S.settings.minWithdraw??1000);
- $("walletEditorTitle").textContent=S.walletTab==="ewallet"?"Add E-Wallet":"Add Network";
+ setVal("walletHint", S.walletTab==="ewallet" ? "Mobile money" : "Select wallet & network");
+ $("walletEditorTitle").textContent=S.walletTab==="ewallet"?"Add E-Wallet Method":"Add Binance / Network Method";
 }
+
 $("addWallet").onclick=()=>{clearWalletForm();$("walletForm").scrollIntoView({behavior:"smooth",block:"start"});$("walletName").focus()};
 $("clearWalletForm").onclick=clearWalletForm;
 
@@ -836,15 +839,17 @@ $("walletForm").onsubmit=e=>{
  document.querySelectorAll("[data-wallet-tab]").forEach(b=>b.classList.toggle("active",b.dataset.walletTab===category));
  renderWallets();clearWalletForm();toast("Method added to draft. Click SAVE ALL METHODS to publish.");
 };
+
 function renderWallets(){
  const list=S.paymentMethods.filter(m=>(m.category|| (m.type==="crypto"?"network":"ewallet"))===S.walletTab);
  $("walletList").innerHTML=list.map(m=>`
  <div class="list-item">
   <div class="item-logo" style="color:${esc(m.color||"#45e8ff")}">${safeUrl(m.logo)?`<img src="${esc(safeUrl(m.logo))}" alt="" onerror="this.remove()">`:esc((m.name||"W").slice(0,1).toUpperCase())}</div>
-  <div class="item-info"><b>${esc(m.name)}</b><small>Fee: ${Number(m.feePercent??0)}% · Minimum: ${fmt(m.minWithdrawal??S.settings.minimumWithdrawal)} CNV · ${esc(m.animation||"none")}</small><span class="badge ${m.enabled!==false?"on":"off"}">${m.enabled!==false?"ENABLED":"DISABLED"}</span></div>
+  <div class="item-info"><b>${esc(m.name)}</b><small>Sub: ${esc(m.hint||"—")} · Fee: ${Number(m.feePercent??0)}% · Min: ${fmt(m.minWithdrawal??S.settings.minimumWithdrawal)} CNV</small><span class="badge ${m.enabled!==false?"on":"off"}">${m.enabled!==false?"ENABLED":"DISABLED"}</span></div>
   <div class="item-actions"><button class="btn small" onclick="editWallet('${esc(m.id)}')">Edit</button><button class="btn small danger" onclick="deleteWallet('${esc(m.id)}')">Delete</button></div>
- </div>`).join("")||'<div class="empty">No methods in this category. Click + Add Wallet / Network.</div>';
+ </div>`).join("")||'<div class="empty">No methods in this category. Click + Add Method.</div>';
 }
+
 window.editWallet=id=>{
  const m=S.paymentMethods.find(x=>String(x.id)===String(id));if(!m)return;
  S.walletTab=m.category||(m.type==="crypto"?"network":"ewallet");
@@ -857,9 +862,11 @@ window.editWallet=id=>{
  $("walletEditorTitle").textContent="Edit "+m.name;
  $("walletForm").scrollIntoView({behavior:"smooth",block:"start"});
 };
+
 window.deleteWallet=id=>{
  S.paymentMethods=S.paymentMethods.filter(m=>String(m.id)!==String(id));renderWallets();toast("Method removed from draft. Save all methods to publish.");
 };
+
 $("saveWallets").onclick=async()=>{
  const valid=S.paymentMethods.map(m=>({...m,category:m.category||(m.type==="crypto"?"network":"ewallet")}));
  if(await saveSettings({paymentMethods:valid},"Wallet and network methods saved"))renderWallets();
