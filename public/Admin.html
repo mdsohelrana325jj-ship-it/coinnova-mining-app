@@ -2,990 +2,1467 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1">
 <meta name="theme-color" content="#080b15">
 <title>CoinNova • Admin Control</title>
 
 <style>
 :root{
- --bg:#080b15;--sidebar:#0d1322;--panel:#111a2c;--panel2:#17233a;
- --gold:#ffd66b;--gold2:#f4a52e;--cyan:#45e8ff;--green:#51f5b7;
- --red:#ff647c;--purple:#a78bfa;--text:#f5f7ff;--muted:#93a1bd;
- --line:#283752;--radius:17px;
+  --bg:#080b15;
+  --panel:#111a2c;
+  --panel2:#17243a;
+  --gold:#ffd66b;
+  --gold2:#f5a623;
+  --cyan:#45e8ff;
+  --green:#48efb0;
+  --red:#ff607e;
+  --text:#f4f6ff;
+  --muted:#96a5c1;
+  --line:#293b59;
 }
 *{box-sizing:border-box}
-body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,system-ui,-apple-system,"Segoe UI",sans-serif}
+html{scroll-behavior:smooth}
+body{
+  margin:0;
+  background:
+    radial-gradient(ellipse at 20% 0%,#1a2a49 0,transparent 38%),
+    var(--bg);
+  color:var(--text);
+  font-family:Inter,system-ui,-apple-system,Arial,sans-serif;
+}
 button,input,select,textarea{font:inherit}
 button{cursor:pointer}
-button:disabled{opacity:.45;cursor:not-allowed}
-button:active{transform:scale(.98)}
-input,select,textarea{width:100%;background:#080f1d;border:1px solid #30415e;color:var(--text);border-radius:11px;padding:12px;outline:none}
-input:focus,select:focus,textarea:focus{border-color:var(--cyan);box-shadow:0 0 0 2px #45e8ff12}
-input[type=checkbox]{width:18px;height:18px;accent-color:var(--gold)}
-input[type=color]{height:42px;padding:4px}
-textarea{min-height:85px;resize:vertical}
-label{font-size:11px;color:var(--muted);display:block;margin:0 0 7px}
+a{color:inherit}
+.wrap{max-width:1250px;margin:auto;padding:20px 16px 70px}
+.header{
+  display:flex;align-items:center;justify-content:space-between;
+  gap:14px;flex-wrap:wrap;margin-bottom:20px
+}
+.brand{display:flex;align-items:center;gap:12px}
+.brand-logo{
+  width:48px;height:48px;border-radius:15px;object-fit:cover;
+  display:grid;place-items:center;background:linear-gradient(135deg,#ffe7a0,#ed9d20);
+  color:#352208;font-size:24px;font-weight:1000;border:1px solid #ffffff22;
+  overflow:hidden
+}
+.brand-logo img{width:100%;height:100%;object-fit:cover}
+.brand-name{font-size:22px;font-weight:950;letter-spacing:.5px}
+.brand-name span{color:var(--gold)}
+.muted{color:var(--muted);font-size:13px;line-height:1.65}
+.actions{display:flex;gap:8px;flex-wrap:wrap}
+.btn{
+  border:1px solid #354866;border-radius:12px;
+  background:#1b2941;color:var(--text);
+  padding:11px 14px;font-weight:800;transition:.2s;
+}
+.btn:hover{filter:brightness(1.14);transform:translateY(-1px)}
+.btn.gold{
+  background:linear-gradient(120deg,#ffe9a3,#f5a426);
+  border-color:transparent;color:#392606
+}
+.btn.green{background:#123b31;border-color:#21624e;color:#75ffd0}
+.btn.red{background:#421c2b;border-color:#773047;color:#ff9eb1}
+.btn.small{padding:8px 11px;font-size:12px}
+.card{
+  background:linear-gradient(145deg,#151f33,#101727);
+  border:1px solid var(--line);border-radius:20px;
+  padding:19px;margin:14px 0;box-shadow:0 12px 32px #0003;
+}
+.card h2{font-size:20px;margin:0 0 9px}
+.card h3{font-size:16px;margin:0 0 12px}
+.card-head{
+  display:flex;align-items:center;justify-content:space-between;
+  gap:10px;flex-wrap:wrap;margin-bottom:14px
+}
+.badge{
+  display:inline-flex;align-items:center;gap:6px;
+  background:#273750;color:#dce7ff;border-radius:10px;
+  padding:7px 10px;font-size:11px;font-weight:900
+}
+.metrics{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.metric{background:#0b1220;border:1px solid var(--line);border-radius:15px;padding:15px}
+.metric small{display:block;color:var(--muted);font-size:12px}
+.metric strong{display:block;font-size:25px;color:var(--gold);margin-top:7px;overflow-wrap:anywhere}
+.tabs{
+  display:flex;gap:8px;overflow:auto;padding:8px 0 12px;
+  scrollbar-width:thin;position:sticky;top:0;z-index:10;
+  background:#080b15ed;backdrop-filter:blur(14px)
+}
+.tabs button{
+  flex-shrink:0;border:1px solid var(--line);border-radius:12px;
+  padding:11px 14px;background:#131d30;color:var(--muted);font-weight:850
+}
+.tabs button.active{background:linear-gradient(120deg,#ffe9a3,#f5a426);color:#352306;border-color:transparent}
+.section{display:none}
+.section.active{display:block}
+.field{
+  width:100%;min-width:0;background:#080f1d;color:var(--text);
+  border:1px solid #334563;border-radius:12px;padding:12px;
+  margin:6px 0 14px;outline:none
+}
+.field:focus{border-color:var(--cyan);box-shadow:0 0 0 3px #45e8ff14}
+textarea.field{min-height:90px;resize:vertical}
+label{display:block;color:var(--muted);font-size:12px;font-weight:750;margin-top:7px}
+.row{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.row3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.check{display:flex;align-items:center;gap:9px;color:var(--text);font-size:13px;margin:12px 0}
+.check input{width:18px;height:18px;accent-color:var(--gold)}
+.hint{
+  background:#2b281a;color:#ffe5a0;border:1px solid #5b4c29;
+  border-radius:13px;padding:13px;font-size:12px;line-height:1.7;margin:12px 0
+}
+.info{
+  background:#101e32;border:1px solid #2c4262;color:#b9cbe8;
+  border-radius:13px;padding:13px;font-size:12px;line-height:1.7
+}
 .hidden{display:none!important}
-.app{display:flex;min-height:100vh}
-.sidebar{width:245px;flex-shrink:0;background:var(--sidebar);border-right:1px solid var(--line);padding:20px 13px;position:fixed;inset:0 auto 0 0;overflow-y:auto;z-index:100}
-.brand{display:flex;align-items:center;gap:11px;padding:3px 7px 23px}
-.brand-icon{width:43px;height:43px;border-radius:14px;display:grid;place-items:center;background:linear-gradient(135deg,#ffe9a0,#ef9d28);color:#4b2b08;font-weight:1000;font-size:24px;overflow:hidden;flex-shrink:0}
-.brand-icon img{width:100%;height:100%;object-fit:cover}
-.brand b{font-size:15px;display:block;letter-spacing:.5px}
-.brand small{font-size:9px;color:var(--muted);display:block;margin-top:4px}
-.nav-label{font-size:9px;color:#66738e;letter-spacing:1.8px;font-weight:900;padding:15px 10px 8px}
-.nav button{width:100%;display:flex;align-items:center;gap:11px;text-align:left;padding:12px 11px;border:1px solid transparent;background:transparent;color:#9ba8c2;border-radius:12px;margin:3px 0;font-size:12px;font-weight:750;transition:.2s}
-.nav button .ico{width:22px;text-align:center;font-size:17px}
-.nav button.active{color:var(--gold);background:#ffd66b12;border-color:#ffd66b24}
-.nav button:hover{background:#ffffff08}
-.side-bottom{border-top:1px solid var(--line);margin-top:20px;padding-top:15px}
-.main{margin-left:245px;width:calc(100% - 245px);padding:24px;min-width:0}
-.topbar{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:24px}
-.topbar h1{font-size:23px;margin:0;font-weight:950}
-.topbar p{font-size:11px;color:var(--muted);margin:6px 0 0}
-.top-actions{display:flex;gap:8px;align-items:center}
-.status-pill{border:1px solid #24664f;background:#102c26;color:var(--green);padding:8px 10px;border-radius:999px;font-size:10px;white-space:nowrap}
-.btn{padding:10px 13px;border:1px solid #354766;background:#1b2941;color:var(--text);border-radius:11px;font-size:11px;font-weight:850}
-.btn.primary{background:linear-gradient(100deg,#ffe9a0,#f2a32c);border:0;color:#3e290b}
-.btn.danger{background:#3a1723;color:#ff8a9d;border-color:#692738}
-.btn.success{background:#10352c;color:var(--green);border-color:#23614f}
-.btn.small{padding:7px 9px;font-size:10px}
-.page{display:none;animation:fade .2s ease}
-.page.active{display:block}
-.grid{display:grid;gap:14px}
-.grid.stats{grid-template-columns:repeat(4,minmax(0,1fr));margin-bottom:18px}
-.grid.two{grid-template-columns:repeat(2,minmax(0,1fr))}
-.grid.three{grid-template-columns:repeat(3,minmax(0,1fr))}
-.panel{background:linear-gradient(135deg,#131d31,#101727);border:1px solid var(--line);border-radius:var(--radius);padding:17px;min-width:0;margin-bottom:15px}
-.panel h3{font-size:14px;margin:0 0 5px}
-.panel-desc{font-size:10px;color:var(--muted);line-height:1.6;margin:0 0 15px}
-.stat-card{background:linear-gradient(140deg,#17233a,#111a2c);border:1px solid var(--line);border-radius:16px;padding:17px;min-width:0}
-.stat-top{display:flex;align-items:center;justify-content:space-between;gap:8px}
-.stat-icon{width:38px;height:38px;border-radius:12px;display:grid;place-items:center;background:#ffd66b13;color:var(--gold);font-size:19px}
-.stat-card small{color:var(--muted);font-size:10px}
-.stat-card strong{display:block;font-size:23px;margin:12px 0 5px;overflow-wrap:anywhere}
-.stat-card .trend{font-size:10px;color:var(--green)}
-.section-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:23px 0 12px}
-.section-head h2{font-size:16px;margin:0}
-.section-head small{font-size:10px;color:var(--muted)}
-.form-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:13px}
-.form-group{min-width:0}
-.form-group.full{grid-column:1/-1}
-.form-actions{display:flex;justify-content:flex-end;gap:9px;margin-top:16px;flex-wrap:wrap}
-.switch-row{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:12px 0;border-bottom:1px solid #273650}
-.switch-row:last-child{border-bottom:0}
-.switch-row b{font-size:12px;display:block}
-.switch-row small{font-size:10px;color:var(--muted);display:block;margin-top:4px;line-height:1.5}
-.switch{position:relative;width:42px;height:23px;flex-shrink:0}
-.switch input{display:none}
-.switch span{position:absolute;inset:0;border-radius:20px;background:#35425a;transition:.2s}
-.switch span:before{content:"";position:absolute;width:17px;height:17px;left:3px;top:3px;border-radius:50%;background:white;transition:.2s}
-.switch input:checked+span{background:#28b98a}
-.switch input:checked+span:before{transform:translateX(19px)}
-.preview{min-height:120px;border:1px dashed #405270;border-radius:14px;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:9px;background:#0a1120;padding:15px;text-align:center}
-.preview img{width:58px;height:58px;object-fit:contain;border-radius:14px}
-.preview b{font-size:13px;overflow-wrap:anywhere}
-.preview small{font-size:10px;color:var(--muted)}
-.list-item{display:flex;align-items:center;gap:12px;padding:13px;border:1px solid var(--line);background:#111a2b;border-radius:14px;margin:9px 0;min-width:0}
-.item-logo{width:43px;height:43px;border-radius:13px;background:#08111f;border:1px solid #33425c;display:grid;place-items:center;overflow:hidden;flex-shrink:0;font-size:20px;font-weight:900;color:var(--gold)}
-.item-logo img{width:100%;height:100%;object-fit:contain;padding:5px}
-.item-info{flex:1;min-width:0}
-.item-info b{display:block;font-size:12px;overflow-wrap:anywhere}
-.item-info small{display:block;font-size:10px;color:var(--muted);margin-top:5px;overflow-wrap:anywhere}
-.item-actions{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
-.badge{display:inline-flex;padding:5px 8px;border-radius:8px;font-size:9px;font-weight:900;background:#28354b;color:#d5dff2}
-.badge.on{background:#12382d;color:var(--green)}
-.badge.off{background:#39232a;color:#ff9aaa}
-.badge.pending{background:#3b3019;color:var(--gold)}
-.table-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:13px}
-table{width:100%;border-collapse:collapse;min-width:600px}
-th,td{text-align:left;padding:12px;border-bottom:1px solid #273650;font-size:11px;white-space:nowrap}
-th{color:#91a0bc;background:#0d1525;font-size:9px;letter-spacing:.7px;text-transform:uppercase}
-td{color:#e5eaf5}
-tr:last-child td{border-bottom:0}
-.empty{text-align:center;padding:25px;color:var(--muted);font-size:11px}
-.tabs{display:flex;gap:7px;flex-wrap:wrap;margin:14px 0}
-.tabs button{background:#101a2b;border:1px solid var(--line);color:var(--muted);border-radius:10px;padding:10px 13px;font-size:11px;font-weight:850}
-.tabs button.active{background:#332d20;border-color:#a98b44;color:var(--gold)}
-.rate-row{display:grid;grid-template-columns:45px 1fr 110px;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--line)}
-.rate-row:last-child{border:0}
-.rate-badge{width:37px;height:37px;display:grid;place-items:center;background:#252b42;color:var(--gold);border-radius:12px;font-size:12px;font-weight:900}
-.rate-row b{font-size:12px}
-.rate-row small{display:block;color:var(--muted);font-size:10px;margin-top:4px}
-.rate-input{position:relative}
-.rate-input input{padding-right:28px}
-.rate-input span{position:absolute;right:11px;top:13px;font-size:11px;color:var(--muted)}
-.login-screen{position:fixed;inset:0;z-index:500;background:radial-gradient(circle at 50% 10%,#233658,#080b15 55%);display:grid;place-items:center;padding:18px}
-.login-box{width:min(400px,100%);background:#111a2c;border:1px solid #33425d;border-radius:24px;padding:28px;box-shadow:0 25px 80px #0008}
-.login-logo{width:65px;height:65px;display:grid;place-items:center;background:linear-gradient(135deg,#ffe9a0,#ed9d29);color:#422806;font-size:34px;font-weight:1000;border-radius:19px;margin-bottom:20px;overflow:hidden}
-.login-logo img{width:100%;height:100%;object-fit:cover}
-.login-box h1{font-size:23px;margin:0 0 8px}
-.login-box p{font-size:11px;color:var(--muted);line-height:1.6;margin:0 0 20px}
-.login-box .primary{width:100%;padding:13px;margin-top:9px}
-.toast{position:fixed;z-index:900;top:15px;left:50%;transform:translate(-50%,-150%);background:#18243a;border:1px solid #425575;border-radius:12px;padding:12px 17px;font-size:12px;box-shadow:0 12px 35px #0008;transition:.25s;max-width:90%;text-align:center}
-.toast.show{transform:translate(-50%,0)}
-.modal-bg{position:fixed;z-index:600;inset:0;background:#000b;display:none;align-items:center;justify-content:center;padding:16px}
-.modal-bg.show{display:flex}
-.modal{width:min(540px,100%);max-height:90vh;overflow:auto;background:#111a2c;border:1px solid #354661;border-radius:20px;padding:21px}
-.modal-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
-.modal-head h3{font-size:16px;margin:0}
-.mobile-menu{display:none}
-.help{background:#0b1b24;border:1px solid #214b57;color:#a4ecf5;border-radius:12px;padding:12px;font-size:10px;line-height:1.7;margin:12px 0}
-@keyframes fade{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
-@keyframes pulse{50%{box-shadow:0 0 22px #ffd66b35}}
-@keyframes bounce{50%{transform:translateY(-4px)}}
-@keyframes glow{50%{filter:brightness(1.3)}}
-@keyframes shake{25%{transform:translateX(-2px)}75%{transform:translateX(2px)}}
-.anim-pulse{animation:pulse 2s infinite}.anim-bounce{animation:bounce 1.5s infinite}.anim-glow{animation:glow 2s infinite}.anim-shake{animation:shake .4s infinite}
-@media(max-width:1050px){
- .grid.stats{grid-template-columns:repeat(2,minmax(0,1fr))}
- .grid.three{grid-template-columns:repeat(2,minmax(0,1fr))}
+.login{max-width:440px;margin:10vh auto}
+.method-tabs{display:flex;gap:8px;flex-wrap:wrap;margin:15px 0}
+.method-tabs button{
+  background:#101a2b;color:var(--muted);border:1px solid var(--line);
+  border-radius:13px;padding:13px 16px;font-weight:850
 }
-@media(max-width:760px){
- .sidebar{width:265px;transform:translateX(-110%);transition:transform .25s;box-shadow:15px 0 45px #0008}
- .sidebar.open{transform:translateX(0)}
- .main{margin:0;width:100%;padding:17px 13px 35px}
- .mobile-menu{display:inline-flex}
- .topbar h1{font-size:19px}
- .topbar{align-items:flex-start}
- .status-pill{display:none}
- .grid.two,.grid.three{grid-template-columns:1fr}
- .form-grid{grid-template-columns:1fr}
- .form-group.full{grid-column:auto}
- .rate-row{grid-template-columns:38px 1fr 85px;gap:8px}
- .panel{padding:14px}
- .stat-card{padding:13px}
- .stat-card strong{font-size:20px}
+.method-tabs button.active{background:#3a3020;color:var(--gold);border-color:#987226}
+.method-list{display:grid;gap:10px}
+.method-item{
+  display:grid;grid-template-columns:60px minmax(0,1fr) auto;
+  align-items:center;gap:13px;padding:13px;
+  border:1px solid var(--line);border-radius:15px;background:#101a2b
 }
-@media(max-width:380px){
- .grid.stats{grid-template-columns:1fr 1fr}
- .top-actions .btn{padding:8px;font-size:10px}
- .rate-row{grid-template-columns:32px 1fr 75px}
+.method-logo{
+  width:56px;height:56px;border-radius:15px;background:#080f1d;
+  border:1px solid #354663;display:grid;place-items:center;
+  overflow:hidden;font-size:22px;font-weight:900;color:var(--gold)
+}
+.method-logo img{width:100%;height:100%;object-fit:contain;padding:5px}
+.method-name{font-size:16px;font-weight:900;overflow-wrap:anywhere}
+.method-info{font-size:12px;color:var(--muted);margin-top:5px;line-height:1.6;overflow-wrap:anywhere}
+.method-actions{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
+.status{display:inline-block;padding:5px 8px;border-radius:8px;font-size:10px;font-weight:900}
+.status.on{background:#123b31;color:#62f5bf}
+.status.off{background:#40212b;color:#ff9db0}
+.subcard{padding:15px;background:#0d1525;border:1px solid var(--line);border-radius:15px;margin:13px 0}
+.button-item{
+  border:1px solid var(--line);border-radius:14px;background:#0d1525;
+  padding:13px;margin:9px 0
+}
+.button-item-head{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.preview{
+  display:flex;align-items:center;gap:12px;background:#0b1220;
+  border:1px solid var(--line);padding:12px;border-radius:13px;margin:10px 0
+}
+.preview img{width:44px;height:44px;object-fit:cover;border-radius:12px}
+.table-wrap{width:100%;overflow:auto}
+table{width:100%;border-collapse:collapse;min-width:720px}
+th,td{padding:12px 10px;text-align:left;border-bottom:1px solid var(--line);font-size:12px;vertical-align:top}
+th{color:var(--gold);font-size:11px;text-transform:uppercase;letter-spacing:.5px}
+td small{color:var(--muted);overflow-wrap:anywhere}
+.task-row{border:1px solid var(--line);border-radius:14px;padding:14px;margin:9px 0}
+.task-row strong{display:block;margin-bottom:5px}
+.toast{
+  position:fixed;bottom:22px;left:50%;transform:translateX(-50%);
+  z-index:1000;background:#1d2d47;border:1px solid #486080;
+  color:white;padding:13px 18px;border-radius:13px;display:none;
+  width:max-content;max-width:90%;box-shadow:0 10px 35px #0008
+}
+.empty{color:var(--muted);text-align:center;padding:24px 10px}
+@media(max-width:700px){
+  .wrap{padding:14px 10px 45px}
+  .brand-name{font-size:18px}
+  .metrics{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .row,.row3{grid-template-columns:1fr}
+  .card{padding:14px;border-radius:17px}
+  .method-item{grid-template-columns:48px minmax(0,1fr);gap:10px}
+  .method-logo{width:46px;height:46px}
+  .method-actions{grid-column:1/-1;justify-content:flex-start}
+  .tabs button{padding:10px 12px;font-size:12px}
 }
 </style>
 </head>
+
 <body>
+<div class="wrap">
 
-<div id="toast" class="toast"></div>
+<header class="header">
+  <div class="brand">
+    <div class="brand-logo" id="brandLogo">C</div>
+    <div>
+      <div class="brand-name">COIN<span>NOVA</span> <small style="font-size:11px;color:var(--muted)">ADMIN</small></div>
+      <div class="muted">Complete User Panel Control Center</div>
+    </div>
+  </div>
+  <div class="actions">
+    <a href="/" class="btn" style="text-decoration:none">↗ User Panel</a>
+    <button class="btn" id="refreshBtn" type="button">↻ Refresh</button>
+    <button class="btn red" id="logout" type="button">Logout</button>
+  </div>
+</header>
 
-<div id="loginScreen" class="login-screen">
- <div class="login-box">
-  <div class="login-logo" id="loginLogo">C</div>
-  <h1>CoinNova Admin</h1>
-  <p>Sign in to manage your mining application, wallets, referrals, commissions and withdrawal requests.</p>
+<div id="loginView" class="card login">
+  <h2>🔐 Admin Login</h2>
+  <p class="muted">Enter the admin password configured through the server environment variable ADMIN_PASSWORD.</p>
   <form id="loginForm">
-   <label>Admin Password</label>
-   <input id="adminPassword" type="password" required autocomplete="current-password" placeholder="Enter admin password">
-   <button class="btn primary" type="submit">SECURE LOGIN →</button>
+    <label>Admin Password</label>
+    <input class="field" id="password" type="password" autocomplete="current-password" required>
+    <button class="btn gold" style="width:100%">SECURE LOGIN</button>
+    <p id="loginError" class="muted"></p>
   </form>
-  <p id="loginError" style="color:var(--red);margin-top:12px"></p>
- </div>
 </div>
 
-<div class="app" id="adminApp" style="display:none">
- <aside class="sidebar" id="sidebar">
-  <div class="brand">
-   <div class="brand-icon" id="sideLogo">C</div>
-   <div><b id="sideAppName">CoinNova</b><small>ADMIN CONTROL CENTER</small></div>
-  </div>
+<div id="adminView" class="hidden">
 
-  <nav class="nav">
-   <div class="nav-label">OVERVIEW</div>
-   <button class="active" data-page="dashboard"><span class="ico">▦</span>Dashboard</button>
+  <div class="metrics" id="metrics"></div>
 
-   <div class="nav-label">APP CONTROL</div>
-   <button data-page="branding"><span class="ico">◈</span>App Branding</button>
-   <button data-page="buttons"><span class="ico">▣</span>Custom Buttons</button>
-   <button data-page="wallets"><span class="ico">◇</span>E-Wallet & Network</button>
-   <button data-page="withdrawSettings"><span class="ico">⇧</span>Withdrawal Settings</button>
-   <button data-page="spin"><span class="ico">✦</span>Lucky Spin</button>
-   <button data-page="commission"><span class="ico">♧</span>Referral Commission</button>
-
-   <div class="nav-label">MANAGEMENT</div>
-   <button data-page="tasks"><span class="ico">◎</span>Tasks</button>
-   <button data-page="withdrawals"><span class="ico">⇄</span>Withdrawal Requests</button>
-   <button data-page="users"><span class="ico">♙</span>Users</button>
-   <button data-page="system"><span class="ico">⚙</span>System Settings</button>
-
-   <div class="side-bottom">
-    <button id="refreshBtn"><span class="ico">↻</span>Refresh Data</button>
-    <button id="logoutBtn"><span class="ico">⇥</span>Logout</button>
-   </div>
+  <nav class="tabs" id="tabs">
+    <button class="active" data-section="dashboard">📊 Overview</button>
+    <button data-section="appearance">🎨 User Design</button>
+    <button data-section="messages">💬 Text Messages</button>
+    <button data-section="methods">💳 Wallets & Network</button>
+    <button data-section="buttons">🔘 Custom Buttons</button>
+    <button data-section="settings">⚙️ App Settings</button>
+    <button data-section="spin">🎡 Lucky Spin</button>
+    <button data-section="commission">👥 Commission</button>
+    <button data-section="tasks">🎯 Tasks</button>
+    <button data-section="withdrawals">💸 Withdrawals</button>
+    <button data-section="users">👤 Users</button>
   </nav>
- </aside>
 
- <main class="main">
-  <header class="topbar">
-   <div style="display:flex;align-items:center;gap:10px">
-    <button class="btn mobile-menu" id="menuBtn">☰</button>
-    <div><h1 id="pageTitle">Dashboard</h1><p id="pageSubtitle">Your app performance at a glance.</p></div>
-   </div>
-   <div class="top-actions"><span class="status-pill">● ADMIN SESSION ACTIVE</span><button class="btn" id="topRefresh">↻ Refresh</button></div>
-  </header>
-
-  <!-- DASHBOARD -->
-  <section id="page-dashboard" class="page active">
-   <div class="grid stats">
-    <div class="stat-card"><div class="stat-top"><small>Total Users</small><span class="stat-icon">♙</span></div><strong id="statUsers">0</strong><span class="trend">Registered accounts</span></div>
-    <div class="stat-card"><div class="stat-top"><small>Withdrawals</small><span class="stat-icon">⇧</span></div><strong id="statWithdrawals">0</strong><span class="trend">Total requests</span></div>
-    <div class="stat-card"><div class="stat-top"><small>Pending Requests</small><span class="stat-icon">◷</span></div><strong id="statPending">0</strong><span class="trend">Need review</span></div>
-    <div class="stat-card"><div class="stat-top"><small>Total Tasks</small><span class="stat-icon">◎</span></div><strong id="statTasks">0</strong><span class="trend">Configured tasks</span></div>
-   </div>
-
-   <div class="grid two">
-    <div class="panel">
-     <h3>Application Status</h3><p class="panel-desc">Main feature availability.</p>
-     <div class="switch-row"><div><b>Mining System</b><small>Allow users to earn by tapping.</small></div><label class="switch"><input id="dashMining" type="checkbox"><span></span></label></div>
-     <div class="switch-row"><div><b>Registration</b><small>Allow verified Telegram accounts.</small></div><label class="switch"><input id="dashRegistration" type="checkbox"><span></span></label></div>
-     <div class="switch-row"><div><b>Withdrawal System</b><small>Accept new withdrawal requests.</small></div><label class="switch"><input id="dashWithdrawal" type="checkbox"><span></span></label></div>
-     <div class="switch-row"><div><b>Lucky Spin</b><small>Allow users to use available spins.</small></div><label class="switch"><input id="dashSpin" type="checkbox"><span></span></label></div>
-     <button class="btn primary" id="saveDashboard" style="margin-top:15px">SAVE STATUS</button>
+  <!-- OVERVIEW -->
+  <section class="section active" id="dashboard">
+    <div class="card">
+      <div class="card-head">
+        <h2>📊 System Overview</h2>
+        <button class="btn" id="overviewRefresh">Refresh Data</button>
+      </div>
+      <div class="info">
+        Settings are stored through the admin settings API. User-panel changes become visible only when the User Panel reads and renders those settings. After saving, refresh the User Panel to verify.
+      </div>
     </div>
-    <div class="panel">
-     <h3>Quick Actions</h3><p class="panel-desc">Open commonly used controls.</p>
-     <button class="btn" style="width:100%;margin:4px 0;text-align:left" onclick="go('branding')">◈ &nbsp; Change App Logo / Loading Image</button>
-     <button class="btn" style="width:100%;margin:4px 0;text-align:left" onclick="go('buttons')">▣ &nbsp; Add Custom Button</button>
-     <button class="btn" style="width:100%;margin:4px 0;text-align:left" onclick="go('wallets')">◇ &nbsp; Add E-Wallet / Network</button>
-     <button class="btn" style="width:100%;margin:4px 0;text-align:left" onclick="go('withdrawals')">⇧ &nbsp; Review Withdrawals</button>
-     <button class="btn" style="width:100%;margin:4px 0;text-align:left" onclick="go('commission')">♧ &nbsp; Edit 6-Level Commission</button>
-    </div>
-   </div>
-
-   <div class="section-head"><h2>Latest Withdrawal Requests</h2><button class="btn small" onclick="go('withdrawals')">View all →</button></div>
-   <div class="panel"><div class="table-wrap"><table><thead><tr><th>ID</th><th>User</th><th>Method</th><th>Amount</th><th>Status</th><th>Action</th></tr></thead><tbody id="dashWithdrawalRows"></tbody></table></div></div>
   </section>
 
-  <!-- BRANDING -->
-  <section id="page-branding" class="page">
-   <div class="grid two">
-    <div class="panel">
-     <h3>App Identity</h3><p class="panel-desc">Configure the name, logos and startup loading screen shown to users.</p>
-     <form id="brandingForm">
-      <div class="form-group"><label>App Name</label><input id="appName" placeholder="CoinNova" required></div>
-      <div class="form-group" style="margin-top:12px"><label>Tagline</label><input id="tagline" placeholder="TAP • MINE • EARN"></div>
-      <div class="form-group" style="margin-top:12px"><label>App Logo URL</label><input id="appLogo" type="url" placeholder="https://example.com/logo.png"></div>
-      <div class="form-group" style="margin-top:12px"><label>Loading Screen Image URL</label><input id="loadingImage" type="url" placeholder="https://example.com/loading.png"></div>
-      <div class="form-group" style="margin-top:12px"><label>Loading Screen Title</label><input id="loadingTitle" placeholder="COINNOVA"></div>
-      <div class="form-group" style="margin-top:12px"><label>Loading Status Text</label><input id="loadingText" placeholder="VERIFYING TELEGRAM ACCOUNT"></div>
-      <div class="form-actions"><button class="btn primary" type="submit">SAVE BRANDING ✓</button></div>
-     </form>
+  <!-- APPEARANCE AND LOADING -->
+  <section class="section" id="appearance">
+    <div class="card">
+      <h2>🎨 App Branding & Logo</h2>
+      <p class="muted">Change the main app title, logo and loading screen image.</p>
+
+      <form id="appearanceForm">
+        <div class="row">
+          <div>
+            <label>App Name</label>
+            <input class="field" id="appName" maxlength="80" placeholder="CoinNova">
+          </div>
+          <div>
+            <label>Tagline</label>
+            <input class="field" id="tagline" maxlength="100" placeholder="Tap • Mine • Earn">
+          </div>
+        </div>
+
+        <label>App Logo Image URL</label>
+        <input class="field" id="appLogo" type="url" placeholder="https://example.com/logo.png">
+
+        <div class="preview">
+          <img id="logoPreview" alt="Logo preview" src="" onerror="this.style.display='none'">
+          <div>
+            <strong>App Logo Preview</strong>
+            <div class="muted">The User Panel must use the appLogo setting.</div>
+          </div>
+        </div>
+
+        <h3>Full-Screen Loading Page</h3>
+        <div class="info">
+          The loading image is intended to cover the entire screen during loading. The User Panel must render it as a full-screen background and hide the loading layer after initialization.
+        </div>
+
+        <label>Full-Screen Loading Image URL</label>
+        <input class="field" id="loadingImage" type="url" placeholder="https://example.com/loading-background.jpg">
+
+        <label>Loading Message</label>
+        <input class="field" id="loadingTitle" maxlength="120" placeholder="Preparing your CoinNova account…">
+
+        <div class="preview" id="loadingPreviewBox">
+          <img id="loadingPreview" alt="Loading preview" src="" onerror="this.style.display='none'">
+          <div>
+            <strong>Loading Image Preview</strong>
+            <div class="muted">Use a public HTTPS image URL.</div>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <label>Main Theme Color</label>
+            <input class="field" id="themeColor" type="color" value="#ffd66b">
+          </div>
+          <div>
+            <label>Secondary Theme Color</label>
+            <input class="field" id="secondaryColor" type="color" value="#f5a623">
+          </div>
+        </div>
+
+        <label class="check"><input type="checkbox" id="sound"> Enable tap sound</label>
+        <button class="btn gold">SAVE DESIGN SETTINGS</button>
+      </form>
     </div>
-    <div class="panel">
-     <h3>Live Preview</h3><p class="panel-desc">Preview of the app identity and loading image.</p>
-     <div class="preview"><img id="brandPreviewImg" alt="App logo preview" src="" onerror="this.style.display='none'"><b id="brandPreviewName">CoinNova</b><small id="brandPreviewTag">TAP • MINE • EARN</small></div>
-     <div style="margin-top:15px" class="preview"><img id="loadingPreviewImg" alt="Loading preview" src="" onerror="this.style.display='none'"><b id="loadingPreviewTitle">COINNOVA</b><small id="loadingPreviewText">VERIFYING TELEGRAM ACCOUNT</small></div>
-     <div class="help">Use a public HTTPS image URL. The image must be accessible to your users' browsers. This panel saves the URL; it does not upload image files.</div>
+  </section>
+
+  <!-- USER PANEL TEXTS -->
+  <section class="section" id="messages">
+    <div class="card">
+      <h2>💬 User Panel Text Editor</h2>
+      <p class="muted">Edit the text labels and messages shown in the User Panel. These values are saved as settings; the User Panel must use the corresponding keys to display them.</p>
+
+      <form id="messagesForm">
+        <div class="row">
+          <div><label>Home Tab</label><input class="field" id="textHome" placeholder="Home"></div>
+          <div><label>Tasks Tab</label><input class="field" id="textTasks" placeholder="Tasks"></div>
+          <div><label>Spin Tab</label><input class="field" id="textSpin" placeholder="Spin"></div>
+          <div><label>Friends Tab</label><input class="field" id="textFriends" placeholder="Friends"></div>
+          <div><label>Wallet Tab</label><input class="field" id="textWallet" placeholder="Wallet"></div>
+          <div><label>Withdraw Page Title</label><input class="field" id="textWithdraw" placeholder="Withdraw"></div>
+          <div><label>Secure Payout Label</label><input class="field" id="textSecurePayout" placeholder="Secure payout"></div>
+          <div><label>Back Button</label><input class="field" id="textBackWithdraw" placeholder="Back to Withdraw"></div>
+          <div><label>E-Wallet Category Name</label><input class="field" id="textEwallet" placeholder="E-Wallet"></div>
+          <div><label>Binance Button Name</label><input class="field" id="textBinance" placeholder="Binance"></div>
+          <div><label>Select Network Popup Title</label><input class="field" id="textSelectNetwork" placeholder="Select Network"></div>
+          <div><label>Crypto Network Section</label><input class="field" id="textCryptoNetwork" placeholder="Crypto Network"></div>
+          <div><label>Withdrawal History</label><input class="field" id="textWithdrawalHistory" placeholder="Withdrawal History"></div>
+          <div><label>Submit Withdrawal Button</label><input class="field" id="textSubmitWithdrawal" placeholder="Submit Withdrawal"></div>
+          <div><label>Amount Placeholder</label><input class="field" id="textAmountPlaceholder" placeholder="Enter amount"></div>
+          <div><label>Address Placeholder</label><input class="field" id="textAddressPlaceholder" placeholder="Enter wallet address"></div>
+        </div>
+
+        <label>Withdrawal Instruction Message</label>
+        <textarea class="field" id="textWithdrawInstruction" placeholder="Select a withdrawal category first..."></textarea>
+
+        <label>No Withdrawal History Message</label>
+        <input class="field" id="textNoWithdrawals" placeholder="No withdrawal requests yet.">
+
+        <label>Wallet Description</label>
+        <input class="field" id="textWalletDescription" placeholder="Mobile money">
+
+        <label>Insufficient Balance Message</label>
+        <input class="field" id="textInsufficientBalance" placeholder="Insufficient balance">
+
+        <label>Withdrawal Success Message</label>
+        <input class="field" id="textWithdrawSuccess" placeholder="Withdrawal request submitted successfully">
+
+        <label>General Notice / Announcement</label>
+        <textarea class="field" id="textAnnouncement" placeholder="Write a message to display in the User Panel"></textarea>
+
+        <button class="btn gold">SAVE ALL USER TEXTS</button>
+      </form>
     </div>
-   </div>
+  </section>
+
+  <!-- PAYMENT METHODS -->
+  <section class="section" id="methods">
+    <div class="card">
+      <div class="card-head">
+        <div>
+          <h2>💳 Withdrawal Method Manager</h2>
+          <p class="muted">Manage E-Wallet and Binance/Select Network separately. Each method supports its own name, logo, color, animation and active status.</p>
+        </div>
+        <span class="badge">SEPARATE CATEGORIES</span>
+      </div>
+
+      <div class="method-tabs">
+        <button type="button" class="active" data-method-category="ewallet">৳ E-Wallet</button>
+        <button type="button" data-method-category="network">🌐 Select Network</button>
+      </div>
+
+      <div id="methodList" class="method-list"></div>
+
+      <div class="actions" style="margin-top:15px">
+        <button class="btn gold" id="addMethod" type="button">＋ Add Wallet / Network</button>
+        <button class="btn" id="saveMethods" type="button">SAVE ALL METHODS ✓</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2 id="methodFormTitle">＋ Add E-Wallet</h2>
+      <p class="muted">Configure the method that should appear on the corresponding withdrawal screen.</p>
+
+      <form id="methodForm">
+        <input type="hidden" id="methodEditId">
+
+        <label>Method Name</label>
+        <input class="field" id="methodName" required maxlength="80" placeholder="bKash / USDT TRC20">
+
+        <div class="row">
+          <div>
+            <label>Category</label>
+            <select class="field" id="methodCategory">
+              <option value="ewallet">E-Wallet</option>
+              <option value="network">Select Network / Crypto</option>
+            </select>
+          </div>
+          <div>
+            <label>Method Type</label>
+            <select class="field" id="methodType">
+              <option value="mobile">Mobile Wallet</option>
+              <option value="crypto">Crypto / Network</option>
+              <option value="other">Other</option>
+            </select>
+          </div>
+        </div>
+
+        <label>Logo Image URL</label>
+        <input class="field" id="methodLogo" type="url" placeholder="https://example.com/logo.png">
+
+        <div class="row">
+          <div>
+            <label>Button Color</label>
+            <input class="field" id="methodColor" type="color" value="#ffd66b">
+          </div>
+          <div>
+            <label>Animation</label>
+            <select class="field" id="methodAnimation">
+              <option value="pulse">Pulse</option>
+              <option value="glow">Glow</option>
+              <option value="bounce">Bounce</option>
+              <option value="none">None</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <label>Minimum Withdrawal (CNV)</label>
+            <input class="field" id="methodMinimum" type="number" min="0" value="0">
+          </div>
+          <div>
+            <label>Withdrawal Fee (%)</label>
+            <input class="field" id="methodFee" type="number" min="0" max="100" step="0.1" value="0">
+          </div>
+        </div>
+
+        <label>Optional Information / URL</label>
+        <input class="field" id="methodUrl" placeholder="Optional note or URL">
+
+        <label class="check"><input type="checkbox" id="methodEnabled" checked> Enabled — show in User Panel</label>
+
+        <div class="actions">
+          <button class="btn gold" type="submit">SAVE METHOD</button>
+          <button class="btn" type="button" id="cancelMethodEdit">CLEAR FORM</button>
+        </div>
+      </form>
+    </div>
+
+    <div class="hint">
+      ⚠️ Saving a method updates the server settings. The User Panel must read paymentMethods and render methods according to category. Actual payments are not automatically sent by this settings screen. Never request a wallet seed phrase or private key.
+    </div>
   </section>
 
   <!-- CUSTOM BUTTONS -->
-  <section id="page-buttons" class="page">
-   <div class="panel">
-    <div class="section-head" style="margin-top:0"><h2>Custom Button Manager</h2><span class="badge">ADD / EDIT / DELETE</span></div>
-    <p class="panel-desc">Every button can have its own name, logo, URL, color and animation. Save the configuration to show enabled buttons in the user app.</p>
-    <div id="buttonList"></div>
-    <button class="btn primary" id="addButton">＋ Add Button</button>
-    <button class="btn" id="saveButtons">SAVE ALL BUTTONS ✓</button>
-   </div>
-   <div class="panel">
-    <h3>Button Editor</h3><p class="panel-desc">Select an existing button above or click Add Button to edit a new one.</p>
-    <form id="buttonForm">
-     <input type="hidden" id="buttonId">
-     <div class="form-grid">
-      <div class="form-group"><label>Button Name</label><input id="buttonName" required placeholder="VIP GROUP JOIN"></div>
-      <div class="form-group"><label>Button Logo URL</label><input id="buttonLogo" type="url" placeholder="https://example.com/icon.png"></div>
-      <div class="form-group full"><label>Target URL</label><input id="buttonUrl" type="url" placeholder="https://t.me/yourchannel"></div>
-      <div class="form-group"><label>Button Color</label><input id="buttonColor" type="color" value="#ffd66b"></div>
-      <div class="form-group"><label>Animation</label><select id="buttonAnimation"><option value="none">None</option><option value="pulse">Pulse</option><option value="bounce">Bounce</option><option value="glow">Glow</option><option value="shake">Shake</option></select></div>
-      <div class="form-group"><label>Button Status</label><select id="buttonEnabled"><option value="true">Enabled</option><option value="false">Disabled</option></select></div>
-     </div>
-     <div class="form-actions"><button type="button" class="btn" id="clearButtonForm">Clear Form</button><button class="btn primary" type="submit">SAVE BUTTON ✓</button></div>
-    </form>
-    <div class="section-head"><h2>Button Preview</h2></div>
-    <div id="buttonPreview" class="preview"><b>Example Button</b><small>Button appearance preview</small></div>
-   </div>
+  <section class="section" id="buttons">
+    <div class="card">
+      <h2>🔘 Custom User Panel Buttons</h2>
+      <p class="muted">Add custom buttons with a title, image, color, animation and URL.</p>
+
+      <div id="customButtonsList"></div>
+
+      <div class="actions">
+        <button class="btn gold" id="addCustomButton" type="button">＋ Add Button</button>
+        <button class="btn" id="saveCustomButtons" type="button">SAVE ALL BUTTONS</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>➕ Add / Edit Button</h2>
+      <form id="customButtonForm">
+        <input type="hidden" id="customButtonId">
+
+        <label>Button Name</label>
+        <input class="field" id="customButtonName" required maxlength="80" placeholder="VIP GROUP FAST JOIN">
+
+        <label>Button Logo / Image URL</label>
+        <input class="field" id="customButtonLogo" type="url" placeholder="https://example.com/button.png">
+
+        <div class="row">
+          <div>
+            <label>Button Color</label>
+            <input class="field" id="customButtonColor" type="color" value="#ffd66b">
+          </div>
+          <div>
+            <label>Animation</label>
+            <select class="field" id="customButtonAnimation">
+              <option value="pulse">Pulse</option>
+              <option value="glow">Glow</option>
+              <option value="bounce">Bounce</option>
+              <option value="none">None</option>
+            </select>
+          </div>
+        </div>
+
+        <label>Destination URL</label>
+        <input class="field" id="customButtonUrl" type="url" placeholder="https://example.com">
+
+        <label class="check"><input type="checkbox" id="customButtonEnabled" checked> Enabled</label>
+
+        <div class="actions">
+          <button class="btn gold">SAVE BUTTON</button>
+          <button class="btn" type="button" id="clearCustomButton">CLEAR</button>
+        </div>
+      </form>
+    </div>
   </section>
 
-  <!-- WALLET MANAGEMENT -->
-  <section id="page-wallets" class="page">
-   <div class="panel">
-    <div class="section-head" style="margin-top:0"><h2>Withdrawal Method Manager</h2><span class="badge">SEPARATE CATEGORIES</span></div>
-    <p class="panel-desc">E-Wallet and Select Network are managed independently. Add any number of methods. Each method can have its own name, logo, button color, animation and active status.</p>
-    <div class="tabs">
-     <button class="active" data-wallet-tab="ewallet">৳ E-Wallet</button>
-     <button data-wallet-tab="network">🌐 Select Network</button>
-    </div>
-    <div id="walletList"></div>
-    <button class="btn primary" id="addWallet">＋ Add Wallet / Network</button>
-    <button class="btn" id="saveWallets">SAVE ALL METHODS ✓</button>
-   </div>
+  <!-- APP SETTINGS -->
+  <section class="section" id="settings">
+    <div class="card">
+      <h2>⚙️ Mining & App Settings</h2>
 
-   <div class="panel">
-    <h3 id="walletEditorTitle">Add E-Wallet</h3><p class="panel-desc">Fill in the details and save. Choose the category carefully so the method appears on the correct withdrawal page.</p>
-    <form id="walletForm">
-     <input type="hidden" id="walletId">
-     <div class="form-grid">
-      <div class="form-group"><label>Method Name</label><input id="walletName" required placeholder="bKash / USDT TRC20"></div>
-      <div class="form-group"><label>Category</label><select id="walletCategory"><option value="ewallet">E-Wallet</option><option value="network">Select Network</option></select></div>
-      <div class="form-group full"><label>Logo Image URL</label><input id="walletLogo" type="url" placeholder="https://example.com/wallet-logo.png"></div>
-      <div class="form-group"><label>Button Color</label><input id="walletColor" type="color" value="#45e8ff"></div>
-      <div class="form-group"><label>Animation</label><select id="walletAnimation"><option value="none">None</option><option value="pulse">Pulse</option><option value="bounce">Bounce</option><option value="glow">Glow</option><option value="shake">Shake</option></select></div>
-      <div class="form-group"><label>Withdrawal Fee (%)</label><input id="walletFee" type="number" min="0" max="100" step=".01" value="0"></div>
-      <div class="form-group"><label>Minimum Withdrawal (CNV)</label><input id="walletMin" type="number" min="1" step="1" value="1000"></div>
-      <div class="form-group full"><label>Instructions / Network Details</label><textarea id="walletHint" placeholder="Enter payout instructions or supported network details"></textarea></div>
-      <div class="form-group full"><label>Method Status</label><select id="walletEnabled"><option value="true">Enabled</option><option value="false">Disabled</option></select></div>
-     </div>
-     <div class="form-actions"><button class="btn" type="button" id="clearWalletForm">Clear Form</button><button class="btn primary" type="submit">SAVE METHOD ✓</button></div>
-    </form>
-   </div>
-  </section>
+      <form id="settingsForm">
+        <div class="row">
+          <div><label>Coins Per Tap</label><input class="field" id="tapReward" type="number" min="0"></div>
+          <div><label>Maximum Energy</label><input class="field" id="maxEnergy" type="number" min="1"></div>
+          <div><label>Energy Regenerated Per Second</label><input class="field" id="energyPerSecond" type="number" min="0"></div>
+          <div><label>Daily Bonus (CNV)</label><input class="field" id="dailyBonus" type="number" min="0"></div>
+          <div><label>Minimum Withdrawal (CNV)</label><input class="field" id="minWithdraw" type="number" min="0"></div>
+          <div><label>Referrals Required to Withdraw</label>
+            <select class="field" id="referralRequired">
+              <option value="0">0 — No referral required</option>
+              <option value="1">1 referral</option>
+              <option value="2">2 referrals</option>
+            </select>
+          </div>
+          <div><label>Referral Bonus (CNV)</label><input class="field" id="referralBonus" type="number" min="0"></div>
+          <div><label>Withdrawal Fee (%)</label><input class="field" id="withdrawalFeePercent" type="number" min="0" max="100" step="0.1"></div>
+        </div>
 
-  <!-- WITHDRAW SETTINGS -->
-  <section id="page-withdrawSettings" class="page">
-   <div class="grid two">
-    <div class="panel">
-     <h3>Global Withdrawal Rules</h3><p class="panel-desc">Set the global minimum, fee and referral requirements.</p>
-     <form id="withdrawSettingsForm">
-      <div class="form-group"><label>Minimum Withdrawal (CNV)</label><input id="minimumWithdrawal" type="number" min="1" required></div>
-      <div class="form-group" style="margin-top:12px"><label>Default Withdrawal Fee (%)</label><input id="withdrawalFeePercent" type="number" min="0" max="100" step=".01" required></div>
-      <div class="form-group" style="margin-top:12px"><label>Required Qualified Referrals</label><input id="referralRequirement" type="number" min="0" step="1" required></div>
-      <div class="form-group" style="margin-top:12px"><label>Withdrawal Notice</label><textarea id="withdrawalNotice" placeholder="Withdrawal processing notice"></textarea></div>
-      <div class="form-actions"><button class="btn primary" type="submit">SAVE WITHDRAWAL RULES ✓</button></div>
-     </form>
+        <label class="check"><input type="checkbox" id="maintenance"> Maintenance Mode</label>
+        <label class="check"><input type="checkbox" id="registrationEnabled"> Enable Registration</label>
+        <label class="check"><input type="checkbox" id="miningEnabled"> Enable Mining</label>
+        <label class="check"><input type="checkbox" id="withdrawalEnabled"> Enable Withdrawals</label>
+
+        <button class="btn gold">SAVE APP SETTINGS</button>
+      </form>
     </div>
-    <div class="panel">
-     <h3>How Fees Work</h3><p class="panel-desc">The User Panel should show the fee before a request is submitted.</p>
-     <div class="stat-card"><small>Example requested amount</small><strong>1,000 CNV</strong><small>Example only; update the settings to calculate your real fee.</small></div>
-     <div class="help">Example: a 5% fee on 1,000 CNV equals 50 CNV; the net amount is 950 CNV. The backend must calculate and enforce the same fee securely. Do not rely only on browser calculations.</div>
-     <div class="switch-row"><div><b>Withdrawal System</b><small>Enable or disable new requests.</small></div><label class="switch"><input id="withdrawEnabled" type="checkbox"><span></span></label></div>
-     <button class="btn primary" id="saveWithdrawToggle" style="margin-top:12px">SAVE STATUS</button>
-    </div>
-   </div>
   </section>
 
   <!-- SPIN -->
-  <section id="page-spin" class="page">
-   <div class="grid two">
-    <div class="panel">
-     <h3>Lucky Spin Settings</h3><p class="panel-desc">Configure referral-based spin rewards and possible prizes.</p>
-     <form id="spinForm">
-      <div class="switch-row"><div><b>Enable Lucky Spin</b><small>Allow eligible users to spin.</small></div><label class="switch"><input id="spinEnabled" type="checkbox"><span></span></label></div>
-      <div class="form-group" style="margin-top:14px"><label>Qualified Referrals Required Per Spin</label><input id="referralsPerSpin" type="number" min="1" step="1" required></div>
-      <div class="form-group" style="margin-top:12px"><label>Spin Prize Values (CNV)</label><input id="spinRewards" placeholder="10,25,50,100,250,500" required></div>
-      <div class="form-group" style="margin-top:12px"><label>Referral Reward (CNV)</label><input id="referralReward" type="number" min="0" step="1" required></div>
-      <div class="form-actions"><button class="btn primary" type="submit">SAVE SPIN SETTINGS ✓</button></div>
-     </form>
+  <section class="section" id="spin">
+    <div class="card">
+      <h2>🎡 Lucky Spin Settings</h2>
+      <p class="muted">Configure spin access and prizes. The server must enforce eligibility and grant spins securely.</p>
+
+      <form id="spinForm">
+        <label class="check"><input type="checkbox" id="spinEnabled"> Enable Lucky Spin</label>
+
+        <label>Qualified Referrals Required Per Spin</label>
+        <input class="field" id="referralsPerSpin" type="number" min="1" max="1000">
+
+        <label>Spin Prize List (CNV, comma-separated)</label>
+        <input class="field" id="spinRewards" placeholder="10,20,30,50,100,200">
+
+        <button class="btn gold">SAVE SPIN SETTINGS</button>
+      </form>
     </div>
-    <div class="panel">
-     <h3>Prize Preview</h3><p class="panel-desc">Configured reward values.</p>
-     <div id="spinPrizePreview" class="grid two"></div>
-     <div class="help">Important: the server must select the prize, deduct one spin and credit the winning amount in one validated database operation. Frontend animation alone does not award a secure prize.</div>
-    </div>
-   </div>
   </section>
 
   <!-- COMMISSION -->
-  <section id="page-commission" class="page">
-   <div class="grid two">
-    <div class="panel">
-     <h3>6-Level Referral Commission</h3><p class="panel-desc">Set the percentage for each referral level. The server must validate rates and calculate commissions.</p>
-     <form id="commissionForm">
-      <div id="commissionRates"></div>
-      <div class="form-actions"><button class="btn primary" type="submit">SAVE COMMISSION RATES ✓</button></div>
-     </form>
+  <section class="section" id="commission">
+    <div class="card">
+      <h2>👥 Six-Level Referral Commission</h2>
+      <p class="muted">Set commission percentages for each team level. The backend must calculate and pay commissions only once for eligible earnings.</p>
+
+      <form id="commissionForm">
+        <label class="check"><input type="checkbox" id="commissionEnabled"> Enable Commission System</label>
+
+        <div class="row3">
+          <div><label>Level 1 (%)</label><input class="field" id="commissionRate1" type="number" min="0" max="100" step="0.1"></div>
+          <div><label>Level 2 (%)</label><input class="field" id="commissionRate2" type="number" min="0" max="100" step="0.1"></div>
+          <div><label>Level 3 (%)</label><input class="field" id="commissionRate3" type="number" min="0" max="100" step="0.1"></div>
+          <div><label>Level 4 (%)</label><input class="field" id="commissionRate4" type="number" min="0" max="100" step="0.1"></div>
+          <div><label>Level 5 (%)</label><input class="field" id="commissionRate5" type="number" min="0" max="100" step="0.1"></div>
+          <div><label>Level 6 (%)</label><input class="field" id="commissionRate6" type="number" min="0" max="100" step="0.1"></div>
+        </div>
+
+        <div class="info">Daily payout schedule: after 1:00 AM Bangladesh time (Asia/Dhaka). This schedule works only if the server implements the payout job.</div>
+
+        <button class="btn gold" style="margin-top:14px">SAVE COMMISSION SETTINGS</button>
+      </form>
     </div>
-    <div class="panel">
-     <h3>Automatic Commission Payout</h3><p class="panel-desc">Bangladesh time (Asia/Dhaka).</p>
-     <div class="stat-card"><small>Scheduled payout</small><strong>01:00 AM</strong><span class="trend">Bangladesh Standard Time</span></div>
-     <div class="switch-row"><div><b>Daily Auto Payout</b><small>Requires a backend scheduler and idempotent payout records.</small></div><label class="switch"><input id="commissionAutoPayout" type="checkbox"><span></span></label></div>
-     <button class="btn primary" id="saveCommissionSchedule" style="margin-top:12px">SAVE PAYOUT SETTING</button>
-     <div class="help">Saving the schedule setting does not create a scheduler by itself. The server.js must actually process due commissions at 01:00 Asia/Dhaka and prevent duplicate payouts.</div>
-    </div>
-   </div>
   </section>
 
   <!-- TASKS -->
-  <section id="page-tasks" class="page">
-   <div class="panel">
-    <div class="section-head" style="margin-top:0"><h2>Task Manager</h2><button class="btn primary" id="addTask">＋ Add Task</button></div>
-    <p class="panel-desc">Create and manage social and daily tasks.</p>
-    <div class="table-wrap"><table><thead><tr><th>ID</th><th>Task</th><th>Platform</th><th>Reward</th><th>Status</th><th>Actions</th></tr></thead><tbody id="taskRows"></tbody></table></div>
-   </div>
-   <div class="panel">
-    <h3 id="taskEditorTitle">Add Task</h3>
-    <form id="taskForm">
-     <input type="hidden" id="taskId">
-     <div class="form-grid">
-      <div class="form-group"><label>Task Name</label><input id="taskTitle" required placeholder="Join Telegram Channel"></div>
-      <div class="form-group"><label>Platform</label><select id="taskPlatform"><option>Telegram</option><option>YouTube</option><option>Facebook</option><option>Instagram</option><option>TikTok</option><option>X</option><option>Daily</option><option>Other</option></select></div>
-      <div class="form-group full"><label>Task URL</label><input id="taskUrl" type="url" placeholder="https://t.me/yourchannel"></div>
-      <div class="form-group"><label>Reward (CNV)</label><input id="taskReward" type="number" min="0" required></div>
-      <div class="form-group"><label>Task Status</label><select id="taskEnabled"><option value="true">Enabled</option><option value="false">Disabled</option></select></div>
-     </div>
-     <div class="form-actions"><button class="btn" type="button" id="clearTask">Clear</button><button class="btn primary" type="submit">SAVE TASK ✓</button></div>
-    </form>
-   </div>
+  <section class="section" id="tasks">
+    <div class="card">
+      <h2>🎯 Create a Task</h2>
+      <form id="taskForm">
+        <div class="row">
+          <div><label>Task Title</label><input class="field" id="taskTitle" required maxlength="100"></div>
+          <div><label>Platform</label><input class="field" id="taskPlatform" required maxlength="40" placeholder="Telegram / YouTube"></div>
+          <div><label>Destination URL</label><input class="field" id="taskUrl" type="url" required placeholder="https://"></div>
+          <div><label>Reward (CNV)</label><input class="field" id="taskReward" type="number" min="0" value="100" required></div>
+        </div>
+        <button class="btn gold">＋ ADD TASK</button>
+      </form>
+    </div>
+
+    <div class="card">
+      <h2>Task List</h2>
+      <div id="taskList"></div>
+    </div>
+
+    <div class="hint">Social-task completion is not verified by this admin page. Add server-side verification before giving high-value rewards.</div>
   </section>
 
-  <!-- WITHDRAWAL REQUESTS -->
-  <section id="page-withdrawals" class="page">
-   <div class="panel">
-    <div class="section-head" style="margin-top:0"><h2>Withdrawal Requests</h2><button class="btn" id="refreshWithdrawals">↻ Refresh</button></div>
-    <div class="tabs" id="withdrawalTabs">
-     <button class="active" data-status="all">All</button>
-     <button data-status="pending">Pending</button>
-     <button data-status="approved">Approved</button>
-     <button data-status="paid">Paid</button>
-     <button data-status="rejected">Rejected</button>
+  <!-- WITHDRAWALS -->
+  <section class="section" id="withdrawals">
+    <div class="card">
+      <h2>💸 Withdrawal Requests</h2>
+      <p class="muted">Review requests, approve them, mark payments as paid, or reject/refund according to server rules.</p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>ID / User</th><th>Method / Address</th><th>Amount</th><th>Status</th><th>Transaction / Note</th><th>Actions</th></tr></thead>
+          <tbody id="withdrawTable"></tbody>
+        </table>
+      </div>
     </div>
-    <div class="table-wrap"><table><thead><tr><th>ID</th><th>User</th><th>Method</th><th>Destination</th><th>Requested</th><th>Fee</th><th>Net</th><th>Status</th><th>Action</th></tr></thead><tbody id="withdrawalRows"></tbody></table></div>
-   </div>
   </section>
 
   <!-- USERS -->
-  <section id="page-users" class="page">
-   <div class="panel">
-    <div class="section-head" style="margin-top:0"><h2>User Management</h2><button class="btn" id="refreshUsers">↻ Refresh</button></div>
-    <div class="form-group" style="max-width:350px;margin-bottom:13px"><label>Search user</label><input id="userSearch" placeholder="Search name or Telegram ID"></div>
-    <div class="table-wrap"><table><thead><tr><th>ID</th><th>Name</th><th>Telegram ID</th><th>Balance</th><th>Referrals</th><th>Status</th><th>Actions</th></tr></thead><tbody id="userRows"></tbody></table></div>
-   </div>
-   <div class="panel">
-    <h3>Edit User</h3><p class="panel-desc">Use balance changes carefully and keep an audit trail on the backend.</p>
-    <form id="userForm">
-     <input type="hidden" id="editUserId">
-     <div class="form-grid">
-      <div class="form-group"><label>Balance (CNV)</label><input id="editUserBalance" type="number" min="0" step="1" required></div>
-      <div class="form-group"><label>Account Status</label><select id="editUserBlocked"><option value="false">Active</option><option value="true">Blocked</option></select></div>
-     </div>
-     <div class="form-actions"><button class="btn primary" type="submit">SAVE USER ✓</button></div>
-    </form>
-   </div>
+  <section class="section" id="users">
+    <div class="card">
+      <h2>👤 User Management</h2>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>User</th><th>Name</th><th>Balance (CNV)</th><th>Taps</th><th>Joined</th><th>Actions</th></tr></thead>
+          <tbody id="userTable"></tbody>
+        </table>
+      </div>
+    </div>
   </section>
 
-  <!-- SYSTEM -->
-  <section id="page-system" class="page">
-   <div class="grid two">
-    <div class="panel">
-     <h3>Core Settings</h3><p class="panel-desc">Mining rewards, energy and daily bonus.</p>
-     <form id="systemForm">
-      <div class="form-group"><label>Tap Reward (CNV)</label><input id="miningReward" type="number" min="0" step="1"></div>
-      <div class="form-group" style="margin-top:12px"><label>Maximum Energy</label><input id="maxEnergy" type="number" min="1" step="1"></div>
-      <div class="form-group" style="margin-top:12px"><label>Energy Restored Per Second</label><input id="energyPerSecond" type="number" min="0" step=".1"></div>
-      <div class="form-group" style="margin-top:12px"><label>Daily Bonus (CNV)</label><input id="dailyReward" type="number" min="0" step="1"></div>
-      <div class="form-actions"><button class="btn primary" type="submit">SAVE CORE SETTINGS ✓</button></div>
-     </form>
-    </div>
-    <div class="panel">
-     <h3>System Controls</h3><p class="panel-desc">Feature toggles.</p>
-     <div class="switch-row"><div><b>Registration</b><small>New accounts can register.</small></div><label class="switch"><input id="systemRegistration" type="checkbox"><span></span></label></div>
-     <div class="switch-row"><div><b>Mining</b><small>Allow coin tapping.</small></div><label class="switch"><input id="systemMining" type="checkbox"><span></span></label></div>
-     <div class="switch-row"><div><b>Withdrawal</b><small>Accept withdrawal requests.</small></div><label class="switch"><input id="systemWithdrawal" type="checkbox"><span></span></label></div>
-     <div class="switch-row"><div><b>Sound Effects</b><small>Enable app tap/spin sound.</small></div><label class="switch"><input id="systemSound" type="checkbox"><span></span></label></div>
-     <div class="form-actions"><button class="btn primary" id="saveSystemToggles">SAVE SYSTEM STATUS ✓</button></div>
-    </div>
-   </div>
-   <div class="panel">
-    <h3>Admin Security</h3><p class="panel-desc">Use a strong admin password. Authentication and password validation must be handled by the server.</p>
-    <button class="btn" id="changePasswordBtn">Change Admin Password</button>
-    <div class="help">Do not put your bot token, database credentials or admin password inside this HTML file. Store secrets in the hosting provider's environment variables.</div>
-   </div>
-  </section>
- </main>
+</div>
 </div>
 
-<div id="modalBg" class="modal-bg">
- <div class="modal">
-  <div class="modal-head"><h3 id="modalTitle">Confirm action</h3><button class="btn" id="modalClose">✕</button></div>
-  <div id="modalBody"></div>
- </div>
-</div>
+<div class="toast" id="toast"></div>
 
 <script>
 "use strict";
-const $=id=>document.getElementById(id);
-const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
-const safeUrl=s=>{try{let u=new URL(s);return ["https:","http:"].includes(u.protocol)?u.href:""}catch{return""}};
-const uid=()=> "item_"+Date.now().toString(36)+"_"+Math.random().toString(36).slice(2,7);
 
-const S={
- settings:{},
- users:[],
- tasks:[],
- withdrawals:[],
- buttons:[],
- paymentMethods:[],
- walletTab:"ewallet",
- withdrawalFilter:"all",
- editingButton:null,
- editingWallet:null,
- editingTask:null,
- currentPage:"dashboard"
+const $ = id => document.getElementById(id);
+let data = null;
+let selectedMethodCategory = "ewallet";
+let editingMethod = null;
+let editingCustomButton = null;
+
+const defaultSettings = {
+  appName:"CoinNova",
+  tagline:"Tap • Mine • Earn",
+  tapReward:1,
+  maxEnergy:1000,
+  energyPerSecond:3,
+  dailyBonus:50,
+  minWithdraw:1000,
+  referralRequired:1,
+  referralBonus:100,
+  withdrawalFeePercent:0,
+  maintenance:false,
+  sound:true,
+  miningEnabled:true,
+  registrationEnabled:true,
+  withdrawalEnabled:true,
+  referralsPerSpin:1,
+  spinEnabled:true,
+  spinRewards:[10,20,30,50,100,200],
+  commissionEnabled:true,
+  commissionRates:[10,5,3,2,1,1],
+  appLogo:"",
+  loadingImage:"",
+  loadingTitle:"Preparing your CoinNova account…",
+  themeColor:"#ffd66b",
+  secondaryColor:"#f5a623",
+  paymentMethods:[],
+  buttons:[],
+  texts:{}
 };
 
-function toast(s){
- const t=$("toast");t.textContent=s;t.classList.add("show");
- clearTimeout(t._timer);t._timer=setTimeout(()=>t.classList.remove("show"),2800);
+function escapeHTML(value){
+  return String(value ?? "").replace(/[&<>"']/g,c=>({
+    "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
+  })[c]);
 }
-function api(path,opts={}){
- return fetch(path,{credentials:"same-origin",...opts,headers:{"Content-Type":"application/json",...(opts.headers||{})}})
- .then(async r=>{const d=await r.json().catch(()=>({}));if(!r.ok)throw Error(d.error||`Request failed (${r.status})`);return d});
-}
-function payload(method,data){return api(method,{method:"PUT",body:JSON.stringify(data)})}
-function checked(id){return $(id).checked}
-function number(id,def=0){const n=Number($(id).value);return Number.isFinite(n)?n:def}
-function setVal(id,v){if($(id))$(id).value=v??""}
-function setCheck(id,v){if($(id))$(id).checked=!!v}
-function urlImage(el,url,fallback="C"){
- const clean=safeUrl(url);
- el.innerHTML=clean?`<img src="${esc(clean)}" alt="" onerror="this.parentElement.textContent='${esc(fallback)}'">`:esc(fallback);
-}
-function animClass(a){return ({pulse:"anim-pulse",bounce:"anim-bounce",glow:"anim-glow",shake:"anim-shake"})[a]||""}
 
-const pageInfo={
- dashboard:["Dashboard","Your app performance at a glance."],
- branding:["App Branding","Control app name, logo and loading screen."],
- buttons:["Custom Buttons","Build custom links and buttons for the user app."],
- wallets:["E-Wallet & Network","Manage each withdrawal category independently."],
- withdrawSettings:["Withdrawal Settings","Configure withdrawal minimums and fees."],
- spin:["Lucky Spin","Configure spin rewards and referral requirements."],
- commission:["Referral Commission","Manage all six commission levels."],
- tasks:["Task Manager","Create and manage user tasks."],
- withdrawals:["Withdrawal Requests","Review and process payout requests."],
- users:["User Management","Manage accounts and balances."],
- system:["System Settings","Configure core rewards and system controls."]
-};
-function go(name){
- if(!pageInfo[name])return;
- S.currentPage=name;
- document.querySelectorAll(".page").forEach(p=>p.classList.toggle("active",p.id==="page-"+name));
- document.querySelectorAll(".nav button[data-page]").forEach(b=>b.classList.toggle("active",b.dataset.page===name));
- $("pageTitle").textContent=pageInfo[name][0];$("pageSubtitle").textContent=pageInfo[name][1];
- $("sidebar").classList.remove("open");window.scrollTo({top:0,behavior:"smooth"});
+function toast(message){
+  const el=$("toast");
+  el.textContent=message;
+  el.style.display="block";
+  clearTimeout(toast.timer);
+  toast.timer=setTimeout(()=>el.style.display="none",3000);
 }
-document.querySelectorAll(".nav button[data-page]").forEach(b=>b.addEventListener("click",()=>go(b.dataset.page)));
-$("menuBtn").onclick=()=>$("sidebar").classList.toggle("open");
 
-function openModal(title,html){
- $("modalTitle").textContent=title;$("modalBody").innerHTML=html;$("modalBg").classList.add("show");
-}
-function closeModal(){$("modalBg").classList.remove("show")}
-$("modalClose").onclick=closeModal;
-$("modalBg").addEventListener("click",e=>{if(e.target===$("modalBg"))closeModal()});
+async function api(url, options={}){
+  const response=await fetch(url,{
+    credentials:"same-origin",
+    ...options,
+    headers:{
+      "Content-Type":"application/json",
+      ...(options.headers||{})
+    }
+  });
 
-function getSettings(){
- return S.settings||{};
-}
-function normalizeSettings(){
- const s=getSettings();
- S.buttons=Array.isArray(s.buttons)?s.buttons:[];
- S.paymentMethods=Array.isArray(s.paymentMethods)?s.paymentMethods:[];
-}
-function fillSettings(){
- const s=getSettings();
- setVal("appName",s.appName||"CoinNova");
- setVal("tagline",s.tagline||"TAP • MINE • EARN");
- setVal("appLogo",s.appLogo||"");
- setVal("loadingImage",s.loadingImage||"");
- setVal("loadingTitle",s.loadingTitle||s.appName||"COINNOVA");
- setVal("loadingText",s.loadingText||"VERIFYING TELEGRAM ACCOUNT");
+  let result={};
+  try{result=await response.json()}catch{}
 
- setVal("minimumWithdrawal",s.minimumWithdrawal??1000);
- setVal("withdrawalFeePercent",s.withdrawalFeePercent??0);
- setVal("referralRequirement",s.referralRequirement??1);
- setVal("withdrawalNotice",s.withdrawalNotice||"");
-
- setCheck("withdrawEnabled",s.withdrawalEnabled!==false);
- setCheck("spinEnabled",s.spinEnabled!==false);
- setVal("referralsPerSpin",s.referralsPerSpin??1);
- setVal("spinRewards",Array.isArray(s.spinRewards)?s.spinRewards.join(","):"10,25,50,100,250,500");
- setVal("referralReward",s.referralReward??250);
-
- let rates=Array.isArray(s.commissionRates)?s.commissionRates:[10,5,3,2,1,.5];
- $("commissionRates").innerHTML=Array.from({length:6},(_,i)=>`
- <div class="rate-row"><div class="rate-badge">L${i+1}</div><div><b>Level ${i+1}</b><small>Commission from level ${i+1} eligible activity</small></div><div class="rate-input"><input aria-label="Level ${i+1} commission rate" id="rate${i+1}" type="number" min="0" max="100" step=".01" value="${esc(rates[i]??0)}"><span>%</span></div></div>`).join("");
- setCheck("commissionAutoPayout",s.commissionAutoPayout!==false);
-
- setVal("miningReward",s.miningReward??1);
- setVal("maxEnergy",s.maxEnergy??1000);
- setVal("energyPerSecond",s.energyPerSecond??1);
- setVal("dailyReward",s.dailyReward??100);
- setCheck("systemRegistration",s.registrationEnabled!==false);
- setCheck("systemMining",s.miningEnabled!==false);
- setCheck("systemWithdrawal",s.withdrawalEnabled!==false);
- setCheck("systemSound",s.sound!==false);
- setCheck("dashMining",s.miningEnabled!==false);
- setCheck("dashRegistration",s.registrationEnabled!==false);
- setCheck("dashWithdrawal",s.withdrawalEnabled!==false);
- setCheck("dashSpin",s.spinEnabled!==false);
-
- $("sideAppName").textContent=s.appName||"CoinNova";
- urlImage($("sideLogo"),s.appLogo,"C");urlImage($("loginLogo"),s.appLogo,"C");
- previewBranding();renderSpinPrizes();renderButtons();renderWallets();renderTasks();
-}
-function previewBranding(){
- setVal("brandPreviewName", $("appName").value||"CoinNova");
- $("brandPreviewName").textContent=$("appName").value||"CoinNova";
- $("brandPreviewTag").textContent=$("tagline").value||"";
- $("loadingPreviewTitle").textContent=$("loadingTitle").value||$("appName").value||"COINNOVA";
- $("loadingPreviewText").textContent=$("loadingText").value||"";
- const a=safeUrl($("appLogo").value),b=safeUrl($("loadingImage").value);
- $("brandPreviewImg").style.display=a?"block":"none";if(a)$("brandPreviewImg").src=a;
- $("loadingPreviewImg").style.display=b?"block":"none";if(b)$("loadingPreviewImg").src=b;
-}
-["appName","tagline","appLogo","loadingImage","loadingTitle","loadingText"].forEach(id=>$(id).addEventListener("input",previewBranding));
-
-async function loadAll(){
- try{
-  const d=await api("/api/admin/overview");
-  S.settings=d.settings||{};
-  S.users=d.users||[];
-  S.tasks=d.tasks||[];
-  S.withdrawals=d.withdrawals||[];
-  normalizeSettings();
-  fillSettings();
-  renderDashboard();renderWithdrawalRows();renderUsers();
-  $("loginScreen").style.display="none";$("adminApp").style.display="flex";
-  toast("Admin data loaded");
- }catch(e){
-  if($("adminApp").style.display!=="flex"){
-   $("loginScreen").style.display="grid";
-   $("loginError").textContent=e.message;
-  }else toast(e.message);
- }
-}
-$("loginForm").onsubmit=async e=>{
- e.preventDefault();$("loginError").textContent="";
- try{
-  await api("/api/auth/admin",{method:"POST",body:JSON.stringify({password:$("adminPassword").value})});
-  $("adminPassword").value="";await loadAll();
- }catch(err){$("loginError").textContent=err.message}
-};
-$("logoutBtn").onclick=async()=>{
- try{await api("/api/logout",{method:"POST",body:"{}"})}catch{}
- $("adminApp").style.display="none";$("loginScreen").style.display="grid";toast("Logged out");
-};
-$("refreshBtn").onclick=loadAll;$("topRefresh").onclick=loadAll;
-$("refreshWithdrawals").onclick=loadAll;$("refreshUsers").onclick=loadAll;
-
-function renderDashboard(){
- $("statUsers").textContent=S.users.length;
- $("statWithdrawals").textContent=S.withdrawals.length;
- $("statPending").textContent=S.withdrawals.filter(w=>String(w.status).toLowerCase()==="pending").length;
- $("statTasks").textContent=S.tasks.length;
- const recent=[...S.withdrawals].slice(-8).reverse();
- $("dashWithdrawalRows").innerHTML=recent.map(w=>`
- <tr><td>#${esc(w.id)}</td><td>${esc(w.userName||w.name||w.userId||"User")}</td><td>${esc(methodName(w.method))}</td><td>${fmt(w.amount)} CNV</td><td>${statusBadge(w.status)}</td><td><button class="btn small" onclick="editWithdrawal('${esc(w.id)}')">Review</button></td></tr>`).join("")||'<tr><td colspan="6" class="empty">No withdrawal requests found.</td></tr>';
-}
-function fmt(n){return Number(n||0).toLocaleString("en-US")}
-function statusBadge(status){
- const s=String(status||"pending").toLowerCase();
- const cls=["paid","approved","completed"].includes(s)?"on":["rejected","blocked"].includes(s)?"off":"pending";
- return `<span class="badge ${cls}">${esc(s.toUpperCase())}</span>`;
-}
-function methodName(id){return S.paymentMethods.find(m=>String(m.id)===String(id))?.name||String(id||"Unknown")}
-function renderWithdrawalRows(){
- const list=S.withdrawals.filter(w=>S.withdrawalFilter==="all"||String(w.status).toLowerCase()===S.withdrawalFilter);
- $("withdrawalRows").innerHTML=list.map(w=>`
- <tr><td>#${esc(w.id)}</td><td>${esc(w.userName||w.name||w.userId||"User")}</td><td>${esc(methodName(w.method))}</td><td>${esc(w.address||"—")}</td><td>${fmt(w.amount)} CNV</td><td>${fmt(w.feeAmount)} CNV</td><td>${fmt(w.netAmount??(Number(w.amount||0)-Number(w.feeAmount||0)))} CNV</td><td>${statusBadge(w.status)}</td><td><button class="btn small" onclick="editWithdrawal('${esc(w.id)}')">Manage</button></td></tr>`).join("")||'<tr><td colspan="9" class="empty">No matching withdrawal requests.</td></tr>';
-}
-document.querySelectorAll("#withdrawalTabs button").forEach(b=>b.onclick=()=>{
- S.withdrawalFilter=b.dataset.status;
- document.querySelectorAll("#withdrawalTabs button").forEach(x=>x.classList.toggle("active",x===b));
- renderWithdrawalRows();
-});
-window.editWithdrawal=id=>{
- const w=S.withdrawals.find(x=>String(x.id)===String(id));if(!w)return;
- openModal("Manage Withdrawal",`
- <div class="help">Request #${esc(w.id)} · ${esc(w.userName||w.userId||"User")} · ${fmt(w.amount)} CNV</div>
- <label>Request Status</label><select id="modalWithdrawalStatus">
- <option value="pending">Pending</option><option value="approved">Approved</option><option value="paid">Paid</option><option value="rejected">Rejected</option></select>
- <label style="margin-top:12px">Admin Note</label><textarea id="modalWithdrawalNote" placeholder="Optional processing note"></textarea>
- <div class="form-actions"><button class="btn" onclick="closeModal()">Cancel</button><button class="btn primary" id="confirmWithdrawal">SAVE STATUS</button></div>`);
- $("modalWithdrawalStatus").value=String(w.status||"pending").toLowerCase();
- $("confirmWithdrawal").onclick=async()=>{
-  try{
-   await api(`/api/admin/withdrawals/${encodeURIComponent(id)}`,{method:"PATCH",body:JSON.stringify({status:$("modalWithdrawalStatus").value,note:$("modalWithdrawalNote").value})});
-   closeModal();await loadAll();toast("Withdrawal status updated");
-  }catch(e){toast(e.message)}
- };
-};
-
-function renderUsers(filter=""){
- const q=filter.trim().toLowerCase();
- const users=S.users.filter(u=>`${u.name||""} ${u.telegramId||u.telegram_id||""} ${u.id||""}`.toLowerCase().includes(q));
- $("userRows").innerHTML=users.map(u=>`
- <tr><td>${esc(u.id)}</td><td>${esc(u.name||"Miner")}</td><td>${esc(u.telegramId||u.telegram_id||"—")}</td><td>${fmt(u.balance)} CNV</td><td>${fmt(u.referrals||u.referralCount||0)}</td><td>${u.blocked?'<span class="badge off">BLOCKED</span>':'<span class="badge on">ACTIVE</span>'}</td>
- <td><button class="btn small" onclick="editUser('${esc(u.id)}')">Edit</button></td></tr>`).join("")||'<tr><td colspan="7" class="empty">No users found.</td></tr>';
-}
-$("userSearch").oninput=e=>renderUsers(e.target.value);
-window.editUser=id=>{
- const u=S.users.find(x=>String(x.id)===String(id));if(!u)return;
- setVal("editUserId",u.id);setVal("editUserBalance",u.balance||0);setVal("editUserBlocked",String(!!u.blocked));
- $("editUserId").scrollIntoView({behavior:"smooth",block:"center"});
-};
-$("userForm").onsubmit=async e=>{
- e.preventDefault();const id=$("editUserId").value;if(!id)return toast("Select a user first.");
- try{
-  await api(`/api/admin/users/${encodeURIComponent(id)}`,{method:"PATCH",body:JSON.stringify({balance:number("editUserBalance"),blocked:$("editUserBlocked").value==="true"})});
-  await loadAll();toast("User updated");
- }catch(err){toast(err.message)}
-};
-
-// Save settings through the existing settings endpoint.
-async function saveSettings(patch,success="Settings saved"){
- const merged={...S.settings,...patch};
- try{
-  const d=await api("/api/admin/settings",{method:"PUT",body:JSON.stringify(merged)});
-  S.settings=d.settings||merged;normalizeSettings();fillSettings();toast(success);return true;
- }catch(e){toast(e.message);return false}
-}
-$("brandingForm").onsubmit=async e=>{
- e.preventDefault();
- await saveSettings({
-  appName:$("appName").value.trim(),
-  tagline:$("tagline").value.trim(),
-  appLogo:$("appLogo").value.trim(),
-  loadingImage:$("loadingImage").value.trim(),
-  loadingTitle:$("loadingTitle").value.trim(),
-  loadingText:$("loadingText").value.trim()
- },"Branding saved");
-};
-
-function clearButtonForm(){
- S.editingButton=null;
- $("buttonForm").reset();setVal("buttonId","");
- setVal("buttonColor","#ffd66b");setVal("buttonAnimation","none");setVal("buttonEnabled","true");
- updateButtonPreview();
-}
-function updateButtonPreview(){
- const name=$("buttonName").value||"Example Button";
- const logo=safeUrl($("buttonLogo").value);
- const color=$("buttonColor").value||"#ffd66b";
- const anim=animClass($("buttonAnimation").value);
- $("buttonPreview").className="preview "+anim;
- $("buttonPreview").style.borderColor=color;
- $("buttonPreview").innerHTML=`${logo?`<img src="${esc(logo)}" alt="" onerror="this.style.display='none'">`:`<div class="item-logo" style="color:${color}">${esc(name.slice(0,1).toUpperCase())}</div>`}<b style="color:${esc(color)}">${esc(name)}</b><small>${esc($("buttonUrl").value||"Button URL not set")}</small>`;
-}
-["buttonName","buttonLogo","buttonUrl","buttonColor","buttonAnimation"].forEach(id=>$(id).addEventListener("input",updateButtonPreview));
-$("buttonAnimation").onchange=updateButtonPreview;
-$("clearButtonForm").onclick=clearButtonForm;
-$("addButton").onclick=()=>{clearButtonForm();$("buttonName").focus();$("buttonForm").scrollIntoView({behavior:"smooth",block:"start"})};
-
-$("buttonForm").onsubmit=e=>{
- e.preventDefault();
- const id=$("buttonId").value||uid();
- const item={
-  id,name:$("buttonName").value.trim(),logo:$("buttonLogo").value.trim(),
-  url:$("buttonUrl").value.trim(),color:$("buttonColor").value,
-  animation:$("buttonAnimation").value,enabled:$("buttonEnabled").value==="true"
- };
- const idx=S.buttons.findIndex(b=>String(b.id)===String(id));
- if(idx>=0)S.buttons[idx]=item;else S.buttons.push(item);
- renderButtons();toast("Button added to draft. Click SAVE ALL BUTTONS to publish.");
- clearButtonForm();
-};
-function renderButtons(){
- $("buttonList").innerHTML=S.buttons.map(b=>`
- <div class="list-item">
-  <div class="item-logo" style="color:${esc(b.color||"#ffd66b")}">${safeUrl(b.logo)?`<img src="${esc(safeUrl(b.logo))}" alt="" onerror="this.remove()">`:esc((b.name||"B").slice(0,1).toUpperCase())}</div>
-  <div class="item-info"><b>${esc(b.name||"Unnamed Button")}</b><small>${esc(b.url||"No URL")} · ${esc(b.animation||"none")}</small><span class="badge ${b.enabled?"on":"off"}">${b.enabled?"ENABLED":"DISABLED"}</span></div>
-  <div class="item-actions"><button class="btn small" onclick="editButton('${esc(b.id)}')">Edit</button><button class="btn small danger" onclick="deleteButton('${esc(b.id)}')">Delete</button></div>
- </div>`).join("")||'<div class="empty">No custom buttons yet. Click + Add Button.</div>';
-}
-window.editButton=id=>{
- const b=S.buttons.find(x=>String(x.id)===String(id));if(!b)return;
- setVal("buttonId",b.id);setVal("buttonName",b.name);setVal("buttonLogo",b.logo);
- setVal("buttonUrl",b.url);setVal("buttonColor",b.color||"#ffd66b");
- setVal("buttonAnimation",b.animation||"none");setVal("buttonEnabled",String(b.enabled!==false));
- updateButtonPreview();$("buttonForm").scrollIntoView({behavior:"smooth",block:"start"});
-};
-window.deleteButton=id=>{
- S.buttons=S.buttons.filter(b=>String(b.id)!==String(id));renderButtons();toast("Button removed from draft. Save all buttons to publish.");
-};
-$("saveButtons").onclick=async()=>{if(await saveSettings({buttons:S.buttons},"Custom buttons saved"))renderButtons()};
-
-// Separate E-Wallet and Network categories.
-document.querySelectorAll("[data-wallet-tab]").forEach(b=>b.onclick=()=>{
- S.walletTab=b.dataset.walletTab;
- document.querySelectorAll("[data-wallet-tab]").forEach(x=>x.classList.toggle("active",x===b));
- setVal("walletCategory",S.walletTab);renderWallets();
-});
-function clearWalletForm(){
- S.editingWallet=null;$("walletForm").reset();setVal("walletId","");
- setVal("walletCategory",S.walletTab);setVal("walletColor",S.walletTab==="ewallet"?"#45e8ff":"#a78bfa");
- setVal("walletFee",S.settings.withdrawalFeePercent??0);setVal("walletMin",S.settings.minimumWithdrawal??1000);
- $("walletEditorTitle").textContent=S.walletTab==="ewallet"?"Add E-Wallet":"Add Network";
-}
-$("addWallet").onclick=()=>{clearWalletForm();$("walletForm").scrollIntoView({behavior:"smooth",block:"start"});$("walletName").focus()};
-$("clearWalletForm").onclick=clearWalletForm;
-
-$("walletForm").onsubmit=e=>{
- e.preventDefault();
- const id=$("walletId").value||uid();
- const category=$("walletCategory").value;
- const item={
-  id,name:$("walletName").value.trim(),category,
-  type:category==="network"?"crypto":"ewallet",
-  logo:$("walletLogo").value.trim(),color:$("walletColor").value,
-  animation:$("walletAnimation").value,feePercent:number("walletFee"),
-  minWithdrawal:number("walletMin",1),hint:$("walletHint").value.trim(),
-  enabled:$("walletEnabled").value==="true"
- };
- const idx=S.paymentMethods.findIndex(m=>String(m.id)===String(id));
- if(idx>=0)S.paymentMethods[idx]=item;else S.paymentMethods.push(item);
- S.walletTab=category;
- document.querySelectorAll("[data-wallet-tab]").forEach(b=>b.classList.toggle("active",b.dataset.walletTab===category));
- renderWallets();clearWalletForm();toast("Method added to draft. Click SAVE ALL METHODS to publish.");
-};
-function renderWallets(){
- const list=S.paymentMethods.filter(m=>(m.category|| (m.type==="crypto"?"network":"ewallet"))===S.walletTab);
- $("walletList").innerHTML=list.map(m=>`
- <div class="list-item">
-  <div class="item-logo" style="color:${esc(m.color||"#45e8ff")}">${safeUrl(m.logo)?`<img src="${esc(safeUrl(m.logo))}" alt="" onerror="this.remove()">`:esc((m.name||"W").slice(0,1).toUpperCase())}</div>
-  <div class="item-info"><b>${esc(m.name)}</b><small>Fee: ${Number(m.feePercent??0)}% · Minimum: ${fmt(m.minWithdrawal??S.settings.minimumWithdrawal)} CNV · ${esc(m.animation||"none")}</small><span class="badge ${m.enabled!==false?"on":"off"}">${m.enabled!==false?"ENABLED":"DISABLED"}</span></div>
-  <div class="item-actions"><button class="btn small" onclick="editWallet('${esc(m.id)}')">Edit</button><button class="btn small danger" onclick="deleteWallet('${esc(m.id)}')">Delete</button></div>
- </div>`).join("")||'<div class="empty">No methods in this category. Click + Add Wallet / Network.</div>';
-}
-window.editWallet=id=>{
- const m=S.paymentMethods.find(x=>String(x.id)===String(id));if(!m)return;
- S.walletTab=m.category||(m.type==="crypto"?"network":"ewallet");
- document.querySelectorAll("[data-wallet-tab]").forEach(b=>b.classList.toggle("active",b.dataset.walletTab===S.walletTab));
- setVal("walletId",m.id);setVal("walletName",m.name);setVal("walletCategory",S.walletTab);
- setVal("walletLogo",m.logo);setVal("walletColor",m.color||"#45e8ff");
- setVal("walletAnimation",m.animation||"none");setVal("walletFee",m.feePercent??0);
- setVal("walletMin",m.minWithdrawal??S.settings.minimumWithdrawal??1000);
- setVal("walletHint",m.hint||"");setVal("walletEnabled",String(m.enabled!==false));
- $("walletEditorTitle").textContent="Edit "+m.name;
- $("walletForm").scrollIntoView({behavior:"smooth",block:"start"});
-};
-window.deleteWallet=id=>{
- S.paymentMethods=S.paymentMethods.filter(m=>String(m.id)!==String(id));renderWallets();toast("Method removed from draft. Save all methods to publish.");
-};
-$("saveWallets").onclick=async()=>{
- const valid=S.paymentMethods.map(m=>({...m,category:m.category||(m.type==="crypto"?"network":"ewallet")}));
- if(await saveSettings({paymentMethods:valid},"Wallet and network methods saved"))renderWallets();
-};
-
-$("withdrawSettingsForm").onsubmit=async e=>{
- e.preventDefault();
- await saveSettings({
-  minimumWithdrawal:number("minimumWithdrawal",1),
-  withdrawalFeePercent:number("withdrawalFeePercent"),
-  referralRequirement:number("referralRequirement"),
-  withdrawalNotice:$("withdrawalNotice").value.trim(),
-  withdrawalEnabled:checked("withdrawEnabled")
- },"Withdrawal settings saved");
-};
-$("saveWithdrawToggle").onclick=()=>saveSettings({withdrawalEnabled:checked("withdrawEnabled")},"Withdrawal status saved");
-
-function renderSpinPrizes(){
- const vals=String($("spinRewards")?.value||"10,25,50,100,250,500").split(",").map(x=>Number(x.trim())).filter(x=>Number.isFinite(x)&&x>=0);
- $("spinPrizePreview").innerHTML=vals.map((v,i)=>`<div class="stat-card"><small>Prize ${i+1}</small><strong style="font-size:18px;color:var(--gold)">+${fmt(v)}</strong><small>CNV</small></div>`).join("")||'<div class="empty">Enter valid prize values.</div>';
-}
-$("spinRewards").addEventListener("input",renderSpinPrizes);
-$("spinForm").onsubmit=async e=>{
- e.preventDefault();
- const rewards=$("spinRewards").value.split(",").map(x=>Number(x.trim()));
- if(!rewards.length||rewards.some(x=>!Number.isFinite(x)||x<0))return toast("Enter valid comma-separated prize values.");
- await saveSettings({
-  spinEnabled:checked("spinEnabled"),
-  referralsPerSpin:number("referralsPerSpin",1),
-  spinRewards:rewards,
-  referralReward:number("referralReward")
- },"Lucky Spin settings saved");
-};
-$("saveCommissionSchedule").onclick=()=>saveSettings({commissionAutoPayout:checked("commissionAutoPayout"),commissionPayoutTime:"01:00",commissionTimezone:"Asia/Dhaka"},"Commission payout settings saved");
-$("commissionForm").onsubmit=async e=>{
- e.preventDefault();
- const rates=Array.from({length:6},(_,i)=>Number($("rate"+(i+1)).value));
- if(rates.some(x=>!Number.isFinite(x)||x<0||x>100))return toast("Commission rates must be between 0 and 100%.");
- await saveSettings({commissionRates:rates},"Six commission rates saved");
-};
-
-// Tasks: add/update/delete. API must support these routes.
-function renderTasks(){
- $("taskRows").innerHTML=S.tasks.map(t=>`
- <tr><td>${esc(t.id)}</td><td>${esc(t.title)}</td><td>${esc(t.platform||"Other")}</td><td>${fmt(t.reward)} CNV</td><td>${statusBadge(t.enabled===false?"disabled":"enabled")}</td><td><button class="btn small" onclick="editTask('${esc(t.id)}')">Edit</button> <button class="btn small" onclick="toggleTask('${esc(t.id)}')">${t.enabled===false?"Enable":"Disable"}</button> <button class="btn small danger" onclick="deleteTask('${esc(t.id)}')">Delete</button></td></tr>`).join("")||'<tr><td colspan="6" class="empty">No tasks configured.</td></tr>';
-}
-function clearTaskForm(){
- setVal("taskId","");setVal("taskTitle","");setVal("taskUrl","");setVal("taskReward",0);setVal("taskPlatform","Telegram");setVal("taskEnabled","true");$("taskEditorTitle").textContent="Add Task";
-}
-$("addTask").onclick=()=>{clearTaskForm();$("taskForm").scrollIntoView({behavior:"smooth",block:"start"})};
-$("clearTask").onclick=clearTaskForm;
-window.editTask=id=>{
- const t=S.tasks.find(x=>String(x.id)===String(id));if(!t)return;
- setVal("taskId",t.id);setVal("taskTitle",t.title);setVal("taskUrl",t.url);
- setVal("taskReward",t.reward);setVal("taskPlatform",t.platform||"Other");setVal("taskEnabled",String(t.enabled!==false));
- $("taskEditorTitle").textContent="Edit Task";$("taskForm").scrollIntoView({behavior:"smooth",block:"start"});
-};
-$("taskForm").onsubmit=async e=>{
- e.preventDefault();
- const id=$("taskId").value;
- const data={title:$("taskTitle").value.trim(),url:$("taskUrl").value.trim(),reward:number("taskReward"),platform:$("taskPlatform").value,enabled:$("taskEnabled").value==="true"};
- try{
-  if(id){
-   await api(`/api/admin/tasks/${encodeURIComponent(id)}`,{method:"PATCH",body:JSON.stringify(data)});
-  }else{
-   await api("/api/admin/tasks",{method:"POST",body:JSON.stringify(data)});
+  if(!response.ok){
+    throw new Error(result.error||result.message||("Request failed ("+response.status+")"));
   }
-  clearTaskForm();await loadAll();toast("Task saved");
- }catch(err){toast(err.message)}
-};
-window.toggleTask=async id=>{
- const t=S.tasks.find(x=>String(x.id)===String(id));if(!t)return;
- try{await api(`/api/admin/tasks/${encodeURIComponent(id)}`,{method:"PATCH",body:JSON.stringify({enabled:t.enabled===false})});await loadAll();toast("Task status updated")}
- catch(e){toast(e.message)}
-};
-window.deleteTask=async id=>{
- if(!confirm("Delete this task?"))return;
- try{await api(`/api/admin/tasks/${encodeURIComponent(id)}`,{method:"DELETE"});await loadAll();toast("Task deleted")}
- catch(e){toast(e.message)}
-};
 
-// Save feature toggles.
-$("saveDashboard").onclick=()=>saveSettings({
- miningEnabled:checked("dashMining"),
- registrationEnabled:checked("dashRegistration"),
- withdrawalEnabled:checked("dashWithdrawal"),
- spinEnabled:checked("dashSpin")
-},"Dashboard feature statuses saved");
-$("saveSystemToggles").onclick=()=>saveSettings({
- registrationEnabled:checked("systemRegistration"),
- miningEnabled:checked("systemMining"),
- withdrawalEnabled:checked("systemWithdrawal"),
- sound:checked("systemSound")
-},"System settings saved");
-$("systemForm").onsubmit=async e=>{
- e.preventDefault();
- await saveSettings({
-  miningReward:number("miningReward"),
-  maxEnergy:number("maxEnergy",1000),
-  energyPerSecond:number("energyPerSecond"),
-  dailyReward:number("dailyReward")
- },"Core settings saved");
-};
-$("changePasswordBtn").onclick=()=>openModal("Change Admin Password",`
- <form id="passwordChangeForm">
-  <label>Current Password</label><input id="oldPassword" type="password" required autocomplete="current-password">
-  <label style="margin-top:12px">New Password</label><input id="newPassword" type="password" required minlength="12" autocomplete="new-password">
-  <label style="margin-top:12px">Confirm New Password</label><input id="confirmPassword" type="password" required minlength="12" autocomplete="new-password">
-  <div class="form-actions"><button class="btn primary" type="submit">CHANGE PASSWORD</button></div>
- </form>
- <div class="help">Use a long, unique password. This feature requires a matching password-change API endpoint in server.js.</div>`);
-document.addEventListener("submit",async e=>{
- if(e.target.id!=="passwordChangeForm")return;
- e.preventDefault();
- const oldPassword=$("oldPassword").value,newPassword=$("newPassword").value,confirmPassword=$("confirmPassword").value;
- if(newPassword!==confirmPassword)return toast("New passwords do not match.");
- try{
-  await api("/api/admin/change-password",{method:"POST",body:JSON.stringify({currentPassword:oldPassword,newPassword})});
-  closeModal();toast("Password changed");
- }catch(err){toast(err.message)}
+  return result;
+}
+
+function showError(error){
+  toast(error?.message||"Something went wrong");
+}
+
+function safeColor(value,fallback="#ffd66b"){
+  return /^#[0-9a-f]{6}$/i.test(String(value||""))?value:fallback;
+}
+
+function setImagePreview(imageId,url){
+  const img=$(imageId);
+  if(!img)return;
+
+  img.style.display=url?"block":"none";
+  img.src=url||"";
+}
+
+function normalizeSettings(settings){
+  const s={...defaultSettings,...(settings||{})};
+  s.paymentMethods=Array.isArray(s.paymentMethods)?s.paymentMethods:[];
+  s.buttons=Array.isArray(s.buttons)?s.buttons:[];
+  s.texts=(s.texts&&typeof s.texts==="object")?s.texts:{};
+  s.spinRewards=Array.isArray(s.spinRewards)?s.spinRewards:defaultSettings.spinRewards;
+  s.commissionRates=Array.isArray(s.commissionRates)?s.commissionRates:defaultSettings.commissionRates;
+  return s;
+}
+
+function settingsPayload(){
+  return data?.settings||{...defaultSettings};
+}
+
+async function saveSettingsPatch(patch){
+  const current=settingsPayload();
+  const next={...current,...patch};
+
+  const result=await api("/api/admin/settings",{
+    method:"PUT",
+    body:JSON.stringify(next)
+  });
+
+  if(result.settings){
+    data.settings=normalizeSettings(result.settings);
+  }else{
+    data.settings=normalizeSettings(next);
+  }
+
+  renderSettings();
+  return result;
+}
+
+$("loginForm").addEventListener("submit",async event=>{
+  event.preventDefault();
+  $("loginError").textContent="";
+
+  try{
+    await api("/api/auth/admin",{
+      method:"POST",
+      body:JSON.stringify({password:$("password").value})
+    });
+
+    $("password").value="";
+    await load();
+  }catch(error){
+    $("loginError").textContent=error.message;
+  }
 });
 
-$("adminApp").style.display="none";
-$("loginScreen").style.display="grid";
+$("logout").addEventListener("click",async()=>{
+  try{
+    await api("/api/logout",{method:"POST",body:"{}"});
+  }catch{}
+  location.reload();
+});
+
+$("refreshBtn").addEventListener("click",()=>load().catch(showError));
+$("overviewRefresh").addEventListener("click",()=>load().catch(showError));
+
+document.querySelectorAll("[data-section]").forEach(button=>{
+  button.addEventListener("click",()=>{
+    document.querySelectorAll("[data-section]").forEach(item=>{
+      item.classList.toggle("active",item===button);
+    });
+
+    document.querySelectorAll(".section").forEach(section=>{
+      section.classList.toggle("active",section.id===button.dataset.section);
+    });
+
+    window.scrollTo({top:0,behavior:"smooth"});
+  });
+});
+
+async function load(){
+  try{
+    const result=await api("/api/admin/overview");
+    data=result;
+    data.settings=normalizeSettings(data.settings);
+
+    $("loginView").classList.add("hidden");
+    $("adminView").classList.remove("hidden");
+
+    renderMetrics();
+    renderSettings();
+    renderMethods();
+    renderCustomButtons();
+    renderTasks();
+    renderWithdrawals();
+    renderUsers();
+  }catch(error){
+    $("loginView").classList.remove("hidden");
+    $("adminView").classList.add("hidden");
+    $("loginError").textContent=error.message;
+  }
+}
+
+function renderMetrics(){
+  const counts=data?.counts||{};
+  const metrics=[
+    ["Total Users",counts.users??0],
+    ["Pending Withdrawals",counts.withdrawPending??0],
+    ["Coins in Balances",Number(counts.coins??0).toLocaleString()],
+    ["Total Taps",Number(counts.taps??0).toLocaleString()],
+    ["Blocked Users",counts.banned??0],
+    ["Withdrawal Volume",Number(counts.withdrawTotal??0).toLocaleString()+" CNV"]
+  ];
+
+  $("metrics").innerHTML=metrics.map(([title,value])=>`
+    <div class="metric">
+      <small>${escapeHTML(title)}</small>
+      <strong>${escapeHTML(value)}</strong>
+    </div>
+  `).join("");
+}
+
+const textFields={
+  textHome:"home",
+  textTasks:"tasks",
+  textSpin:"spin",
+  textFriends:"friends",
+  textWallet:"wallet",
+  textWithdraw:"withdraw",
+  textSecurePayout:"securePayout",
+  textBackWithdraw:"backToWithdraw",
+  textEwallet:"ewallet",
+  textBinance:"binance",
+  textSelectNetwork:"selectNetwork",
+  textCryptoNetwork:"cryptoNetwork",
+  textWithdrawalHistory:"withdrawalHistory",
+  textSubmitWithdrawal:"submitWithdrawal",
+  textAmountPlaceholder:"amountPlaceholder",
+  textAddressPlaceholder:"addressPlaceholder",
+  textWithdrawInstruction:"withdrawInstruction",
+  textNoWithdrawals:"noWithdrawals",
+  textWalletDescription:"walletDescription",
+  textInsufficientBalance:"insufficientBalance",
+  textWithdrawSuccess:"withdrawSuccess",
+  textAnnouncement:"announcement"
+};
+
+function renderSettings(){
+  const s=data.settings;
+
+  $("appName").value=s.appName||"";
+  $("tagline").value=s.tagline||"";
+  $("appLogo").value=s.appLogo||"";
+  $("loadingImage").value=s.loadingImage||"";
+  $("loadingTitle").value=s.loadingTitle||"";
+  $("themeColor").value=safeColor(s.themeColor);
+  $("secondaryColor").value=safeColor(s.secondaryColor,"#f5a623");
+  $("sound").checked=s.sound!==false;
+
+  setImagePreview("logoPreview",s.appLogo);
+  setImagePreview("loadingPreview",s.loadingImage);
+
+  $("brandLogo").innerHTML=s.appLogo
+    ?`<img src="${escapeHTML(s.appLogo)}" alt="Logo" onerror="this.parentElement.textContent='C'">`
+    :"C";
+
+  $("tapReward").value=s.tapReward??1;
+  $("maxEnergy").value=s.maxEnergy??1000;
+  $("energyPerSecond").value=s.energyPerSecond??3;
+  $("dailyBonus").value=s.dailyBonus??50;
+  $("minWithdraw").value=s.minWithdraw??1000;
+  $("referralRequired").value=String(s.referralRequired??1);
+  $("referralBonus").value=s.referralBonus??100;
+  $("withdrawalFeePercent").value=s.withdrawalFeePercent??0;
+
+  $("maintenance").checked=!!s.maintenance;
+  $("miningEnabled").checked=s.miningEnabled!==false;
+  $("registrationEnabled").checked=s.registrationEnabled!==false;
+  $("withdrawalEnabled").checked=s.withdrawalEnabled!==false;
+
+  $("spinEnabled").checked=s.spinEnabled!==false;
+  $("referralsPerSpin").value=s.referralsPerSpin??1;
+  $("spinRewards").value=(s.spinRewards||defaultSettings.spinRewards).join(",");
+
+  $("commissionEnabled").checked=s.commissionEnabled!==false;
+  for(let i=1;i<=6;i++){
+    $("commissionRate"+i).value=(s.commissionRates||defaultSettings.commissionRates)[i-1]??0;
+  }
+
+  const texts=s.texts||{};
+  Object.entries(textFields).forEach(([elementId,key])=>{
+    $(elementId).value=texts[key]??"";
+  });
+}
+
+$("appLogo").addEventListener("input",()=>{
+  setImagePreview("logoPreview",$("appLogo").value.trim());
+});
+$("loadingImage").addEventListener("input",()=>{
+  setImagePreview("loadingPreview",$("loadingImage").value.trim());
+});
+
+$("appearanceForm").addEventListener("submit",async event=>{
+  event.preventDefault();
+
+  try{
+    await saveSettingsPatch({
+      appName:$("appName").value.trim(),
+      tagline:$("tagline").value.trim(),
+      appLogo:$("appLogo").value.trim(),
+      loadingImage:$("loadingImage").value.trim(),
+      loadingTitle:$("loadingTitle").value.trim(),
+      themeColor:safeColor($("themeColor").value),
+      secondaryColor:safeColor($("secondaryColor").value,"#f5a623"),
+      sound:$("sound").checked
+    });
+    toast("Design and loading settings saved");
+  }catch(error){showError(error)}
+});
+
+$("messagesForm").addEventListener("submit",async event=>{
+  event.preventDefault();
+
+  const texts={...(data.settings.texts||{})};
+  Object.entries(textFields).forEach(([elementId,key])=>{
+    texts[key]=$(elementId).value;
+  });
+
+  try{
+    await saveSettingsPatch({texts});
+    toast("User Panel text settings saved");
+  }catch(error){showError(error)}
+});
+
+$("settingsForm").addEventListener("submit",async event=>{
+  event.preventDefault();
+
+  const patch={
+    tapReward:Number($("tapReward").value),
+    maxEnergy:Number($("maxEnergy").value),
+    energyPerSecond:Number($("energyPerSecond").value),
+    dailyBonus:Number($("dailyBonus").value),
+    minWithdraw:Number($("minWithdraw").value),
+    referralRequired:Number($("referralRequired").value),
+    referralBonus:Number($("referralBonus").value),
+    withdrawalFeePercent:Number($("withdrawalFeePercent").value),
+    maintenance:$("maintenance").checked,
+    miningEnabled:$("miningEnabled").checked,
+    registrationEnabled:$("registrationEnabled").checked,
+    withdrawalEnabled:$("withdrawalEnabled").checked
+  };
+
+  try{
+    await saveSettingsPatch(patch);
+    toast("App settings saved");
+  }catch(error){showError(error)}
+});
+
+$("spinForm").addEventListener("submit",async event=>{
+  event.preventDefault();
+
+  const rewards=$("spinRewards").value
+    .split(",")
+    .map(value=>Number(value.trim()))
+    .filter(value=>Number.isFinite(value)&&value>=0);
+
+  if(!rewards.length){
+    toast("Enter at least one valid prize");
+    return;
+  }
+
+  try{
+    await saveSettingsPatch({
+      spinEnabled:$("spinEnabled").checked,
+      referralsPerSpin:Math.max(1,Number($("referralsPerSpin").value)||1),
+      spinRewards:rewards
+    });
+    toast("Lucky Spin settings saved");
+  }catch(error){showError(error)}
+});
+
+$("commissionForm").addEventListener("submit",async event=>{
+  event.preventDefault();
+
+  const rates=[];
+  for(let i=1;i<=6;i++){
+    const value=Number($("commissionRate"+i).value);
+    if(!Number.isFinite(value)||value<0||value>100){
+      toast("Commission rates must be between 0 and 100");
+      return;
+    }
+    rates.push(value);
+  }
+
+  try{
+    await saveSettingsPatch({
+      commissionEnabled:$("commissionEnabled").checked,
+      commissionRates:rates
+    });
+    toast("Commission settings saved");
+  }catch(error){showError(error)}
+});
+
+/* PAYMENT METHODS */
+
+document.querySelectorAll("[data-method-category]").forEach(button=>{
+  button.addEventListener("click",()=>{
+    selectedMethodCategory=button.dataset.methodCategory;
+    document.querySelectorAll("[data-method-category]").forEach(item=>{
+      item.classList.toggle("active",item===button);
+    });
+    renderMethods();
+    clearMethodForm(false);
+  });
+});
+
+function getMethodCategory(method){
+  const category=String(method.category||"").toLowerCase();
+  if(category==="ewallet"||category==="e-wallet"||category==="wallet")return "ewallet";
+  if(category==="network"||category==="crypto")return "network";
+  return method.type==="mobile"?"ewallet":"network";
+}
+
+function renderMethods(){
+  const methods=data.settings.paymentMethods||[];
+  const filtered=methods.filter(method=>getMethodCategory(method)===selectedMethodCategory);
+
+  $("methodList").innerHTML=filtered.length?filtered.map(method=>{
+    const logo=method.logo||"";
+    const category=getMethodCategory(method);
+    return `
+      <div class="method-item">
+        <div class="method-logo">
+          ${logo?`<img src="${escapeHTML(logo)}" alt="" onerror="this.style.display='none'">`:"◈"}
+        </div>
+        <div>
+          <div class="method-name">${escapeHTML(method.name||"Unnamed Method")}</div>
+          <div class="method-info">
+            ${category==="ewallet"?"E-Wallet":"Select Network"} ·
+            Fee: ${escapeHTML(method.fee??0)}% ·
+            Minimum: ${escapeHTML(method.minimum??0)} CNV ·
+            ${escapeHTML(method.animation||"none")}
+          </div>
+          <span class="status ${method.enabled?"on":"off"}">${method.enabled?"ENABLED":"DISABLED"}</span>
+        </div>
+        <div class="method-actions">
+          <button type="button" class="btn small" data-edit-method="${escapeHTML(method.id)}">Edit</button>
+          <button type="button" class="btn red small" data-delete-method="${escapeHTML(method.id)}">Delete</button>
+        </div>
+      </div>
+    `;
+  }).join(""):`<div class="empty">No ${selectedMethodCategory==="ewallet"?"E-Wallet":"Network"} methods found. Use “Add Wallet / Network”.</div>`;
+
+  $("methodList").querySelectorAll("[data-edit-method]").forEach(button=>{
+    button.addEventListener("click",()=>{
+      const method=(data.settings.paymentMethods||[]).find(item=>String(item.id)===button.dataset.editMethod);
+      if(method)editMethod(method);
+    });
+  });
+
+  $("methodList").querySelectorAll("[data-delete-method]").forEach(button=>{
+    button.addEventListener("click",()=>{
+      const id=button.dataset.deleteMethod;
+      const method=(data.settings.paymentMethods||[]).find(item=>String(item.id)===id);
+      if(!method)return;
+      if(!confirm("Delete "+method.name+"?"))return;
+
+      data.settings.paymentMethods=data.settings.paymentMethods.filter(item=>String(item.id)!==id);
+      renderMethods();
+      toast("Removed from the editor. Click SAVE ALL METHODS to save.");
+    });
+  });
+}
+
+function editMethod(method){
+  editingMethod=String(method.id);
+  selectedMethodCategory=getMethodCategory(method);
+
+  document.querySelectorAll("[data-method-category]").forEach(button=>{
+    button.classList.toggle("active",button.dataset.methodCategory===selectedMethodCategory);
+  });
+
+  $("methodEditId").value=String(method.id);
+  $("methodName").value=method.name||"";
+  $("methodCategory").value=selectedMethodCategory;
+  $("methodType").value=method.type||"other";
+  $("methodLogo").value=method.logo||"";
+  $("methodColor").value=safeColor(method.color);
+  $("methodAnimation").value=method.animation||"pulse";
+  $("methodMinimum").value=method.minimum??0;
+  $("methodFee").value=method.fee??0;
+  $("methodUrl").value=method.url||"";
+  $("methodEnabled").checked=method.enabled!==false;
+  $("methodFormTitle").textContent="✏️ Edit "+(method.name||"Method");
+
+  $("methodForm").scrollIntoView({behavior:"smooth",block:"start"});
+}
+
+function clearMethodForm(clearNotice=true){
+  editingMethod=null;
+  $("methodForm").reset();
+  $("methodEditId").value="";
+  $("methodColor").value="#ffd66b";
+  $("methodMinimum").value="0";
+  $("methodFee").value="0";
+  $("methodEnabled").checked=true;
+  $("methodCategory").value=selectedMethodCategory;
+  $("methodType").value=selectedMethodCategory==="ewallet"?"mobile":"crypto";
+  $("methodFormTitle").textContent="＋ Add "+(selectedMethodCategory==="ewallet"?"E-Wallet":"Network");
+}
+
+$("cancelMethodEdit").addEventListener("click",()=>clearMethodForm());
+
+$("addMethod").addEventListener("click",()=>{
+  clearMethodForm();
+  $("methodForm").scrollIntoView({behavior:"smooth",block:"start"});
+});
+
+$("methodForm").addEventListener("submit",event=>{
+  event.preventDefault();
+
+  const methods=data.settings.paymentMethods||[];
+  const id=editingMethod||("custom_"+Date.now());
+
+  const method={
+    id,
+    name:$("methodName").value.trim(),
+    category:$("methodCategory").value,
+    type:$("methodType").value,
+    logo:$("methodLogo").value.trim(),
+    color:safeColor($("methodColor").value),
+    animation:$("methodAnimation").value,
+    minimum:Math.max(0,Number($("methodMinimum").value)||0),
+    fee:Math.min(100,Math.max(0,Number($("methodFee").value)||0)),
+    url:$("methodUrl").value.trim(),
+    enabled:$("methodEnabled").checked
+  };
+
+  const index=methods.findIndex(item=>String(item.id)===String(id));
+
+  if(index>=0)methods[index]={...methods[index],...method};
+  else methods.push(method);
+
+  data.settings.paymentMethods=methods;
+  selectedMethodCategory=method.category;
+  clearMethodForm();
+  renderMethods();
+  toast("Method prepared. Click SAVE ALL METHODS to save.");
+});
+
+$("saveMethods").addEventListener("click",async()=>{
+  try{
+    await saveSettingsPatch({
+      paymentMethods:data.settings.paymentMethods||[]
+    });
+    renderMethods();
+    toast("All payment methods saved");
+  }catch(error){showError(error)}
+});
+
+/* CUSTOM BUTTONS */
+
+function renderCustomButtons(){
+  const buttons=data.settings.buttons||[];
+
+  $("customButtonsList").innerHTML=buttons.length?buttons.map(button=>`
+    <div class="button-item">
+      <div class="button-item-head">
+        <strong>${escapeHTML(button.name||"Custom Button")}</strong>
+        <span class="status ${button.enabled!==false?"on":"off"}">${button.enabled!==false?"ENABLED":"DISABLED"}</span>
+      </div>
+      <div class="method-info">
+        Color: ${escapeHTML(button.color||"#ffd66b")} ·
+        Animation: ${escapeHTML(button.animation||"none")}<br>
+        URL: ${escapeHTML(button.url||"Not set")}
+      </div>
+      <div class="actions" style="margin-top:10px">
+        <button type="button" class="btn small" data-edit-custom="${escapeHTML(button.id)}">Edit</button>
+        <button type="button" class="btn red small" data-delete-custom="${escapeHTML(button.id)}">Delete</button>
+      </div>
+    </div>
+  `).join(""):`<div class="empty">No custom buttons added.</div>`;
+
+  $("customButtonsList").querySelectorAll("[data-edit-custom]").forEach(button=>{
+    button.addEventListener("click",()=>{
+      const item=buttons.find(entry=>String(entry.id)===button.dataset.editCustom);
+      if(!item)return;
+
+      editingCustomButton=String(item.id);
+      $("customButtonId").value=String(item.id);
+      $("customButtonName").value=item.name||"";
+      $("customButtonLogo").value=item.logo||"";
+      $("customButtonColor").value=safeColor(item.color);
+      $("customButtonAnimation").value=item.animation||"pulse";
+      $("customButtonUrl").value=item.url||"";
+      $("customButtonEnabled").checked=item.enabled!==false;
+
+      $("customButtonForm").scrollIntoView({behavior:"smooth",block:"start"});
+    });
+  });
+
+  $("customButtonsList").querySelectorAll("[data-delete-custom]").forEach(button=>{
+    button.addEventListener("click",()=>{
+      if(!confirm("Delete this button?"))return;
+      data.settings.buttons=(data.settings.buttons||[]).filter(item=>String(item.id)!==button.dataset.deleteCustom);
+      renderCustomButtons();
+      toast("Button removed. Click SAVE ALL BUTTONS to save.");
+    });
+  });
+}
+
+$("addCustomButton").addEventListener("click",()=>{
+  clearCustomButtonForm();
+  $("customButtonForm").scrollIntoView({behavior:"smooth",block:"start"});
+});
+
+function clearCustomButtonForm(){
+  editingCustomButton=null;
+  $("customButtonForm").reset();
+  $("customButtonId").value="";
+  $("customButtonColor").value="#ffd66b";
+  $("customButtonEnabled").checked=true;
+}
+
+$("clearCustomButton").addEventListener("click",clearCustomButtonForm);
+
+$("customButtonForm").addEventListener("submit",event=>{
+  event.preventDefault();
+
+  const buttons=data.settings.buttons||[];
+  const id=editingCustomButton||("button_"+Date.now());
+
+  const item={
+    id,
+    name:$("customButtonName").value.trim(),
+    logo:$("customButtonLogo").value.trim(),
+    color:safeColor($("customButtonColor").value),
+    animation:$("customButtonAnimation").value,
+    url:$("customButtonUrl").value.trim(),
+    enabled:$("customButtonEnabled").checked
+  };
+
+  const index=buttons.findIndex(button=>String(button.id)===String(id));
+  if(index>=0)buttons[index]={...buttons[index],...item};
+  else buttons.push(item);
+
+  data.settings.buttons=buttons;
+  clearCustomButtonForm();
+  renderCustomButtons();
+  toast("Button prepared. Click SAVE ALL BUTTONS to save.");
+});
+
+$("saveCustomButtons").addEventListener("click",async()=>{
+  try{
+    await saveSettingsPatch({buttons:data.settings.buttons||[]});
+    renderCustomButtons();
+    toast("Custom buttons saved");
+  }catch(error){showError(error)}
+});
+
+/* TASK MANAGEMENT */
+
+$("taskForm").addEventListener("submit",async event=>{
+  event.preventDefault();
+
+  try{
+    await api("/api/admin/tasks",{
+      method:"POST",
+      body:JSON.stringify({
+        title:$("taskTitle").value.trim(),
+        platform:$("taskPlatform").value.trim(),
+        url:$("taskUrl").value.trim(),
+        reward:Number($("taskReward").value)
+      })
+    });
+
+    event.target.reset();
+    $("taskReward").value=100;
+    await load();
+    toast("Task added");
+  }catch(error){showError(error)}
+});
+
+function renderTasks(){
+  const tasks=data.tasks||[];
+
+  $("taskList").innerHTML=tasks.length?tasks.map(task=>`
+    <div class="task-row">
+      <strong>${escapeHTML(task.title)} · +${escapeHTML(task.reward)} CNV</strong>
+      <div class="muted">${escapeHTML(task.platform)} · ${escapeHTML(task.url)}</div>
+      <p><span class="status ${task.enabled?"on":"off"}">${task.enabled?"ENABLED":"DISABLED"}</span></p>
+      <div class="actions">
+        <button type="button" class="btn small" data-toggle-task="${escapeHTML(task.id)}">${task.enabled?"Disable":"Enable"}</button>
+        <button type="button" class="btn red small" data-delete-task="${escapeHTML(task.id)}">Delete</button>
+      </div>
+    </div>
+  `).join(""):`<div class="empty">No tasks found.</div>`;
+
+  $("taskList").querySelectorAll("[data-toggle-task]").forEach(button=>{
+    button.addEventListener("click",async()=>{
+      const task=tasks.find(item=>String(item.id)===button.dataset.toggleTask);
+      if(!task)return;
+
+      try{
+        await api(`/api/admin/tasks/${encodeURIComponent(task.id)}`,{
+          method:"PATCH",
+          body:JSON.stringify({enabled:!task.enabled})
+        });
+        await load();
+        toast("Task status updated");
+      }catch(error){showError(error)}
+    });
+  });
+
+  $("taskList").querySelectorAll("[data-delete-task]").forEach(button=>{
+    button.addEventListener("click",async()=>{
+      if(!confirm("Delete this task?"))return;
+
+      try{
+        await api(`/api/admin/tasks/${encodeURIComponent(button.dataset.deleteTask)}`,{
+          method:"DELETE"
+        });
+        await load();
+        toast("Task deleted");
+      }catch(error){showError(error)}
+    });
+  });
+}
+
+/* WITHDRAWAL MANAGEMENT */
+
+function renderWithdrawals(){
+  const withdrawals=data.withdrawals||[];
+
+  $("withdrawTable").innerHTML=withdrawals.length?withdrawals.map(item=>`
+    <tr>
+      <td>#${escapeHTML(item.id)}<br>${escapeHTML(item.userName||"User")}<br><small>${escapeHTML(item.tgId||"")}</small></td>
+      <td>${escapeHTML(item.method||"")}<br><small>${escapeHTML(item.address||"")}</small></td>
+      <td>${Number(item.amount||0).toLocaleString()} CNV</td>
+      <td><span class="status ${item.status==="paid"||item.status==="approved"?"on":item.status==="rejected"?"off":""}">${escapeHTML(item.status||"pending")}</span></td>
+      <td>
+        <input class="field txid" data-id="${escapeHTML(item.id)}" placeholder="Transaction ID" value="${escapeHTML(item.txid||"")}">
+        <input class="field note" data-id="${escapeHTML(item.id)}" placeholder="Admin note" value="${escapeHTML(item.note||"")}">
+      </td>
+      <td>
+        <div class="actions">
+          <button class="btn small" data-withdraw-status="approved" data-id="${escapeHTML(item.id)}">Approve</button>
+          <button class="btn gold small" data-withdraw-status="paid" data-id="${escapeHTML(item.id)}">Mark Paid</button>
+          <button class="btn red small" data-withdraw-status="rejected" data-id="${escapeHTML(item.id)}">Reject</button>
+        </div>
+      </td>
+    </tr>
+  `).join(""):`<tr><td colspan="6" class="empty">No withdrawal requests.</td></tr>`;
+
+  $("withdrawTable").querySelectorAll("[data-withdraw-status]").forEach(button=>{
+    button.addEventListener("click",async()=>{
+      const id=button.dataset.id;
+      const txid=document.querySelector(`.txid[data-id="${CSS.escape(id)}"]`)?.value||"";
+      const note=document.querySelector(`.note[data-id="${CSS.escape(id)}"]`)?.value||"";
+      const status=button.dataset.withdrawStatus;
+
+      if(status==="paid"&&!confirm("Mark this request as paid? Confirm that payment has actually been sent."))return;
+      if(status==="rejected"&&!confirm("Reject this request? The server should handle any refund safely."))return;
+
+      try{
+        await api(`/api/admin/withdrawals/${encodeURIComponent(id)}`,{
+          method:"PATCH",
+          body:JSON.stringify({status,txid,note})
+        });
+        await load();
+        toast("Withdrawal updated");
+      }catch(error){showError(error)}
+    });
+  });
+}
+
+/* USER MANAGEMENT */
+
+function renderUsers(){
+  const users=data.users||[];
+
+  $("userTable").innerHTML=users.length?users.map(user=>`
+    <tr>
+      <td>#${escapeHTML(user.id)}<br><small>${escapeHTML(user.tg_id||"")}</small></td>
+      <td>${escapeHTML(user.name||"User")}<br><small>${escapeHTML(user.username||"")}</small></td>
+      <td><input class="field user-balance" data-id="${escapeHTML(user.id)}" type="number" min="0" value="${escapeHTML(user.balance??0)}"></td>
+      <td>${Number(user.total_taps||0).toLocaleString()}</td>
+      <td><small>${user.created_at?escapeHTML(new Date(user.created_at).toLocaleDateString()):"—"}</small></td>
+      <td>
+        <div class="actions">
+          <button class="btn gold small" data-save-user="${escapeHTML(user.id)}">Save Balance</button>
+          <button class="btn red small" data-ban-user="${escapeHTML(user.id)}" data-banned="${user.is_banned?1:0}">${user.is_banned?"Unblock":"Block"}</button>
+        </div>
+      </td>
+    </tr>
+  `).join(""):`<tr><td colspan="6" class="empty">No users found.</td></tr>`;
+
+  $("userTable").querySelectorAll("[data-save-user]").forEach(button=>{
+    button.addEventListener("click",async()=>{
+      const id=button.dataset.saveUser;
+      const field=document.querySelector(`.user-balance[data-id="${CSS.escape(id)}"]`);
+      const balance=Number(field?.value);
+
+      if(!Number.isFinite(balance)||balance<0){
+        toast("Enter a valid balance");
+        return;
+      }
+
+      try{
+        await api(`/api/admin/users/${encodeURIComponent(id)}`,{
+          method:"PATCH",
+          body:JSON.stringify({balance})
+        });
+        await load();
+        toast("Balance updated");
+      }catch(error){showError(error)}
+    });
+  });
+
+  $("userTable").querySelectorAll("[data-ban-user]").forEach(button=>{
+    button.addEventListener("click",async()=>{
+      const id=button.dataset.banUser;
+      const currentlyBanned=button.dataset.banned==="1";
+
+      if(!confirm(currentlyBanned?"Unblock this user?":"Block this user?"))return;
+
+      try{
+        await api(`/api/admin/users/${encodeURIComponent(id)}`,{
+          method:"PATCH",
+          body:JSON.stringify({banned:!currentlyBanned})
+        });
+        await load();
+        toast("User status updated");
+      }catch(error){showError(error)}
+    });
+  });
+}
+
+load();
 </script>
 </body>
 </html>
