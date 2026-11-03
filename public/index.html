@@ -1,1291 +1,810 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="utf-8">
+<meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
-<meta name="theme-color" content="#090d19">
-<title>CoinNova • Tap Mining</title>
+<meta name="theme-color" content="#080b15">
+<title>CoinNova Mining</title>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 
 <style>
 :root{
-  --bg:#080b15;--panel:#11182a;--panel2:#172139;
-  --gold:#ffd66b;--gold2:#ff9f43;--cyan:#45e8ff;
-  --green:#51f5b7;--text:#f5f7ff;--muted:#9aa7c2;
-  --line:#283651;--pink:#ff70c7;
+ --bg:#080b15;--panel:#11182a;--panel2:#172139;
+ --gold:#ffd66b;--gold2:#ff9f43;--cyan:#45e8ff;
+ --green:#51f5b7;--text:#f5f7ff;--muted:#9aa7c2;
+ --line:#283651;--pink:#ff70c7;--red:#ff627c;
 }
 *{box-sizing:border-box}
+html{scroll-behavior:smooth}
 body{
-  margin:0;background:radial-gradient(circle at 50% -15%,#293660 0,transparent 42%),var(--bg);
-  color:var(--text);font-family:Inter,system-ui,-apple-system,Segoe UI,sans-serif;min-height:100vh
+ margin:0;min-height:100vh;color:var(--text);
+ background:radial-gradient(circle at 50% -10%,#26385c 0,transparent 42%),var(--bg);
+ font-family:Inter,system-ui,-apple-system,"Segoe UI",sans-serif;
 }
 button,input,select{font:inherit}
-button{cursor:pointer;border:0;color:inherit}
-.app{max-width:480px;margin:auto;min-height:100vh;padding:18px 15px 110px;overflow:hidden}
-.top{display:flex;align-items:center;justify-content:space-between;gap:12px}
+button{cursor:pointer}
+button:disabled{opacity:.45;cursor:not-allowed}
+button:active{transform:scale(.97)}
+.app{max-width:480px;margin:auto;min-height:100vh;padding:15px 15px 110px;overflow:hidden}
+.hidden{display:none!important}
+.loading{
+ position:fixed;inset:0;z-index:1000;background:#080b15;
+ display:flex;align-items:center;justify-content:center;flex-direction:column;gap:17px;
+ transition:opacity .45s,visibility .45s;
+}
+.loading.done{opacity:0;visibility:hidden;pointer-events:none}
+.loading-art{
+ width:112px;height:112px;border-radius:30px;
+ display:grid;place-items:center;overflow:hidden;
+ background:linear-gradient(135deg,#ffe9a0,#f4a32b);
+ box-shadow:0 0 45px #ffd66b40;animation:float 2s ease-in-out infinite;
+ color:#382306;font-size:50px;font-weight:1000;
+}
+.loading-art img{width:100%;height:100%;object-fit:cover}
+.loading-ring{width:145px;height:145px;position:absolute;border-radius:50%;border:2px solid #ffd66b24;border-top-color:var(--gold);animation:rotate 1.2s linear infinite}
+.loading-title{font-size:19px;font-weight:950;letter-spacing:1px;text-align:center;padding:0 20px}
+.loading-sub{font-size:11px;color:var(--muted);letter-spacing:1px}
+.loading-bar{width:180px;height:4px;background:#1b2943;border-radius:10px;overflow:hidden}
+.loading-bar i{display:block;height:100%;width:40%;background:var(--gold);animation:load 1s infinite alternate}
+.header{display:flex;align-items:center;justify-content:space-between;gap:8px}
 .brand{display:flex;align-items:center;gap:10px;min-width:0}
-.brand-mark{
-  width:43px;height:43px;border-radius:15px;background:linear-gradient(135deg,#fff2a5,#f5a623);
-  color:#50300b;display:grid;place-items:center;font-weight:1000;font-size:22px;
-  box-shadow:0 0 25px #ffca5555;animation:float 3s ease-in-out infinite;flex-shrink:0
+.brand-icon{
+ width:44px;height:44px;flex-shrink:0;border-radius:15px;
+ background:linear-gradient(135deg,#fff0a5,#f2a12c);
+ color:#50300b;display:grid;place-items:center;font-size:24px;font-weight:1000;
+ box-shadow:0 0 22px #ffd66b35;overflow:hidden;
 }
-.brand h1{font-size:19px;letter-spacing:1px;margin:0}
-.brand small{color:var(--muted);font-size:11px}
+.brand-icon img{width:100%;height:100%;object-fit:cover}
+.brand-name{font-size:17px;font-weight:950;letter-spacing:.5px;overflow-wrap:anywhere}
+.brand-tag{font-size:10px;color:var(--muted);margin-top:3px}
 .profile{
-  display:flex;align-items:center;gap:8px;max-width:155px;background:#111a2c;
-  border:1px solid var(--line);padding:5px 8px 5px 5px;border-radius:999px
+ display:flex;align-items:center;gap:7px;padding:5px 8px 5px 5px;
+ border-radius:999px;background:var(--panel);border:1px solid var(--line);max-width:145px;
 }
-.avatar{
-  width:38px;height:38px;border-radius:50%;object-fit:cover;
-  background:linear-gradient(135deg,#ffe9a0,#f3a42a);border:2px solid #ffd66b;
-  display:grid;place-items:center;color:#50300b;font-weight:950;flex-shrink:0
-}
-.profile-meta{min-width:0;text-align:right}
-.profile-meta b{display:block;font-size:11px;max-width:90px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.profile-meta small{display:block;color:var(--muted);font-size:9px}
-
-.loading-screen{
-  position:fixed;inset:0;z-index:100;
-  background:radial-gradient(circle at 50% 35%,#24345a 0,#0b1020 48%,#070a13 100%);
-  display:flex;align-items:center;justify-content:center;flex-direction:column;gap:16px;
-  transition:opacity .45s,visibility .45s
-}
-.loading-screen.done{opacity:0;visibility:hidden;pointer-events:none}
-.loading-screen.has-background{background-size:cover;background-position:center;background-repeat:no-repeat}
-.loading-screen.has-background:before{
-  content:"";position:absolute;inset:0;background:#05091435;backdrop-filter:blur(1px)
-}
-.loading-screen>*{position:relative;z-index:1}
-.loader-logo{
-  width:94px;height:94px;border-radius:29px;background:linear-gradient(135deg,#fff0a8,#f3a12c);
-  display:grid;place-items:center;color:#50300b;font-size:48px;font-weight:1000;
-  box-shadow:0 0 45px #ffc44c55;animation:float 1.6s ease-in-out infinite
-}
-.loader-ring{
-  width:140px;height:140px;border:2px solid #ffd66b2a;border-top-color:var(--gold);
-  border-radius:50%;position:absolute;animation:spin 1.4s linear infinite
-}
-.loader-wrap{width:140px;height:140px;display:grid;place-items:center;position:relative}
-.loading-title{font-size:20px;font-weight:950;letter-spacing:2px;text-shadow:0 2px 12px #000}
-.loading-sub{color:var(--muted);font-size:11px;letter-spacing:1.2px;text-shadow:0 2px 8px #000}
-.loading-bar{width:180px;height:4px;border-radius:9px;background:#1b2943;overflow:hidden}
-.loading-bar i{
-  display:block;width:40%;height:100%;background:linear-gradient(90deg,var(--gold2),var(--gold));
-  animation:loadslide 1.1s ease-in-out infinite alternate
-}
-
+.avatar{width:34px;height:34px;object-fit:cover;border-radius:50%;background:#293a55;display:grid;place-items:center;font-weight:900;flex-shrink:0}
+.profile-name{font-size:10px;font-weight:800;max-width:85px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.profile-small{font-size:9px;color:var(--muted);margin-top:2px}
+.page{display:none;animation:fade .25s ease}
+.page.active{display:block}
 .balance-card{
-  margin:22px 0 17px;padding:19px;border-radius:25px;border:1px solid #364563;
-  background:linear-gradient(135deg,#1d2a46,#10182a 65%);box-shadow:0 16px 40px #0005;
-  position:relative;overflow:hidden
+ margin:20px 0 14px;padding:20px;border-radius:24px;
+ border:1px solid #354564;background:linear-gradient(135deg,#1d2a46,#10182a 70%);
+ box-shadow:0 16px 40px #0005;position:relative;overflow:hidden;
 }
-.balance-card:after{
-  content:"";position:absolute;width:160px;height:160px;border-radius:50%;
-  right:-50px;top:-70px;background:#ffd66b14
-}
-.label{font-size:11px;color:var(--muted);letter-spacing:1.5px;text-transform:uppercase}
-.balance{font-size:35px;font-weight:950;margin:5px 0;color:#fff4c9;text-shadow:0 0 24px #ffd66b30}
-.balance span{font-size:13px;color:var(--gold)}
-.stats{display:flex;gap:8px;margin-top:15px}
-.stat{flex:1;padding:10px;background:#080f1d80;border-radius:13px;min-width:0}
-.stat strong{display:block;font-size:14px}
-.stat small{font-size:10px;color:var(--muted)}
-.coin-stage{height:280px;display:grid;place-items:center;position:relative;isolation:isolate}
-.orbit{
-  position:absolute;width:245px;height:245px;border:1px solid #ffd66b24;
-  border-radius:50%;animation:spin 18s linear infinite
-}
-.orbit:before,.orbit:after{
-  content:"";position:absolute;width:9px;height:9px;border-radius:50%;
-  background:var(--cyan);box-shadow:0 0 16px var(--cyan);top:22px;left:35px
-}
-.orbit:after{
-  top:auto;left:auto;right:14px;bottom:50px;background:var(--pink);
-  box-shadow:0 0 16px var(--pink)
-}
-.orbit.two{width:205px;height:205px;border-style:dashed;animation-direction:reverse;animation-duration:25s}
+.balance-card:after{content:"";position:absolute;width:180px;height:180px;border-radius:50%;right:-60px;top:-80px;background:#ffd66b13}
+.label{font-size:10px;letter-spacing:1.5px;color:var(--muted);text-transform:uppercase}
+.balance{font-size:35px;font-weight:1000;color:#fff1bd;margin:7px 0}
+.balance small{font-size:12px;color:var(--gold)}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:15px}
+.stat{padding:10px 8px;border-radius:13px;background:#080e1d99;min-width:0}
+.stat strong{display:block;font-size:14px;overflow:hidden;text-overflow:ellipsis}
+.stat small{display:block;color:var(--muted);font-size:9px;margin-top:4px}
+.section-title{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:21px 0 12px}
+.section-title h2{font-size:19px;margin:0}
+.muted{color:var(--muted);font-size:12px;line-height:1.5}
+.coin-stage{height:270px;display:grid;place-items:center;position:relative;isolation:isolate}
+.orbit{position:absolute;width:240px;height:240px;border:1px solid #ffd66b25;border-radius:50%;animation:rotate 18s linear infinite}
+.orbit:before,.orbit:after{content:"";position:absolute;width:8px;height:8px;border-radius:50%;background:var(--cyan);box-shadow:0 0 15px var(--cyan);top:22px;left:36px}
+.orbit:after{top:auto;left:auto;right:15px;bottom:48px;background:var(--pink);box-shadow:0 0 15px var(--pink)}
+.orbit.two{width:198px;height:198px;border-style:dashed;animation-direction:reverse;animation-duration:24s}
 .coin{
-  width:166px;height:166px;border-radius:50%;position:relative;
-  background:radial-gradient(circle at 32% 24%,#fff5be 0,#ffdc68 16%,#efa52e 46%,#9b5317 72%,#ffcf5d 100%);
-  box-shadow:0 0 0 8px #ffc44c16,0 0 0 16px #ffc44c0b,0 20px 55px #0008,0 0 40px #ffc44c55;
-  display:grid;place-items:center;user-select:none;touch-action:manipulation;
-  transition:transform .08s;animation:coinfloat 3s ease-in-out infinite
+ width:155px;height:155px;border-radius:50%;display:grid;place-items:center;
+ background:radial-gradient(circle at 30% 23%,#fff8c6,#ffdc68 20%,#efa52e 50%,#975016 77%,#ffce58);
+ box-shadow:0 0 0 8px #ffc44c15,0 0 0 17px #ffc44c09,0 15px 40px #0009,0 0 35px #ffc44c45;
+ position:relative;user-select:none;touch-action:manipulation;animation:float 2.8s ease-in-out infinite;
 }
-.coin:before{
-  content:"";position:absolute;inset:10px;border:2px solid #fff0a5;
-  border-radius:50%;box-shadow:inset 0 0 15px #9b531755
-}
-.coin:active{transform:scale(.92)}
-.coin-core{
-  width:95px;height:95px;border-radius:50%;border:2px solid #a96b1b;
-  display:grid;place-items:center;color:#7c4511;font-size:58px;font-weight:1000;
-  text-shadow:0 2px #ffe9a2;box-shadow:inset 0 0 18px #fff2a3aa
-}
-.tap-hint{position:absolute;bottom:0;color:var(--muted);font-size:12px;letter-spacing:.4px}
-.energy-wrap{background:var(--panel);border:1px solid var(--line);padding:13px 14px;border-radius:17px}
-.energy-row{display:flex;justify-content:space-between;font-size:12px;margin-bottom:9px}
+.coin:before{content:"";position:absolute;inset:10px;border:2px solid #fff1a1;border-radius:50%}
+.coin-core{width:90px;height:90px;border-radius:50%;border:2px solid #a96b1b;display:grid;place-items:center;color:#7c4511;font-size:53px;font-weight:1000}
+.tap-hint{position:absolute;bottom:0;font-size:11px;color:var(--muted)}
+.energy-card{padding:13px 14px;background:var(--panel);border:1px solid var(--line);border-radius:16px}
+.energy-row{display:flex;justify-content:space-between;font-size:11px;margin-bottom:9px}
 .energy-row b{color:var(--gold)}
-.bar{height:8px;background:#070b13;border-radius:99px;overflow:hidden}
-.bar i{
-  display:block;height:100%;width:100%;background:linear-gradient(90deg,var(--gold2),var(--gold));
-  border-radius:99px;transition:width .25s;box-shadow:0 0 12px #ffd66b55
-}
-.quick{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;margin:13px 0}
-.quick button{
-  padding:13px 5px;border-radius:15px;background:linear-gradient(135deg,#1b2943,#11182a);
-  border:1px solid var(--line);font-weight:750;font-size:12px;transition:.2s
-}
-.quick button:active,.nav button:active{transform:scale(.96)}
-.quick .ico{display:block;font-size:21px;margin-bottom:5px}
-.section{display:none;animation:fade .25s ease}
-.section.active{display:block}
-.section-head{display:flex;justify-content:space-between;align-items:center;margin:22px 0 12px}
-.section-head h2{font-size:20px;margin:0}
-.muted{color:var(--muted);font-size:12px}
-.task,.wallet-option,.history,.ref-card{
-  display:flex;align-items:center;gap:12px;background:linear-gradient(135deg,#151f34,#101727);
-  border:1px solid var(--line);border-radius:17px;padding:13px;margin:9px 0
-}
+.bar{height:8px;background:#070b13;border-radius:20px;overflow:hidden}
+.bar i{display:block;height:100%;width:100%;background:linear-gradient(90deg,var(--gold2),var(--gold));border-radius:20px;transition:width .2s}
+.quick{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;margin:12px 0}
+.quick button{padding:13px 4px;border-radius:15px;background:linear-gradient(135deg,#1b2943,#11182a);border:1px solid var(--line);font-size:11px;font-weight:800;color:var(--text)}
+.quick span{display:block;font-size:21px;margin-bottom:5px}
+.card{background:linear-gradient(135deg,#151f34,#101727);border:1px solid var(--line);border-radius:17px;padding:14px;margin:9px 0}
+.row{display:flex;align-items:center;gap:11px}
+.row-info{flex:1;min-width:0}
+.row-info b{display:block;font-size:13px;overflow-wrap:anywhere}
+.row-info small{display:block;font-size:11px;color:var(--muted);margin-top:5px;line-height:1.4}
 .logo{
-  width:43px;height:43px;border-radius:14px;background:#0b1220;border:1px solid #34425c;
-  display:grid;place-items:center;flex-shrink:0;overflow:hidden;animation:glow 3s infinite
+ width:48px;height:48px;flex-shrink:0;border-radius:15px;
+ display:grid;place-items:center;background:#091120;border:1px solid #34425c;overflow:hidden;
 }
-.logo img{width:27px;height:27px;object-fit:contain}
-.task-info,.wallet-info{flex:1;min-width:0}
-.task-info b,.wallet-info b{display:block;font-size:13px}
-.task-info small,.wallet-info small{font-size:11px;color:var(--muted)}
-.reward{color:var(--gold);font-weight:800;font-size:12px}
-.mini-btn{
-  border:1px solid #4b5c7c;background:#202e49;border-radius:11px;
-  padding:9px 11px;font-size:11px;font-weight:800;white-space:nowrap
+.logo img{width:100%;height:100%;padding:8px;object-fit:contain}
+.logo .fallback{font-size:22px;font-weight:950;color:var(--cyan)}
+.reward{color:var(--gold);font-size:12px;font-weight:900}
+.btn{
+ border:1px solid #3b4d6b;border-radius:12px;padding:10px 12px;
+ background:#202e49;color:var(--text);font-size:11px;font-weight:850;white-space:nowrap;
 }
-.mini-btn.gold{background:linear-gradient(135deg,#ffe69a,#f4a42c);color:#41280a;border:0}
-.mini-btn:disabled{opacity:.45}
-.primary{
-  width:100%;padding:14px;border-radius:15px;font-weight:900;color:#36220b;
-  background:linear-gradient(100deg,#ffe9a0,#f6a72e);box-shadow:0 8px 25px #f6a72e25;transition:.2s
-}
-.primary:active{transform:scale(.98)}
-.field{
-  width:100%;background:#080e1b;border:1px solid #34415b;color:var(--text);
-  padding:13px;border-radius:12px;outline:none;margin:6px 0 12px
-}
+.btn.gold,.primary{background:linear-gradient(100deg,#ffe9a0,#f6a72e);color:#392407;border:0}
+.primary{width:100%;padding:14px;border-radius:14px;font-size:13px;font-weight:950;box-shadow:0 8px 25px #f6a72e20}
+.secondary{width:100%;padding:13px;border-radius:14px;background:#17243a;color:var(--text);border:1px solid var(--line);font-weight:800}
+.field{width:100%;padding:13px;background:#080e1b;border:1px solid #34415b;border-radius:12px;color:var(--text);outline:none;margin:7px 0 12px}
 .field:focus{border-color:var(--cyan)}
 label{font-size:12px;color:var(--muted)}
+.notice{padding:12px;border-radius:13px;background:#332b1c;border:1px solid #65502a;color:#f9dca0;font-size:11px;line-height:1.6;margin:12px 0}
+.empty{text-align:center;padding:28px 10px;color:var(--muted);font-size:12px}
 .nav{
-  position:fixed;z-index:10;bottom:0;left:50%;transform:translateX(-50%);
-  width:min(480px,100%);display:grid;grid-template-columns:repeat(5,1fr);gap:4px;
-  padding:9px 8px calc(9px + env(safe-area-inset-bottom));
-  background:#090e1beb;backdrop-filter:blur(18px);border-top:1px solid #2a3650
+ position:fixed;z-index:50;bottom:0;left:50%;transform:translateX(-50%);
+ width:min(480px,100%);display:grid;grid-template-columns:repeat(5,1fr);gap:4px;
+ padding:8px 8px calc(8px + env(safe-area-inset-bottom));
+ background:#090e1fee;backdrop-filter:blur(18px);border-top:1px solid #2a3650;
 }
-.nav button{background:transparent;color:#8592ac;font-size:10px;padding:6px 2px;border-radius:12px;transition:.2s}
+.nav button{background:transparent;color:#8794ad;font-size:10px;padding:7px 2px;border-radius:12px}
 .nav button span{display:block;font-size:20px;margin-bottom:3px}
 .nav button.active{color:var(--gold);background:#ffd66b12}
-.toast{
-  position:fixed;z-index:130;top:15px;left:50%;transform:translate(-50%,-150%);
-  background:#17243a;border:1px solid #3b4e6e;padding:12px 17px;border-radius:13px;
-  font-size:13px;box-shadow:0 12px 35px #0008;transition:.3s;max-width:90%;text-align:center
-}
+.toast{position:fixed;z-index:2000;top:15px;left:50%;transform:translate(-50%,-150%);background:#17243a;border:1px solid #3b4e6e;padding:12px 17px;border-radius:13px;font-size:12px;box-shadow:0 12px 35px #0008;transition:.3s;max-width:90%;text-align:center}
 .toast.show{transform:translate(-50%,0)}
-.float-text{
-  position:absolute;z-index:3;color:#fff2a1;font-weight:1000;font-size:21px;
-  pointer-events:none;text-shadow:0 2px 12px #f99c27;animation:rise .75s ease-out forwards
-}
-.notice{
-  padding:12px;border-radius:13px;background:#332b1c;border:1px solid #65502a;
-  color:#f9dca0;font-size:11px;line-height:1.5;margin:12px 0
-}
-.modal-bg{
-  position:fixed;inset:0;z-index:25;background:#03060bc9;display:none;
-  align-items:flex-end;justify-content:center
-}
+.modal-bg{position:fixed;z-index:100;inset:0;background:#02050bd9;display:none;align-items:flex-end;justify-content:center}
 .modal-bg.show{display:flex}
-.modal{
-  width:min(480px,100%);background:#111a2c;border:1px solid #33435f;
-  border-radius:25px 25px 0 0;padding:22px 18px calc(25px + env(safe-area-inset-bottom));
-  animation:slide .25s ease
-}
+.modal{width:min(480px,100%);background:#111a2c;border:1px solid #33435f;border-radius:25px 25px 0 0;padding:22px 18px calc(25px + env(safe-area-inset-bottom));animation:slide .25s}
 .modal h3{margin:0 0 12px}
-.modal .close{float:right;background:#26334a;border-radius:9px;padding:6px 10px}
-.empty{text-align:center;color:var(--muted);padding:28px 10px;font-size:13px}
-.footer-note{text-align:center;color:#68758e;font-size:10px;margin:18px 0 0}
-
-.spin-panel{
-  background:linear-gradient(145deg,#182643,#0c1425);border:1px solid #465779;
-  border-radius:22px;padding:16px;margin:12px 0;overflow:hidden
+.modal-close{float:right;background:#26334a;border:0;color:white;border-radius:9px;padding:7px 10px}
+.history{display:flex;align-items:center;gap:10px;padding:12px;border-radius:13px;background:#121c30;border:1px solid var(--line);margin:8px 0}
+.history-info{flex:1;min-width:0}
+.history-info b{font-size:12px;display:block}
+.history-info small{font-size:10px;color:var(--muted);display:block;margin-top:4px;overflow-wrap:anywhere}
+.level-row{display:flex;align-items:center;gap:10px;padding:12px 0;border-bottom:1px solid var(--line)}
+.level-badge{width:35px;height:35px;display:grid;place-items:center;border-radius:11px;background:#26334a;color:var(--gold);font-weight:900}
+.level-info{flex:1;min-width:0}
+.level-info b{font-size:12px}
+.level-info small{display:block;color:var(--muted);font-size:10px;margin-top:4px}
+.float-text{position:absolute;color:#fff2a1;font-weight:1000;font-size:20px;pointer-events:none;text-shadow:0 2px 12px #f99c27;animation:rise .8s forwards}
+.wheel-wrap{display:grid;place-items:center;padding:15px 0}
+.wheel{width:230px;height:230px;border-radius:50%;border:7px solid #ffe8a0;box-shadow:0 0 30px #ffd66b30;display:grid;place-items:center;background:conic-gradient(#f5a623 0 60deg,#243754 60deg 120deg,#45e8ff 120deg 180deg,#342858 180deg 240deg,#51f5b7 240deg 300deg,#f5a623 300deg);position:relative;transition:transform 4.2s cubic-bezier(.12,.65,.12,1)}
+.wheel:after{content:"CNV";width:65px;height:65px;border-radius:50%;background:#0c1424;border:3px solid #ffe8a0;display:grid;place-items:center;font-weight:1000;color:var(--gold)}
+.wheel-pointer{color:var(--gold);font-size:25px;text-align:center;margin-bottom:-14px;position:relative;z-index:2}
+.method-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.method-card{
+ text-align:left;width:100%;padding:13px;border-radius:17px;background:linear-gradient(135deg,#151f34,#101727);
+ border:1px solid var(--line);color:var(--text);min-width:0;transition:.2s;
 }
-.spin-wheel-wrap{display:grid;place-items:center;padding:12px 0 16px}
-.spin-wheel{
-  width:218px;height:218px;border-radius:50%;position:relative;border:7px solid #ffe6a0;
-  box-shadow:0 0 0 5px #f5b53624,0 0 35px #ffc44c35;display:grid;place-items:center;
-  background:conic-gradient(#ffcb54 0deg 60deg,#1b3153 60deg 120deg,#47d8cb 120deg 180deg,#3d4f80 180deg 240deg,#ff8c61 240deg 300deg,#694fd1 300deg 360deg);
-  transition:transform 4.3s cubic-bezier(.12,.75,.08,1)
-}
-.spin-wheel:before{content:"";position:absolute;inset:12px;border-radius:50%;border:2px dashed #fff9}
-.spin-wheel-core{
-  width:65px;height:65px;border-radius:50%;background:linear-gradient(135deg,#fff3b4,#efa52e);
-  color:#4a2c09;display:grid;place-items:center;font-size:26px;font-weight:1000;
-  border:4px solid #fff0b2;z-index:1;box-shadow:0 3px 15px #0007
-}
-.spin-pointer{font-size:28px;color:#fff0a5;text-shadow:0 3px 8px #000;line-height:1;margin-bottom:-8px;z-index:2}
-.spin-btn{max-width:280px;margin:0 auto;display:block}
-.spin-meta{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
-.spin-meta .stat{border:1px solid #334461}
-.rule-note{
-  padding:12px;border-radius:14px;background:#0b1323;border:1px solid #293a58;
-  font-size:11px;line-height:1.7;color:#b9c6dc;margin-top:13px
-}
-.level-row{
-  display:grid;grid-template-columns:42px 1fr auto;gap:10px;align-items:center;
-  padding:12px 0;border-bottom:1px solid var(--line)
-}
-.level-row:last-child{border-bottom:0}
-.level-badge{
-  width:36px;height:36px;border-radius:12px;background:linear-gradient(135deg,#ffe69a,#f4a42c);
-  display:grid;place-items:center;color:#43290a;font-weight:950
-}
-.level-row b{font-size:12px}
-.level-row small{display:block;color:var(--muted);font-size:10px;margin-top:3px}
-.level-rate{color:var(--gold);font-weight:900}
-
-@keyframes spin{to{transform:rotate(360deg)}}
-@keyframes float{50%{transform:translateY(-4px)}}
-@keyframes coinfloat{50%{transform:translateY(-6px) rotateY(7deg)}}
-@keyframes glow{50%{box-shadow:0 0 17px #45e8ff24}}
-@keyframes rise{to{transform:translateY(-70px) scale(1.2);opacity:0}}
-@keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
-@keyframes slide{from{transform:translateY(50px);opacity:.5}to{transform:none;opacity:1}}
-@keyframes loadslide{from{transform:translateX(-10px)}to{transform:translateX(160px)}}
-@keyframes tapPop{50%{transform:scale(.9) rotate(-2deg)}}
-@keyframes spinWin{50%{filter:brightness(1.6);transform:scale(1.04)}}
-.tap-pop{animation:tapPop .18s ease-out}
-.spin-win{animation:spinWin .6s ease-out}
-
-@media(max-width:360px){
-  .app{padding-left:11px;padding-right:11px}
-  .balance{font-size:30px}
-  .coin{width:150px;height:150px}
-  .orbit{width:220px;height:220px}
-  .profile{max-width:130px}
-}
+.method-card.selected{border-color:var(--gold);background:#222b3c;box-shadow:0 0 0 1px #ffd66b25}
+.method-card .logo{width:45px;height:45px;margin-bottom:10px}
+.method-card b{display:block;font-size:12px;overflow-wrap:anywhere}
+.method-card small{display:block;color:var(--muted);font-size:10px;margin-top:5px;line-height:1.4}
+.method-card .check{float:right;color:var(--gold)}
+.fee-box{background:#0b1323;border:1px solid #2c3b56;padding:13px;border-radius:14px;margin:9px 0 14px}
+.fee-line{display:flex;justify-content:space-between;gap:10px;font-size:11px;padding:5px 0;color:var(--muted)}
+.fee-line strong{color:var(--text);text-align:right}
+.fee-line.total{border-top:1px solid var(--line);padding-top:10px;margin-top:5px;font-size:12px}
+.subnav{display:flex;gap:8px;margin:14px 0}
+.subnav button{flex:1;border:1px solid var(--line);border-radius:11px;padding:11px 4px;background:#111a2c;color:var(--muted);font-size:11px;font-weight:850}
+.subnav button.active{background:#292d35;border-color:var(--gold);color:var(--gold)}
+.custom-button{display:flex;align-items:center;gap:10px;padding:12px;border:1px solid var(--line);border-radius:15px;background:#131d31;margin:9px 0;color:var(--text);text-decoration:none}
+.custom-button .logo{width:42px;height:42px}
+.custom-button b{font-size:12px}
+@keyframes rotate{to{transform:rotate(360deg)}}
+@keyframes fade{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:translateY(0)}}
+@keyframes float{50%{transform:translateY(-5px)}}
+@keyframes load{to{width:100%}}
+@keyframes rise{to{opacity:0;transform:translateY(-65px) scale(1.2)}}
+@keyframes slide{from{transform:translateY(25px);opacity:0}to{transform:translateY(0);opacity:1}}
+@keyframes pulse{50%{box-shadow:0 0 25px #45e8ff35}}
+@keyframes bounce{50%{transform:translateY(-5px)}}
+@keyframes glow{50%{filter:brightness(1.25);box-shadow:0 0 20px currentColor}}
+@keyframes shake{25%{transform:translateX(-2px)}75%{transform:translateX(2px)}}
+.anim-pulse{animation:pulse 2s infinite}.anim-bounce{animation:bounce 1.5s infinite}.anim-glow{animation:glow 2s infinite}.anim-shake{animation:shake .4s infinite}
+@media(max-width:350px){.balance{font-size:29px}.method-grid{grid-template-columns:1fr}.coin{width:140px;height:140px}.wheel{width:205px;height:205px}}
 </style>
 </head>
 
 <body>
-
-<!-- Full-screen loading screen. Admin can set loadingBackgroundUrl in app settings. -->
-<div class="loading-screen" id="loadingScreen">
-  <div class="loader-wrap">
-    <div class="loader-ring"></div>
-    <div class="loader-logo" id="loadingLogo">C</div>
-  </div>
-  <div class="loading-title" id="loadingTitle">COINNOVA</div>
-  <div class="loading-sub" id="loadingSub">VERIFYING TELEGRAM ACCOUNT</div>
-  <div class="loading-bar"><i></i></div>
+<div id="loadingScreen" class="loading">
+ <div class="loading-ring"></div>
+ <div class="loading-art" id="loadingArt">C</div>
+ <div class="loading-title" id="loadingTitle">COINNOVA</div>
+ <div class="loading-sub" id="loadingSub">VERIFYING TELEGRAM ACCOUNT</div>
+ <div class="loading-bar"><i></i></div>
 </div>
 
-<div class="toast" id="toast"></div>
+<div id="toast" class="toast"></div>
 
 <main class="app">
-
-<header class="top">
+ <header class="header">
   <div class="brand">
-    <div class="brand-mark" id="brandLogo">C</div>
-    <div>
-      <h1 id="appName">COINNOVA</h1>
-      <small id="tagline">TAP • MINE • EARN</small>
-    </div>
+   <div class="brand-icon" id="brandIcon">C</div>
+   <div style="min-width:0">
+    <div class="brand-name" id="appName">CoinNova</div>
+    <div class="brand-tag" id="tagline">TAP • MINE • EARN</div>
+   </div>
   </div>
-
   <div class="profile">
-    <img class="avatar" id="profilePhoto" alt="Telegram profile" src="" style="display:none">
-    <div class="avatar" id="profileFallback">?</div>
-    <div class="profile-meta">
-      <b id="profileName">Telegram User</b>
-      <small>TELEGRAM ACCOUNT</small>
-    </div>
+   <img id="profilePhoto" class="avatar hidden" alt="">
+   <div id="profileFallback" class="avatar">C</div>
+   <div>
+    <div id="profileName" class="profile-name">Miner</div>
+    <div class="profile-small">● <span id="userPill">Verified</span></div>
+   </div>
   </div>
-</header>
+ </header>
 
-<div class="balance-card">
-  <div class="label" id="balanceLabel">Your mining balance</div>
-  <div class="balance"><b id="balance">0</b> <span>CNV</span></div>
-  <div class="stats">
-    <div class="stat"><strong id="totalTaps">0</strong><small id="tapsLabel">Total taps</small></div>
-    <div class="stat"><strong id="refCount">0</strong><small id="referralsLabel">Qualified referrals</small></div>
-    <div class="stat"><strong id="tapRate">+1</strong><small id="tapRateLabel">Coins / tap</small></div>
+ <section id="home" class="page active">
+  <div class="balance-card">
+   <div class="label">TOTAL COINS</div>
+   <div class="balance"><span id="balance">0</span> <small>CNV</small></div>
+   <div class="stats">
+    <div class="stat"><strong id="totalTaps">0</strong><small>Total taps</small></div>
+    <div class="stat"><strong id="refCount">0</strong><small>Referrals</small></div>
+    <div class="stat"><strong id="tapRate">+1</strong><small>Coins / tap</small></div>
+   </div>
   </div>
-</div>
 
-<section id="home" class="section active">
   <div class="coin-stage" id="coinStage">
-    <div class="orbit"></div>
-    <div class="orbit two"></div>
-    <button class="coin" id="coin" aria-label="Tap to mine">
-      <span class="coin-core" id="coinLetter">C</span>
-    </button>
-    <div class="tap-hint" id="tapHint">TAP THE COIN TO MINE</div>
+   <div class="orbit"></div><div class="orbit two"></div>
+   <button id="coin" class="coin" aria-label="Tap to mine"><span class="coin-core">C</span></button>
+   <div class="tap-hint">TAP THE COIN TO MINE</div>
   </div>
 
-  <div class="energy-wrap">
-    <div class="energy-row">
-      <span id="energyLabel">⚡ ENERGY</span>
-      <b><span id="energy">1000</span> / <span id="maxEnergy">1000</span></b>
-    </div>
-    <div class="bar"><i id="energyBar"></i></div>
+  <div class="energy-card">
+   <div class="energy-row"><span>⚡ Energy</span><b><span id="energy">1000</span> / <span id="maxEnergy">1000</span></b></div>
+   <div class="bar"><i id="energyBar"></i></div>
   </div>
 
   <div class="quick">
-    <button data-go="tasks"><span class="ico">🎯</span><span id="quickTasks">Tasks</span></button>
-    <button data-go="spin"><span class="ico">🎡</span><span id="quickSpin">Daily bonus</span></button>
-    <button data-go="friends"><span class="ico">🤝</span><span id="quickFriends">Invite friends</span></button>
+   <button onclick="showPage('tasks')"><span>◎</span>Tasks</button>
+   <button onclick="showPage('spin')"><span>✦</span>Lucky Spin</button>
+   <button onclick="showPage('wallet')"><span>◇</span>Wallet</button>
   </div>
 
-  <div class="notice" id="homeNotice">
-    Mining coins are in-app reward points. Withdrawals are subject to administrator review.
-  </div>
-</section>
+  <div id="customButtons"></div>
 
-<section id="tasks" class="section">
-  <div class="section-head">
-    <h2 id="tasksTitle">🎯 Earn more</h2>
-    <span class="muted" id="tasksSubtitle">Complete tasks</span>
-  </div>
+  <div class="notice">Keep your Telegram account secure. Never share your wallet seed phrase or password.</div>
+ </section>
+
+ <section id="tasks" class="page">
+  <div class="section-title"><h2>Daily Tasks</h2><span class="muted">Earn CNV</span></div>
   <div id="taskList"></div>
-</section>
-
-<section id="spin" class="section">
-  <div class="section-head">
-    <h2 id="spinTitle">🎡 Lucky Spin</h2>
-    <span class="muted" id="spinSubtitle">Invite • Spin • Earn</span>
+  <div class="card">
+   <div class="row">
+    <div class="logo"><span class="fallback">☀</span></div>
+    <div class="row-info"><b>Daily Bonus</b><small>Claim your daily reward.</small></div>
+    <strong id="dailyAmount" class="reward">+50</strong>
+   </div>
+   <button id="dailyBtn" class="primary" style="margin-top:13px">CLAIM DAILY BONUS</button>
   </div>
+ </section>
 
-  <div class="spin-panel">
-    <div class="spin-meta">
-      <div class="stat"><strong id="spinAvailable">0</strong><small id="availableSpinsLabel">Available spins</small></div>
-      <div class="stat"><strong id="spinReferralRule">1 referral</strong><small id="perSpinLabel">Per free spin</small></div>
-    </div>
-
-    <div class="spin-wheel-wrap">
-      <div class="spin-pointer">▼</div>
-      <div class="spin-wheel" id="spinWheel">
-        <div class="spin-wheel-core">CNV</div>
-      </div>
-    </div>
-
-    <button class="primary spin-btn" id="spinBtn">🎡 SPIN NOW</button>
-    <div class="rule-note" id="spinRules">
-      Refer qualified friends to unlock spins. Rewards are selected by the server.
-    </div>
+ <section id="spin" class="page">
+  <div class="section-title"><h2>Lucky Spin</h2><span class="reward"><span id="spinAvailable">0</span> spins</span></div>
+  <div class="card">
+   <div class="wheel-pointer">▼</div>
+   <div class="wheel-wrap"><div id="spinWheel" class="wheel"></div></div>
+   <button id="spinBtn" class="primary">✦ SPIN NOW</button>
+   <p class="muted" id="spinRules" style="text-align:center">Invite qualified friends to unlock spins.</p>
   </div>
-
-  <div class="section-head">
-    <h2 id="dailyTitle">🎁 Daily reward</h2>
-    <span class="muted" id="dailySubtitle">Once per day</span>
-  </div>
-
-  <div class="ref-card">
-    <div class="logo">🎁</div>
-    <div class="task-info">
-      <b id="dailyName">Daily login bonus</b>
-      <small id="dailyDescription">Claim your daily coins</small>
-    </div>
-    <strong class="reward" id="dailyAmount">+50</strong>
-  </div>
-  <button class="primary" id="dailyBtn">CLAIM DAILY BONUS</button>
-
-  <div class="section-head"><h2 id="recentSpinsTitle">Recent spins</h2></div>
+  <div class="section-title"><h2>Spin History</h2></div>
   <div id="spinHistory"></div>
-</section>
+ </section>
 
-<section id="commission" class="section">
-  <div class="section-head">
-    <h2 id="commissionTitle">💎 Team Commission</h2>
-    <span class="muted">6 levels</span>
+ <section id="friends" class="page">
+  <div class="section-title"><h2>Invite Friends</h2><span class="reward">Referral</span></div>
+  <div class="card">
+   <div class="row">
+    <div class="logo"><span class="fallback">↗</span></div>
+    <div class="row-info"><b>Invite & Earn</b><small>Earn <span id="refBonus">100</span> CNV when your friend qualifies.</small></div>
+   </div>
+   <div class="notice" id="refRule">Your invited friend qualifies after completing 10 taps.</div>
+   <label>Your personal referral link</label>
+   <input id="refLink" class="field" readonly value="Loading referral link">
+   <button id="copyRef" class="primary">COPY INVITE LINK</button>
+   <button id="openCommission" class="secondary" style="margin-top:10px">VIEW TEAM & COMMISSIONS</button>
   </div>
+  <div class="section-title"><h2>Your Team</h2></div>
+  <div id="teamSummary"></div>
+ </section>
 
+ <section id="commission" class="page">
+  <div class="section-title"><h2>Team Commission</h2><span class="reward">6 Levels</span></div>
   <div class="balance-card">
-    <div class="label" id="commissionTodayLabel">Today's commission</div>
-    <div class="balance"><b id="commissionTotal">0</b> <span>CNV</span></div>
-    <div class="muted" id="commissionDescription">
-      Daily commission is calculated and credited after 1:00 AM Bangladesh time.
-    </div>
+   <div class="label">COMMISSION TODAY</div>
+   <div class="balance"><span id="commissionTotal">0</span> <small>CNV</small></div>
+   <div class="muted">Commission payouts are processed after 1:00 AM Bangladesh time.</div>
   </div>
-
-  <div class="spin-panel">
-    <h3 style="margin:0 0 6px" id="teamPerformanceTitle">Your team performance</h3>
-    <div id="commissionLevels"></div>
-  </div>
-
-  <div class="section-head"><h2 id="commissionHistoryTitle">Commission history</h2></div>
+  <div id="commissionLevels"></div>
+  <div class="section-title"><h2>Commission History</h2></div>
   <div id="commissionHistory"></div>
+ </section>
 
-  <div class="rule-note" id="commissionRule">
-    Commission percentages are set by the administrator and calculated from eligible team earnings.
+ <section id="wallet" class="page">
+  <div class="section-title"><h2>Withdraw</h2><span class="reward">Secure payout</span></div>
+  <div class="notice">Select a withdrawal category first. E-Wallet and Crypto Network use separate selection screens. Verify the destination carefully before submitting.</div>
+
+  <div id="walletCategories" class="method-grid">
+   <button class="method-card" onclick="openWalletCategory('ewallet')">
+    <div class="logo"><span class="fallback">৳</span></div>
+    <b>E-Wallet</b><small>bKash · Nagad · Rocket</small>
+   </button>
+   <button class="method-card" onclick="openWalletCategory('network')">
+    <div class="logo"><span class="fallback">🌐</span></div>
+    <b>Select Network</b><small>USDT · TRC20 · BEP20 · Wallets</small>
+   </button>
   </div>
-</section>
 
-<section id="friends" class="section">
-  <div class="section-head">
-    <h2 id="friendsTitle">🤝 Invite friends</h2>
-    <span class="muted" id="friendsSubtitle">Grow together</span>
+  <div id="walletMethodPage" class="hidden">
+   <button id="walletBackCategory" class="secondary">← Back to Withdraw</button>
+   <div class="section-title"><h2 id="walletMethodTitle">Select method</h2><span class="muted" id="walletMethodCount"></span></div>
+   <div id="methodList" class="method-grid"></div>
   </div>
 
-  <div class="ref-card">
-    <div class="logo">👥</div>
-    <div class="task-info">
-      <b id="referralRewardTitle">Referral reward</b>
-      <small id="refRule">Invite a friend; they must make 10 taps to qualify.</small>
+  <div id="walletFormPage" class="hidden">
+   <button id="walletBackMethods" class="secondary">← Back to methods</button>
+   <div class="section-title"><h2 id="selectedMethodTitle">Withdraw</h2><span class="reward" id="selectedMethodType"></span></div>
+
+   <div class="card">
+    <div class="row">
+     <div class="logo" id="selectedMethodLogo"><span class="fallback">◇</span></div>
+     <div class="row-info"><b id="selectedMethodName">Select wallet</b><small id="selectedMethodHint">Destination details</small></div>
     </div>
-    <strong class="reward" id="refBonus">+100</strong>
-  </div>
+   </div>
 
-  <label id="refLinkLabel">Your invite link</label>
-  <input class="field" id="refLink" readonly value="Open this app inside Telegram">
-  <button class="primary" id="copyRef">COPY INVITE LINK</button>
-  <button class="primary" id="openCommission" style="margin-top:10px;background:linear-gradient(100deg,#b8a6ff,#7254ff);color:#fff">
-    💎 VIEW 6-LEVEL COMMISSION
-  </button>
-  <p class="muted" id="refInfo">
-    Only new Telegram users who open the app through your referral and make at least 10 taps count as qualified referrals.
-  </p>
-</section>
+   <form id="withdrawForm">
+    <label id="destinationLabel">Mobile number or wallet address</label>
+    <input id="address" class="field" required minlength="5" maxlength="180" placeholder="Enter destination">
 
-<section id="wallet" class="section">
-  <div class="section-head">
-    <h2 id="withdrawTitle">💳 Withdraw</h2>
-    <span class="muted" id="withdrawSubtitle">Admin reviewed</span>
-  </div>
+    <label>Withdrawal amount (CNV)</label>
+    <input id="amount" class="field" required type="number" min="1" step="1" inputmode="numeric" placeholder="Enter amount">
 
-  <div class="notice" id="withdrawNotice">
-    Payments are not automatic. The administrator must verify the request and send payment.
-    Never share your wallet seed phrase or password.
-  </div>
-
-  <div id="withdrawCategoryScreen">
-    <div class="section-head"><h2 id="categoryHeading">Select withdrawal category</h2></div>
-    <div id="categoryList"></div>
-  </div>
-
-  <div id="withdrawMethodScreen" style="display:none">
-    <button class="mini-btn" id="backToCategories" type="button" style="width:100%;padding:13px;margin:5px 0 15px">
-      ← Back to Withdraw
-    </button>
-    <div class="section-head">
-      <h2 id="methodHeading">Select wallet / network</h2>
-      <span class="muted" id="methodCount"></span>
+    <div class="fee-box">
+     <div class="fee-line"><span>Requested amount</span><strong id="feeGross">0 CNV</strong></div>
+     <div class="fee-line"><span>Withdrawal fee (<span id="feePercent">0</span>%)</span><strong id="feeAmount">0 CNV</strong></div>
+     <div class="fee-line total"><span>You receive</span><strong id="feeNet">0 CNV</strong></div>
     </div>
-    <div id="methodList"></div>
+    <button class="primary" type="submit">SUBMIT WITHDRAWAL</button>
+   </form>
   </div>
 
-  <div id="withdrawFormScreen" style="display:none">
-    <button class="mini-btn" id="backToMethods" type="button" style="width:100%;padding:13px;margin:5px 0 15px">
-      ← Back to wallets
-    </button>
-
-    <div class="ref-card" id="selectedMethodCard"></div>
-
-    <form id="withdrawForm">
-      <label id="destinationLabel">Mobile number or wallet address</label>
-      <input class="field" id="address" minlength="5" maxlength="180" placeholder="Enter destination" required>
-
-      <label id="amountLabel">Amount (CNV)</label>
-      <input class="field" id="amount" type="number" min="1" step="1" placeholder="Minimum withdrawal" required>
-
-      <div class="rule-note" id="withdrawFeeInfo"></div>
-      <button class="primary" id="submitWithdraw" type="submit">SUBMIT WITHDRAWAL REQUEST</button>
-    </form>
-  </div>
-
-  <div class="section-head"><h2 id="withdrawHistoryTitle">Withdrawal History</h2></div>
+  <div class="section-title"><h2>Withdrawal History</h2></div>
   <div id="withdrawHistory"></div>
-</section>
-
-<p class="footer-note" id="footerNote">CoinNova • Secure rewards experience</p>
+ </section>
 </main>
 
 <nav class="nav">
-  <button class="active" data-tab="home"><span>⌂</span><span id="navHome">Home</span></button>
-  <button data-tab="tasks"><span>◎</span><span id="navTasks">Tasks</span></button>
-  <button data-tab="spin"><span>✦</span><span id="navSpin">Spin</span></button>
-  <button data-tab="friends"><span>♧</span><span id="navFriends">Friends</span></button>
-  <button data-tab="wallet"><span>◈</span><span id="navWallet">Wallet</span></button>
+ <button data-page="home" class="active"><span>⌂</span>Home</button>
+ <button data-page="tasks"><span>◎</span>Tasks</button>
+ <button data-page="spin"><span>✦</span>Spin</button>
+ <button data-page="friends"><span>♧</span>Friends</button>
+ <button data-page="wallet"><span>◇</span>Wallet</button>
 </nav>
 
-<div class="modal-bg" id="modalBg">
-  <div class="modal">
-    <button class="close" id="closeModal">✕</button>
-    <h3 id="modalTitle">Notice</h3>
-    <div id="modalBody"></div>
-  </div>
+<div id="modalBg" class="modal-bg">
+ <div class="modal">
+  <button id="closeModal" class="modal-close">✕</button>
+  <h3 id="modalTitle">Notice</h3>
+  <div id="modalBody"></div>
+ </div>
 </div>
 
 <script>
 "use strict";
 
+const $ = id => document.getElementById(id);
 const tg = window.Telegram?.WebApp;
-tg?.ready();
-tg?.expand();
+if (tg) {
+ try { tg.ready(); tg.expand(); tg.setHeaderColor("#080b15"); tg.setBackgroundColor("#080b15"); } catch {}
+}
 
 let state = {
-  user:null,
-  settings:null,
-  tasks:[],
-  referrals:0,
-  withdrawals:[],
-  referralUrl:"",
-  busy:false,
-  commissionLevels:[],
-  commissionToday:0,
-  spinHistory:[],
-  selectedCategory:null,
-  selectedMethod:null
+ user:null,
+ settings:{},
+ tasks:[],
+ withdrawals:[],
+ spinHistory:[],
+ commissionLevels:[],
+ commissionToday:0,
+ referrals:0,
+ referralUrl:"",
+ busy:false
 };
 
-const $ = id => document.getElementById(id);
+let selectedCategory = "";
+let selectedMethod = null;
+let tapPending = 0;
+let tapTimer = null;
+let lastServerSync = 0;
 
+function fmt(n){return Number(n||0).toLocaleString("en-US")}
+function esc(s){return String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
+function safeUrl(s){try{const u=new URL(s);return ["https:","http:"].includes(u.protocol)?u.href:""}catch{return""}}
 function toast(message){
-  const t=$("toast");
-  t.textContent=message;
-  t.classList.add("show");
-  clearTimeout(toast.timer);
-  toast.timer=setTimeout(()=>t.classList.remove("show"),2800);
+ const el=$("toast");el.textContent=String(message||"");el.classList.add("show");
+ clearTimeout(el._timer);el._timer=setTimeout(()=>el.classList.remove("show"),2600);
 }
-
-async function api(url,opts={}){
-  const response=await fetch(url,{
-    credentials:"same-origin",
-    headers:{"Content-Type":"application/json",...(opts.headers||{})},
-    ...opts
-  });
-  let data={};
-  try{data=await response.json()}catch{}
-  if(!response.ok)throw new Error(data.error||`Request failed (${response.status})`);
+function api(path,options={}){
+ return fetch(path,{
+  credentials:"same-origin",
+  ...options,
+  headers:{"Content-Type":"application/json",...(options.headers||{})}
+ }).then(async r=>{
+  const data=await r.json().catch(()=>({}));
+  if(!r.ok)throw new Error(data.error||`Request failed (${r.status})`);
   return data;
+ });
 }
-
-function esc(value){
-  return String(value??"").replace(/[&<>"']/g,char=>({
-    "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
-  }[char]));
+function showLoading(done=true){
+ if(done)$("loadingScreen").classList.add("done");
+ else $("loadingScreen").classList.remove("done");
 }
-
-function fmt(value){
-  return Number(value||0).toLocaleString("en-US");
+function setImageOrText(container,url,fallback){
+ const clean=safeUrl(url);
+ if(clean){
+  container.innerHTML=`<img src="${esc(clean)}" alt="" onerror="this.remove();this.parentElement.textContent='${esc(fallback)}'">`;
+ }else container.textContent=fallback;
 }
+function applyBranding(settings){
+ const s=settings||{};
+ document.title=(s.appName||"CoinNova")+" • Mining";
+ $("appName").textContent=s.appName||"CoinNova";
+ $("tagline").textContent=s.tagline||"TAP • MINE • EARN";
+ $("loadingTitle").textContent=s.loadingTitle||s.appName||"COINNOVA";
+ setImageOrText($("brandIcon"),s.appLogo,"C");
+ setImageOrText($("loadingArt"),s.loadingImage||s.appLogo,"C");
+ if(s.appLogo){
+  const icon=new Image();icon.src=safeUrl(s.appLogo);
+  icon.onload=()=>{const link=document.querySelector('link[rel="icon"]')||document.createElement("link");link.rel="icon";link.href=icon.src;document.head.appendChild(link)};
+ }
+}
+function showPage(name){
+ document.querySelectorAll(".page").forEach(p=>p.classList.toggle("active",p.id===name));
+ document.querySelectorAll(".nav button").forEach(b=>b.classList.toggle("active",b.dataset.page===name));
+ window.scrollTo({top:0,behavior:"smooth"});
+}
+document.querySelectorAll(".nav button").forEach(b=>b.addEventListener("click",()=>showPage(b.dataset.page)));
 
-function showTab(name){
-  document.querySelectorAll(".section").forEach(section=>{
-    section.classList.toggle("active",section.id===name);
+function playTone(kind="tap"){
+ if(state.settings?.sound===false)return;
+ try{
+  const AudioCtx=window.AudioContext||window.webkitAudioContext;
+  if(!AudioCtx)return;
+  const ctx=new AudioCtx();
+  const notes=kind==="spin"?[440,660,880]:kind==="win"?[660,880,1100]:[650];
+  notes.forEach((hz,i)=>{
+   const osc=ctx.createOscillator(),gain=ctx.createGain();
+   const start=ctx.currentTime+i*.09;
+   osc.type=kind==="tap"?"sine":"triangle";osc.frequency.value=hz;
+   gain.gain.setValueAtTime(.0001,start);
+   gain.gain.exponentialRampToValueAtTime(.04,start+.02);
+   gain.gain.exponentialRampToValueAtTime(.0001,start+.13);
+   osc.connect(gain);gain.connect(ctx.destination);osc.start(start);osc.stop(start+.14);
   });
-  document.querySelectorAll(".nav button").forEach(button=>{
-    button.classList.toggle("active",button.dataset.tab===name);
-  });
-  window.scrollTo({top:0,behavior:"smooth"});
+  setTimeout(()=>ctx.close(),600);
+ }catch{}
+}
+function animationClass(animation){
+ const map={pulse:"anim-pulse",bounce:"anim-bounce",glow:"anim-glow",shake:"anim-shake"};
+ return map[animation]||"";
+}
+function logoMarkup(url,name,color="#45e8ff"){
+ const clean=safeUrl(url);
+ const first=esc((name||"C").slice(0,1).toUpperCase());
+ if(clean)return `<div class="logo" style="color:${esc(color)}"><img src="${esc(clean)}" alt="" onerror="this.remove();this.parentElement.innerHTML='<span class=\\'fallback\\'>${first}</span>'"></div>`;
+ return `<div class="logo"><span class="fallback" style="color:${esc(color)}">${first}</span></div>`;
 }
 
-document.querySelectorAll("[data-tab]").forEach(button=>{
-  button.addEventListener("click",()=>showTab(button.dataset.tab));
-});
-document.querySelectorAll("[data-go]").forEach(button=>{
-  button.addEventListener("click",()=>showTab(button.dataset.go));
-});
-
-function setText(id,value){
-  const element=$(id);
-  if(element && value!==undefined && value!==null)element.textContent=String(value);
-}
-
-function applyLoadingSettings(settings){
-  const loading=$("loadingScreen");
-  const image=settings.loadingBackgroundUrl||settings.loadingImageUrl||"";
-
-  if(image){
-    loading.style.backgroundImage=`url("${String(image).replace(/["\\]/g,"")}")`;
-    loading.classList.add("has-background");
-  }else{
-    loading.style.backgroundImage="";
-    loading.classList.remove("has-background");
-  }
-
-  setText("loadingTitle",settings.loadingTitle||settings.appName||"COINNOVA");
-  setText("loadingSub",settings.loadingMessage||"VERIFYING TELEGRAM ACCOUNT");
-  setText("loadingLogo",settings.logoText||"C");
-  setText("brandLogo",settings.logoText||"C");
-  setText("coinLetter",settings.logoText||"C");
-}
-
-function applyTextSettings(settings){
-  const map={
-    tagline:"tagline",
-    balanceLabel:"balanceLabel",
-    tapsLabel:"tapsLabel",
-    referralsLabel:"referralsLabel",
-    tapRateLabel:"tapRateLabel",
-    tapHint:"tapHint",
-    homeNotice:"homeNotice",
-    tasksTitle:"tasksTitle",
-    tasksSubtitle:"tasksSubtitle",
-    spinTitle:"spinTitle",
-    spinSubtitle:"spinSubtitle",
-    dailyTitle:"dailyTitle",
-    dailySubtitle:"dailySubtitle",
-    dailyName:"dailyName",
-    dailyDescription:"dailyDescription",
-    recentSpinsTitle:"recentSpinsTitle",
-    commissionTitle:"commissionTitle",
-    commissionTodayLabel:"commissionTodayLabel",
-    commissionDescription:"commissionDescription",
-    teamPerformanceTitle:"teamPerformanceTitle",
-    commissionHistoryTitle:"commissionHistoryTitle",
-    commissionRule:"commissionRule",
-    friendsTitle:"friendsTitle",
-    friendsSubtitle:"friendsSubtitle",
-    referralRewardTitle:"referralRewardTitle",
-    refRule:"refRule",
-    refLinkLabel:"refLinkLabel",
-    refInfo:"refInfo",
-    withdrawTitle:"withdrawTitle",
-    withdrawSubtitle:"withdrawSubtitle",
-    withdrawNotice:"withdrawNotice",
-    categoryHeading:"categoryHeading",
-    methodHeading:"methodHeading",
-    destinationLabel:"destinationLabel",
-    amountLabel:"amountLabel",
-    withdrawHistoryTitle:"withdrawHistoryTitle",
-    footerNote:"footerNote",
-    navHome:"navHome",
-    navTasks:"navTasks",
-    navSpin:"navSpin",
-    navFriends:"navFriends",
-    navWallet:"navWallet",
-    quickTasks:"quickTasks",
-    quickSpin:"quickSpin",
-    quickFriends:"quickFriends"
-  };
-
-  Object.entries(map).forEach(([settingKey,elementId])=>{
-    if(typeof settings[settingKey]==="string")setText(elementId,settings[settingKey]);
-  });
-
-  if(settings.withdrawButtonText)setText("submitWithdraw",settings.withdrawButtonText);
-  if(settings.dailyButtonText)setText("dailyBtn",settings.dailyButtonText);
-  if(settings.copyReferralText)setText("copyRef",settings.copyReferralText);
-  if(settings.commissionButtonText)setText("openCommission",settings.commissionButtonText);
-}
-
-function applySettings(settings){
-  if(!settings)return;
-
-  setText("appName",(settings.appName||"CoinNova").toUpperCase());
-  applyLoadingSettings(settings);
-  applyTextSettings(settings);
-
-  if(settings.backgroundColor)document.documentElement.style.setProperty("--bg",settings.backgroundColor);
-  if(settings.panelColor)document.documentElement.style.setProperty("--panel",settings.panelColor);
-  if(settings.goldColor)document.documentElement.style.setProperty("--gold",settings.goldColor);
-  if(settings.textColor)document.documentElement.style.setProperty("--text",settings.textColor);
-
-  if(settings.logoUrl){
-    $("brandLogo").innerHTML=`<img src="${esc(settings.logoUrl)}" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:inherit">`;
-    $("loadingLogo").innerHTML=`<img src="${esc(settings.logoUrl)}" alt="" style="width:100%;height:100%;object-fit:cover;border-radius:inherit">`;
-  }
-}
-
-function renderProfile(user){
-  $("profileName").textContent=user.name||"Telegram User";
-  const avatar=$("profilePhoto");
-  const fallback=$("profileFallback");
-
-  if(user.photoUrl){
-    avatar.src=user.photoUrl;
-    avatar.style.display="block";
-    fallback.style.display="none";
-    avatar.onerror=()=>{
-      avatar.style.display="none";
-      fallback.style.display="grid";
-    };
-  }else{
-    avatar.style.display="none";
-    fallback.style.display="grid";
-    fallback.textContent=(user.name||"?").trim().charAt(0).toUpperCase()||"?";
-  }
-}
-
-function renderCommission(){
-  const levels=Array.isArray(state.commissionLevels)?state.commissionLevels:[];
-  $("commissionTotal").textContent=fmt(state.commissionToday||0);
-
-  $("commissionLevels").innerHTML=levels.map(level=>`
-    <div class="level-row">
-      <div class="level-badge">L${Number(level.level)||0}</div>
-      <div>
-        <b>Level ${Number(level.level)||0}</b>
-        <small>${fmt(level.members)} team members · ${fmt(level.todayCoins)} CNV team earnings today</small>
-      </div>
-      <div style="text-align:right">
-        <strong class="level-rate">${Number((state.settings.commissionRates||[])[Number(level.level)-1]||0)}%</strong>
-        <small>+${fmt(level.commissionToday)} CNV today</small>
-      </div>
-    </div>
-  `).join("")||'<div class="empty">No team commission data yet.</div>';
-}
-
-function renderTasks(){
-  const tasks=Array.isArray(state.tasks)?state.tasks:[];
-  $("taskList").innerHTML=tasks.map(task=>`
-    <div class="task">
-      <div class="logo">${logoFor(task.platform)}</div>
-      <div class="task-info">
-        <b>${esc(task.title)}</b>
-        <small>${esc(task.platform)} · <span class="reward">+${fmt(task.reward)} CNV</span></small>
-      </div>
-      <button class="mini-btn ${task.claimed?"":"gold"}" ${task.claimed?"disabled":""} data-task="${Number(task.id)}">
-        ${task.claimed?"CLAIMED":"OPEN"}
-      </button>
-    </div>
-  `).join("")||'<div class="empty">No tasks available right now.</div>';
-
-  $("taskList").querySelectorAll("[data-task]").forEach(button=>{
-    button.addEventListener("click",()=>openTask(Number(button.dataset.task)));
-  });
-}
-
-function logoFor(platform){
-  const icons={
-    Telegram:"✈",YouTube:"▶",TikTok:"♪",Facebook:"f",Instagram:"◎",X:"𝕏"
-  };
-  return `<span style="font-size:24px;font-weight:900;color:var(--cyan)">${icons[platform]||"✦"}</span>`;
-}
-
-function methodType(method){
-  return method.type==="crypto"?"crypto":"mobile";
-}
-
-function getPaymentMethods(){
-  return (state.settings?.paymentMethods||[]).filter(method=>method.enabled);
-}
-
-function getMobileMethods(){
-  return getPaymentMethods().filter(method=>methodType(method)==="mobile");
-}
-
-function getCryptoMethods(){
-  return getPaymentMethods().filter(method=>methodType(method)==="crypto");
-}
-
-function renderWithdrawalCategories(){
-  const mobile=getMobileMethods();
-  const crypto=getCryptoMethods();
-
-  const categories=[];
-  if(mobile.length){
-    categories.push({
-      id:"mobile",
-      name:state.settings?.walletCategoryName||"E-Wallet",
-      logo:state.settings?.walletCategoryLogo||"",
-      description:"Mobile money",
-      count:mobile.length
-    });
-  }
-
-  if(crypto.length){
-    categories.push({
-      id:"crypto",
-      name:state.settings?.networkCategoryName||"Binance",
-      logo:state.settings?.networkCategoryLogo||"",
-      description:"Crypto wallet",
-      count:crypto.length
-    });
-  }
-
-  $("categoryList").innerHTML=categories.map(category=>`
-    <button type="button" class="wallet-option" data-category="${category.id}" style="width:100%;text-align:left;color:var(--text)">
-      <div class="logo">
-        ${category.logo?`<img src="${esc(category.logo)}" alt="" onerror="this.style.display='none'">`:`<span style="font-size:23px">${category.id==="crypto"?"◈":"৳"}</span>`}
-      </div>
-      <div class="wallet-info">
-        <b>${esc(category.name)}</b>
-        <small>${esc(category.description)} · ${category.count} available</small>
-      </div>
-      <span class="reward">›</span>
-    </button>
-  `).join("")||'<div class="empty">No withdrawal methods are enabled.</div>';
-
-  $("categoryList").querySelectorAll("[data-category]").forEach(button=>{
-    button.addEventListener("click",()=>{
-      state.selectedCategory=button.dataset.category;
-      showMethodScreen();
-    });
-  });
-}
-
-function showMethodScreen(){
-  const category=state.selectedCategory;
-  const methods=category==="crypto"?getCryptoMethods():getMobileMethods();
-  const heading=category==="crypto"
-    ?(state.settings?.networkSelectionTitle||"Select Network")
-    :(state.settings?.walletSelectionTitle||"Select E-Wallet");
-
-  setText("methodHeading",heading);
-  setText("methodCount",`${methods.length} available`);
-  $("withdrawCategoryScreen").style.display="none";
-  $("withdrawMethodScreen").style.display="block";
-  $("withdrawFormScreen").style.display="none";
-
-  $("methodList").innerHTML=methods.map(method=>`
-    <button type="button" class="wallet-option" data-method="${esc(method.id)}" style="width:100%;text-align:left;color:var(--text)">
-      <div class="logo">
-        ${method.logo?`<img src="${esc(method.logo)}" alt="" onerror="this.style.display='none'">`:`<b>${esc((method.name||"W").slice(0,1))}</b>`}
-      </div>
-      <div class="wallet-info">
-        <b>${esc(method.name)}</b>
-        <small>${category==="crypto"?"Crypto network / wallet":"Mobile money"}</small>
-      </div>
-      <span class="reward">›</span>
-    </button>
-  `).join("")||'<div class="empty">No wallets available in this category.</div>';
-
-  $("methodList").querySelectorAll("[data-method]").forEach(button=>{
-    button.addEventListener("click",()=>{
-      const selected=methods.find(method=>method.id===button.dataset.method);
-      if(selected){
-        state.selectedMethod=selected;
-        showWithdrawForm();
-      }
-    });
-  });
-}
-
-function showWithdrawForm(){
-  const method=state.selectedMethod;
-  if(!method)return;
-
-  $("withdrawCategoryScreen").style.display="none";
-  $("withdrawMethodScreen").style.display="none";
-  $("withdrawFormScreen").style.display="block";
-
-  $("selectedMethodCard").innerHTML=`
-    <div class="logo">
-      ${method.logo?`<img src="${esc(method.logo)}" alt="" onerror="this.style.display='none'">`:`<b>${esc(method.name.slice(0,1))}</b>`}
-    </div>
-    <div class="task-info">
-      <b>${esc(method.name)}</b>
-      <small>${method.type==="crypto"?"Crypto wallet / network":"Mobile money"}</small>
-    </div>
-  `;
-
-  const fee=Number(method.fee||0);
-  const minimum=Number(method.minimum||state.settings.minWithdraw||1);
-  $("amount").min=minimum;
-  $("amount").placeholder=`Minimum ${fmt(minimum)} CNV`;
-
-  const feeText=fee>0?`Withdrawal fee: ${fee}%`:"Withdrawal fee: Free";
-  $("withdrawFeeInfo").textContent=`${feeText} · Minimum withdrawal: ${fmt(minimum)} CNV`;
-}
-
-$("backToCategories").addEventListener("click",()=>{
-  $("withdrawCategoryScreen").style.display="block";
-  $("withdrawMethodScreen").style.display="none";
-  $("withdrawFormScreen").style.display="none";
-  state.selectedCategory=null;
-  state.selectedMethod=null;
-});
-
-$("backToMethods").addEventListener("click",showMethodScreen);
-
-function renderWithdrawals(){
-  const methods=getPaymentMethods();
-  renderWithdrawalCategories();
-
-  $("withdrawHistory").innerHTML=(state.withdrawals||[]).map(withdrawal=>`
-    <div class="history">
-      <div class="task-info">
-        <b>#${withdrawal.id} · ${esc(withdrawal.method)}</b>
-        <small>${new Date(withdrawal.createdAt).toLocaleString()} · ${esc(withdrawal.address)}</small>
-      </div>
-      <span class="reward">
-        ${fmt(withdrawal.amount)} CNV<br>
-        <small>${esc(withdrawal.status)}</small>
-      </span>
-    </div>
-  `).join("")||'<div class="empty">No withdrawal requests yet.</div>';
+function renderCustomButtons(){
+ const buttons=(state.settings.buttons||[]).filter(b=>b.enabled);
+ $("customButtons").innerHTML=buttons.length
+ ? `<div class="section-title"><h2>Quick Links</h2><span class="muted">Explore</span></div>`+
+ buttons.map(b=>{
+  const url=safeUrl(b.url);
+  return `<a class="custom-button ${animationClass(b.animation)}" href="${url||"#"}" ${url?'target="_blank" rel="noopener noreferrer"':""} style="border-color:${esc(b.color||"#283651")};color:${esc(b.color||"#f5f7ff")}" data-custom="${esc(b.id)}">
+  ${logoMarkup(b.logo,b.name,b.color)}
+  <div class="row-info"><b>${esc(b.name)}</b><small>${url?"Open link":"No link configured"}</small></div><span>↗</span></a>`;
+ }).join("")
+ : "";
 }
 
 function render(){
-  if(!state.user||!state.settings)return;
+ if(!state.user)return;
+ const u=state.user,s=state.settings||{};
+ applyBranding(s);
+ $("balance").textContent=fmt(u.balance);
+ $("totalTaps").textContent=fmt(u.totalTaps);
+ $("refCount").textContent=fmt(state.referrals||0);
+ $("tapRate").textContent="+"+fmt(s.tapReward||1);
+ $("profileName").textContent=u.name||"Miner";
+ $("userPill").textContent="Verified";
+ $("profileFallback").textContent=(u.name||"C").slice(0,1).toUpperCase();
 
-  const user=state.user;
-  const settings=state.settings;
+ if(u.photoUrl&&safeUrl(u.photoUrl)){
+  $("profilePhoto").src=safeUrl(u.photoUrl);
+  $("profilePhoto").classList.remove("hidden");
+  $("profileFallback").classList.add("hidden");
+  $("profilePhoto").onerror=()=>{$("profilePhoto").classList.add("hidden");$("profileFallback").classList.remove("hidden")};
+ }else{
+  $("profilePhoto").classList.add("hidden");
+  $("profileFallback").classList.remove("hidden");
+ }
+ $("energy").textContent=fmt(u.energy);
+ $("maxEnergy").textContent=fmt(s.maxEnergy||1000);
+ $("energyBar").style.width=Math.max(0,Math.min(100,(u.energy/(s.maxEnergy||1000))*100))+"%";
+ $("dailyAmount").textContent="+"+fmt(s.dailyBonus||0);
+ $("refBonus").textContent=fmt(s.referralBonus||0);
+ $("refRule").textContent=`Your friend qualifies after completing 10 taps. Withdrawals require ${s.referralRequired||0} qualified referral(s).`;
+ $("refLink").value=state.referralUrl||"Open this app from your Telegram bot to get a referral link.";
 
-  applySettings(settings);
-  renderProfile(user);
+ $("spinAvailable").textContent=fmt(u.spinsAvailable||0);
+ $("spinBtn").disabled=!s.spinEnabled||Number(u.spinsAvailable||0)<1;
+ $("spinRules").textContent=`Every ${s.referralsPerSpin||1} qualified referral(s) gives 1 spin. Possible rewards: ${(s.spinRewards||[]).join(", ")} CNV.`;
+ $("spinBtn").style.opacity=$("spinBtn").disabled?".5":"1";
 
-  $("balance").textContent=fmt(user.balance);
-  $("totalTaps").textContent=fmt(user.totalTaps);
-  $("energy").textContent=fmt(user.energy);
-  $("maxEnergy").textContent=fmt(settings.maxEnergy);
-  $("energyBar").style.width=Math.max(0,Math.min(100,user.energy/Math.max(1,settings.maxEnergy)*100))+"%";
-  $("tapRate").textContent="+"+fmt(settings.tapReward);
-  $("refCount").textContent=fmt(state.referrals);
+ $("taskList").innerHTML=(state.tasks||[]).map(t=>`
+  <div class="card row">
+   ${logoMarkup("",t.platform)}
+   <div class="row-info"><b>${esc(t.title)}</b><small>${esc(t.platform)} · <span class="reward">+${fmt(t.reward)} CNV</span></small></div>
+   <button class="btn ${t.claimed?"":"gold"}" data-task="${Number(t.id)}" ${t.claimed?"disabled":""}>${t.claimed?"CLAIMED":"OPEN"}</button>
+  </div>`).join("")||'<div class="empty">No tasks available right now.</div>';
 
-  $("dailyAmount").textContent="+"+fmt(settings.dailyBonus);
-  $("refBonus").textContent="+"+fmt(settings.referralBonus);
-  $("refLink").value=state.referralUrl||"Open this Mini App through your Telegram bot to get your invite link.";
+ $("spinHistory").innerHTML=(state.spinHistory||[]).map(x=>`
+  <div class="history"><div class="history-info"><b>✦ Spin reward</b><small>${new Date(x.createdAt).toLocaleString()}</small></div><strong class="reward">+${fmt(x.reward)} CNV</strong></div>
+ `).join("")||'<div class="empty">No spin history yet. Invite friends to earn spins.</div>';
 
-  $("spinAvailable").textContent=fmt(user.spinsAvailable);
-  $("spinReferralRule").textContent=`${settings.referralsPerSpin||1} referral${Number(settings.referralsPerSpin||1)===1?"":"s"}`;
-  $("spinBtn").disabled=!settings.spinEnabled||Number(user.spinsAvailable||0)<1;
-  $("spinBtn").style.opacity=$("spinBtn").disabled?".5":"1";
+ $("commissionTotal").textContent=fmt(state.commissionToday||0);
+ $("commissionLevels").innerHTML=(state.commissionLevels||[]).map(l=>`
+  <div class="level-row"><div class="level-badge">L${l.level}</div><div class="level-info"><b>Level ${l.level}</b><small>${fmt(l.members)} team members · ${fmt(l.todayCoins)} CNV team earnings today</small></div><div style="text-align:right"><b class="reward">${Number((s.commissionRates||[])[l.level-1]||0)}%</b><small class="muted" style="display:block">+${fmt(l.commissionToday)} today</small></div></div>
+ `).join("")||'<div class="empty">Team data will appear here.</div>';
 
-  $("spinRules").textContent=
-    `Every ${settings.referralsPerSpin||1} qualified referral(s) gives 1 spin. `+
-    `Qualified referrals must complete at least 10 taps. `+
-    `Possible rewards: ${(settings.spinRewards||[]).join(", ")} CNV.`;
+ $("teamSummary").innerHTML=(state.commissionLevels||[]).map(l=>`
+  <div class="history"><div class="history-info"><b>Level ${l.level}</b><small>${fmt(l.members)} members · ${fmt(l.todayMembers)} joined today</small></div><strong class="reward">${fmt(l.commissionToday)} CNV</strong></div>
+ `).join("");
 
-  $("spinHistory").innerHTML=(state.spinHistory||[]).map(item=>`
-    <div class="history">
-      <div class="task-info">
-        <b>🎡 Spin reward</b>
-        <small>${new Date(item.createdAt).toLocaleString()}</small>
-      </div>
-      <strong class="reward">+${fmt(item.reward)} CNV</strong>
-    </div>
-  `).join("")||'<div class="empty">No spins yet. Invite friends to earn your first spin.</div>';
+ $("commissionHistory").innerHTML=(state.commissionHistory||[]).map(h=>`
+  <div class="history"><div class="history-info"><b>Level ${h.level} commission</b><small>${esc(h.day)} · ${h.rate}% of ${fmt(h.baseAmount)} CNV</small></div><strong class="reward">+${fmt(h.amount)} CNV</strong></div>
+ `).join("")||'<div class="empty">Commission history will appear after payout.</div>';
 
-  renderCommission();
-  renderTasks();
-  renderWithdrawals();
+ renderWalletHistory();
+ renderCustomButtons();
+ updateFeePreview();
+ $("taskList").querySelectorAll("[data-task]").forEach(btn=>btn.onclick=()=>openTask(Number(btn.dataset.task)));
 }
 
 async function refresh(){
-  const data=await api("/api/me");
-  state={...state,...data};
-
-  try{
-    const commissions=await api("/api/commissions");
-    state.commissionLevels=commissions.levels||[];
-    state.commissionToday=commissions.total||0;
-
-    $("commissionHistory").innerHTML=(commissions.history||[]).map(item=>`
-      <div class="history">
-        <div class="task-info">
-          <b>Level ${item.level} commission</b>
-          <small>${esc(item.day)} · ${item.rate}% of ${fmt(item.baseAmount)} CNV</small>
-        </div>
-        <strong class="reward">+${fmt(item.amount)} CNV</strong>
-      </div>
-    `).join("")||'<div class="empty">No commission payouts yet.</div>';
-  }catch(error){
-    console.warn("Commission data unavailable:",error.message);
-  }
-
-  render();
+ const d=await api("/api/me");
+ state={...state,...d};
+ try{
+  const c=await api("/api/commission");
+  state.commissionLevels=c.levels||state.commissionLevels;
+  state.commissionToday=c.today||0;
+  state.commissionHistory=c.history||[];
+ }catch{}
+ try{
+  const r=await api("/api/referrals");
+  state.referrals=r.referrals??state.referrals;
+  state.referralUrl=r.referralUrl||state.referralUrl;
+  state.commissionLevels=r.commissionLevels||state.commissionLevels;
+ }catch{}
+ render();
 }
 
 async function openTask(id){
-  const task=state.tasks.find(item=>Number(item.id)===Number(id));
-  if(!task)return;
-
-  if(task.url)window.open(task.url,"_blank","noopener");
-
-  if(!confirm("After visiting the task, claim the reward? This starter version does not automatically verify social follows or subscriptions."))return;
-
-  try{
-    const data=await api(`/api/tasks/${id}/claim`,{
-      method:"POST",
-      body:"{}"
-    });
-    state.user=data.user;
-    await refresh();
-    toast(`+${fmt(data.reward)} CNV added`);
-  }catch(error){
-    toast(error.message);
-  }
+ const task=state.tasks.find(t=>Number(t.id)===id);
+ if(!task)return;
+ if(safeUrl(task.url))window.open(task.url,"_blank","noopener,noreferrer");
+ if(!confirm("After visiting the task, claim the reward? This starter version does not automatically verify social follows."))return;
+ try{
+  const d=await api(`/api/tasks/${id}/claim`,{method:"POST",body:"{}"});
+  state.user=d.user;await refresh();toast(`+${fmt(d.reward)} CNV added`);
+ }catch(e){toast(e.message)}
 }
 
-function playTone(kind="tap"){
-  if(!state.settings?.sound)return;
-
-  try{
-    const AudioContextClass=window.AudioContext||window.webkitAudioContext;
-    if(!AudioContextClass)return;
-
-    const context=new AudioContextClass();
-    const notes=kind==="spin"?[440,660,880]:kind==="win"?[660,880,1100]:[650];
-
-    notes.forEach((frequency,index)=>{
-      const oscillator=context.createOscillator();
-      const gain=context.createGain();
-
-      oscillator.type=kind==="tap"?"sine":"triangle";
-      oscillator.frequency.value=frequency;
-
-      const start=context.currentTime+index*.09;
-      gain.gain.setValueAtTime(.0001,start);
-      gain.gain.exponentialRampToValueAtTime(.045,start+.02);
-      gain.gain.exponentialRampToValueAtTime(.0001,start+.13);
-
-      oscillator.connect(gain);
-      gain.connect(context.destination);
-      oscillator.start(start);
-      oscillator.stop(start+.14);
-    });
-
-    setTimeout(()=>context.close(),600);
-  }catch(error){
-    console.warn("Audio unavailable",error);
-  }
-}
-
-let tapPending=0;
-let tapTimer=null;
-
-$("coin").addEventListener("pointerdown",event=>{
-  event.preventDefault();
-
-  if(state.busy||!state.user||!state.settings)return;
-  if(Number(state.user.energy)<=0){
-    toast("Not enough energy. Please wait for energy to recharge.");
-    return;
-  }
-
-  const rect=$("coinStage").getBoundingClientRect();
-  const float=document.createElement("span");
-
-  float.className="float-text";
-  float.textContent="+"+fmt(state.settings.tapReward);
-  float.style.left=(event.clientX-rect.left-15)+"px";
-  float.style.top=(event.clientY-rect.top-15)+"px";
-
-  $("coinStage").appendChild(float);
-  setTimeout(()=>float.remove(),800);
-
-  playTone("tap");
-
-  $("coin").classList.remove("tap-pop");
-  void $("coin").offsetWidth;
-  $("coin").classList.add("tap-pop");
-
-  tapPending++;
-  state.user.energy=Math.max(0,state.user.energy-1);
-  state.user.balance+=Number(state.settings.tapReward||0);
-  state.user.totalTaps++;
-  render();
-
-  if(tapPending>=10){
-    sendTaps();
-  }else{
-    clearTimeout(tapTimer);
-    tapTimer=setTimeout(sendTaps,220);
-  }
+$("coin").addEventListener("pointerdown",e=>{
+ e.preventDefault();
+ if(state.busy||!state.user||state.user.energy<1)return;
+ const rect=$("coinStage").getBoundingClientRect();
+ const f=document.createElement("span");
+ f.className="float-text";f.textContent="+"+(state.settings.tapReward||1);
+ f.style.left=(e.clientX-rect.left-10)+"px";
+ f.style.top=(e.clientY-rect.top-10)+"px";
+ $("coinStage").appendChild(f);setTimeout(()=>f.remove(),850);
+ playTone("tap");
+ $("coin").style.transform="scale(.92)";
+ setTimeout(()=>$("coin").style.transform="",100);
+ tapPending++;
+ state.user.energy=Math.max(0,state.user.energy-1);
+ state.user.balance+=Number(state.settings.tapReward||1);
+ state.user.totalTaps=(state.user.totalTaps||0)+1;
+ render();
+ if(tapPending>=10)sendTaps();
+ else{clearTimeout(tapTimer);tapTimer=setTimeout(sendTaps,220)}
 });
 
 async function sendTaps(){
-  if(!tapPending)return;
-
-  const count=Math.min(20,tapPending);
-  tapPending-=count;
-
-  try{
-    const data=await api("/api/tap",{
-      method:"POST",
-      body:JSON.stringify({count})
-    });
-    state.user=data.user;
-    render();
-  }catch(error){
-    toast(error.message);
-    await refresh().catch(()=>{});
-  }
-
-  if(tapPending)sendTaps();
+ if(!tapPending)return;
+ const count=Math.min(20,tapPending);tapPending-=count;
+ try{
+  const d=await api("/api/tap",{method:"POST",body:JSON.stringify({count})});
+  state.user=d.user;lastServerSync=Date.now();render();
+ }catch(e){toast(e.message);await refresh().catch(()=>{})}
+ if(tapPending)sendTaps();
 }
 
-$("spinBtn").addEventListener("click",async()=>{
-  if($("spinBtn").disabled)return;
+$("spinBtn").onclick=async()=>{
+ if($("spinBtn").disabled)return;
+ playTone("spin");
+ const wheel=$("spinWheel");
+ wheel.style.transform=`rotate(${1800+Math.floor(Math.random()*720)}deg)`;
+ $("spinBtn").disabled=true;
+ try{
+  const d=await api("/api/spin",{method:"POST",body:"{}"});
+  setTimeout(async()=>{
+   playTone("win");state.user=d.user;await refresh();toast(`You won ${fmt(d.reward)} CNV!`);
+  },4200);
+ }catch(e){wheel.style.transform="";toast(e.message);await refresh().catch(()=>{})}
+ setTimeout(()=>{if(state.user)$("spinBtn").disabled=!state.settings.spinEnabled||Number(state.user.spinsAvailable||0)<1},4400);
+};
 
-  playTone("spin");
+$("dailyBtn").onclick=async()=>{
+ try{
+  const d=await api("/api/bonus/daily",{method:"POST",body:"{}"});
+  state.user=d.user;await refresh();playTone("win");toast(`Daily bonus +${fmt(d.reward)} CNV`);
+ }catch(e){toast(e.message)}
+};
 
-  const wheel=$("spinWheel");
-  wheel.classList.remove("spin-win");
-  wheel.style.transform=`rotate(${1800+Math.floor(Math.random()*720)}deg)`;
-  $("spinBtn").disabled=true;
+$("copyRef").onclick=async()=>{
+ if(!state.referralUrl)return toast("Open this app through your Telegram bot to generate a referral link.");
+ try{await navigator.clipboard.writeText(state.referralUrl);toast("Invite link copied")}
+ catch{$("refLink").select();document.execCommand("copy");toast("Invite link copied")}
+};
+$("openCommission").onclick=async()=>{await refresh().catch(()=>{});showPage("commission")};
 
-  try{
-    const data=await api("/api/spin",{
-      method:"POST",
-      body:"{}"
-    });
+// ======================================================
+// SEPARATE WITHDRAWAL CATEGORIES AND PAGES
+// ======================================================
 
-    setTimeout(async()=>{
-      playTone("win");
-      wheel.classList.add("spin-win");
-      state.user=data.user;
-      await refresh();
-      toast(`🎉 You won ${fmt(data.reward)} CNV!`);
-    },4300);
-  }catch(error){
-    wheel.style.transform="rotate(0deg)";
-    toast(error.message);
-    await refresh().catch(()=>{});
-  }finally{
-    setTimeout(()=>{
-      if(state.user&&state.settings){
-        $("spinBtn").disabled=!state.settings.spinEnabled||Number(state.user.spinsAvailable||0)<1;
-      }
-    },4400);
-  }
-});
+function openWalletCategory(category){
+ selectedCategory=category;selectedMethod=null;
+ $("walletCategories").classList.add("hidden");
+ $("walletFormPage").classList.add("hidden");
+ $("walletMethodPage").classList.remove("hidden");
+ $("walletMethodTitle").textContent=category==="ewallet"?"E-Wallet":"Select Network";
+ $("walletBackCategory").onclick=()=>{
+  $("walletMethodPage").classList.add("hidden");
+  $("walletCategories").classList.remove("hidden");
+ };
+ renderMethodCards();
+}
+function renderMethodCards(){
+ const all=(state.settings.paymentMethods||[]).filter(m=>m.enabled);
+ const list=all.filter(m=>{
+  if(selectedCategory==="ewallet")return m.category==="ewallet"||(!m.category&&m.type!=="crypto");
+  return m.category==="network"||m.category==="crypto"||m.type==="crypto";
+ });
+ $("walletMethodCount").textContent=`${list.length} available`;
+ $("methodList").innerHTML=list.map(m=>`
+  <button class="method-card ${selectedMethod?.id===m.id?"selected":""} ${animationClass(m.animation)}" data-method="${esc(m.id)}" style="border-color:${selectedMethod?.id===m.id?esc(m.color||"#ffd66b"):"var(--line)"}">
+   <span class="check">${selectedMethod?.id===m.id?"●":"○"}</span>
+   ${logoMarkup(m.logo,m.name,m.color)}
+   <b>${esc(m.name)}</b>
+   <small>${m.category==="ewallet"||(!m.category&&m.type!=="crypto")?"Mobile money":"Crypto wallet / network"}</small>
+  </button>
+ `).join("")||'<div class="empty" style="grid-column:1/-1">No methods enabled in this category. Ask the admin to add one.</div>';
+ $("methodList").querySelectorAll("[data-method]").forEach(btn=>{
+  btn.onclick=()=>{
+   selectedMethod=list.find(m=>m.id===btn.dataset.method)||null;
+   if(!selectedMethod)return;
+   openWithdrawForm();
+  };
+ });
+}
+function openWithdrawForm(){
+ $("walletMethodPage").classList.add("hidden");
+ $("walletFormPage").classList.remove("hidden");
+ $("selectedMethodTitle").textContent="Withdraw";
+ $("selectedMethodName").textContent=selectedMethod.name;
+ $("selectedMethodType").textContent=selectedCategory==="ewallet"?"E-WALLET":"NETWORK";
+ $("selectedMethodHint").textContent=selectedCategory==="ewallet"?"Mobile money destination":"Enter the exact wallet address for this network";
+ $("destinationLabel").textContent=selectedCategory==="ewallet"?"Mobile number":"Wallet address";
+ $("address").placeholder=selectedCategory==="ewallet"?"Enter mobile number":"Enter wallet address";
+ setImageOrText($("selectedMethodLogo"),selectedMethod.logo,selectedMethod.name.slice(0,1));
+ $("selectedMethodLogo").style.color=selectedMethod.color||"var(--cyan)";
+ $("amount").min=Number(state.settings.minWithdraw||1);
+ $("amount").placeholder=`Minimum ${fmt(state.settings.minWithdraw||1)} CNV`;
+ $("walletBackMethods").onclick=()=>{
+  $("walletFormPage").classList.add("hidden");
+  $("walletMethodPage").classList.remove("hidden");
+  renderMethodCards();
+ };
+ updateFeePreview();
+}
+$("walletCategories").querySelectorAll("button").forEach(btn=>btn.addEventListener("click",()=>{}));
 
-$("openCommission").addEventListener("click",async()=>{
+function updateFeePreview(){
+ const amount=Math.max(0,Math.floor(Number($("amount")?.value)||0));
+ const percent=Math.max(0,Math.min(100,Number(state.settings.withdrawalFeePercent)||0));
+ const fee=Math.min(amount,Math.floor(amount*percent/100));
+ $("feeGross").textContent=fmt(amount)+" CNV";
+ $("feePercent").textContent=String(percent);
+ $("feeAmount").textContent=fmt(fee)+" CNV";
+ $("feeNet").textContent=fmt(amount-fee)+" CNV";
+}
+$("amount").addEventListener("input",updateFeePreview);
+
+$("withdrawForm").onsubmit=async e=>{
+ e.preventDefault();
+ if(!selectedMethod)return toast("Please select a wallet or network first.");
+ const amount=Math.floor(Number($("amount").value));
+ const address=$("address").value.trim();
+ if(!address)return toast("Enter your destination details.");
+ if(amount<Number(state.settings.minWithdraw||1))return toast(`Minimum withdrawal is ${fmt(state.settings.minWithdraw)} CNV.`);
+ try{
+  const d=await api("/api/withdraw",{
+   method:"POST",
+   body:JSON.stringify({method:selectedMethod.id,address,amount})
+  });
+  $("address").value="";$("amount").value="";
   await refresh();
-  showTab("commission");
-});
+  toast(`Request submitted. Fee ${fmt(d.feeAmount)} CNV · You receive ${fmt(d.netAmount)} CNV`);
+  $("walletFormPage").classList.add("hidden");
+  $("walletMethodPage").classList.add("hidden");
+  $("walletCategories").classList.remove("hidden");
+  selectedMethod=null;
+ }catch(err){toast(err.message)}
+};
 
-$("dailyBtn").addEventListener("click",async()=>{
-  try{
-    const data=await api("/api/bonus/daily",{
-      method:"POST",
-      body:"{}"
-    });
-    state.user=data.user;
-    await refresh();
-    toast(`Daily bonus +${fmt(data.reward)} CNV`);
-  }catch(error){
-    toast(error.message);
-  }
-});
-
-$("copyRef").addEventListener("click",async()=>{
-  if(!state.referralUrl){
-    toast("Open this Mini App through your Telegram bot and set BOT_USERNAME.");
-    return;
-  }
-
-  try{
-    await navigator.clipboard.writeText(state.referralUrl);
-    toast("Invite link copied");
-  }catch{
-    $("refLink").select();
-    document.execCommand("copy");
-    toast("Invite link copied");
-  }
-});
-
-$("withdrawForm").addEventListener("submit",async event=>{
-  event.preventDefault();
-
-  if(!state.selectedMethod){
-    toast("Please select a withdrawal wallet first.");
-    return;
-  }
-
-  const amount=Number($("amount").value);
-  const address=$("address").value.trim();
-
-  if(!address||address.length<5){
-    toast("Please enter a valid wallet address or mobile number.");
-    return;
-  }
-
-  if(!Number.isSafeInteger(amount)||amount<Number($("amount").min||1)){
-    toast("Please enter a valid withdrawal amount.");
-    return;
-  }
-
-  try{
-    const data=await api("/api/withdraw",{
-      method:"POST",
-      body:JSON.stringify({
-        method:state.selectedMethod.id,
-        address,
-        amount
-      })
-    });
-
-    $("address").value="";
-    $("amount").value="";
-    state.selectedMethod=null;
-    state.selectedCategory=null;
-
-    $("withdrawCategoryScreen").style.display="block";
-    $("withdrawMethodScreen").style.display="none";
-    $("withdrawFormScreen").style.display="none";
-
-    await refresh();
-    toast(data.message||"Withdrawal request submitted.");
-  }catch(error){
-    toast(error.message);
-  }
-});
-
-function hideLoading(){
-  $("loadingScreen").classList.add("done");
+function renderWalletHistory(){
+ $("withdrawHistory").innerHTML=(state.withdrawals||[]).map(w=>{
+  const method=(state.settings.paymentMethods||[]).find(m=>m.id===w.method);
+  const name=method?.name||w.method;
+  const status=String(w.status||"pending");
+  return `<div class="history"><div class="history-info"><b>#${w.id} · ${esc(name)}</b><small>${new Date(w.createdAt).toLocaleString()}<br>${esc(w.address)}<br>Fee ${fmt(w.feeAmount)} CNV · Net ${fmt(w.netAmount||Math.max(0,w.amount-(w.feeAmount||0)))} CNV</small></div><div style="text-align:right"><strong class="reward">${fmt(w.amount)} CNV</strong><small style="display:block;color:${status==="paid"?"var(--green)":status==="rejected"?"var(--red)":"var(--gold)"};margin-top:5px">${esc(status.toUpperCase())}</small></div></div>`;
+ }).join("")||'<div class="empty">No withdrawal requests yet.</div>';
 }
 
+// ======================================================
+// TELEGRAM AUTO LOGIN AND LOADING
+// ======================================================
+
+function showLoginError(message){
+ $("modalTitle").textContent="Telegram verification required";
+ $("modalBody").innerHTML=`<p class="muted">${esc(message)}</p><p class="muted">Open this Mini App using your Telegram bot. Telegram account verification is required to access your balance and wallet.</p>`;
+ $("modalBg").classList.add("show");
+}
 async function boot(){
-  try{
-    if(tg?.initData){
-      const startParam=tg.initDataUnsafe?.start_param||"";
-
-      const authData=await api("/api/auth/telegram",{
-        method:"POST",
-        body:JSON.stringify({
-          initData:tg.initData,
-          startParam
-        })
-      });
-
-      state={...state,...authData};
-      await refresh();
-      hideLoading();
-      return;
-    }
-
-    // Outside Telegram, use the existing session if one exists.
-    const sessionData=await api("/api/me");
-    state={...state,...sessionData};
-    await refresh();
-    hideLoading();
-
-  }catch(error){
-    // Do not show a blocking Telegram verification popup.
-    // Hide loading and leave the app visible with a small toast.
-    hideLoading();
-
-    const message=String(error?.message||"");
-    if(message.includes("500")){
-      toast("Server error. Please try again shortly.");
-    }else if(message.includes("401")||message.includes("403")){
-      toast("Open this app from the official Telegram bot.");
-    }else{
-      toast("Could not connect. Please refresh the app.");
-    }
+ try{
+  if(!tg?.initData){
+   // Existing session may still be valid on same browser.
+   const d=await api("/api/me");
+   state={...state,...d};
+   await refresh();
+   $("loadingSub").textContent="ACCOUNT READY";
+   setTimeout(()=>showLoading(true),450);
+   return;
   }
+  $("loadingSub").textContent="VERIFYING TELEGRAM ACCOUNT";
+  const startParam=tg.initDataUnsafe?.start_param||"";
+  const d=await api("/api/auth/telegram",{
+   method:"POST",
+   body:JSON.stringify({initData:tg.initData,startParam})
+  });
+  state={...state,...d};
+  $("loadingSub").textContent="LOADING YOUR ACCOUNT";
+  await refresh();
+  setTimeout(()=>showLoading(true),500);
+ }catch(error){
+  showLoading(true);
+  showLoginError(error.message||"Could not verify your Telegram account.");
+ }
 }
-
-$("closeModal").addEventListener("click",()=>{
-  $("modalBg").classList.remove("show");
-});
+$("closeModal").onclick=()=>$("modalBg").classList.remove("show");
 
 setInterval(()=>{
-  if(state.user&&state.settings){
-    state.user.energy=Math.min(
-      Number(state.settings.maxEnergy||1000),
-      Number(state.user.energy||0)+Number(state.settings.energyPerSecond||0)
-    );
-    $("energy").textContent=fmt(state.user.energy);
-    $("energyBar").style.width=Math.max(
-      0,
-      Math.min(100,state.user.energy/Math.max(1,state.settings.maxEnergy)*100)
-    )+"%";
-  }
+ if(!state.user||!state.settings)return;
+ const max=Number(state.settings.maxEnergy||1000);
+ const rate=Number(state.settings.energyPerSecond||0);
+ state.user.energy=Math.min(max,Number(state.user.energy||0)+rate);
+ render();
 },1000);
 
 setInterval(()=>{
-  if(state.user)refresh().catch(error=>console.warn("Refresh failed:",error.message));
-},20000);
+ if(state.user&&Date.now()-lastServerSync>12000){
+  refresh().catch(()=>{});
+  lastServerSync=Date.now();
+ }
+},15000);
 
 boot();
 </script>
