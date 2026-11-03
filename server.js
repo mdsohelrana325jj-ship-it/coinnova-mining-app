@@ -971,7 +971,16 @@ app.post(
     );
 
     const username = cleanText(telegramUser.username || "", 64);
-    const startParam = cleanText(req.body?.startParam || "", 80);
+
+    // start_param is part of Telegram's signed initData. Never trust
+    // a separate client-supplied startParam field for referral attribution.
+    const initDataParams = new URLSearchParams(
+      String(req.body?.initData || "")
+    );
+    const startParam = cleanText(
+      initDataParams.get("start_param") || "",
+      80
+    );
 
     const transaction = db.transaction(() => {
       let user = db.prepare(`
@@ -1352,30 +1361,45 @@ app.post("/api/tap", auth, requireUser, (req, res) => {
 // ======================================================
 
 app.post("/api/bonus/daily", auth, requireUser, (req, res) => {
-  const key = "daily_" + req.user.id;
-  const last = getSetting.get(key);
+  const userId = req.user.id;
+  const key = "daily_" + userId;
   const today = bdDate();
 
-  if (last && last.value === today) {
-    return res.status(400).json({
-      error: "Daily bonus already claimed today."
+  try {
+    const claimDailyBonus = db.transaction(() => {
+      const last = getSetting.get(key);
+
+      if (last && last.value === today) {
+        return { alreadyClaimed: true };
+      }
+
+      const reward = Math.max(0, Math.floor(Number(getSettings().dailyBonus) || 0));
+      setSetting.run(key, today);
+
+      db.prepare(`
+        UPDATE users SET balance = balance + ? WHERE id = ?
+      `).run(reward, userId);
+
+      recordEarning(userId, reward, "daily_bonus");
+      return { alreadyClaimed: false, reward };
     });
+
+    const result = claimDailyBonus();
+
+    if (result.alreadyClaimed) {
+      return res.status(400).json({
+        error: "Daily bonus already claimed today."
+      });
+    }
+
+    res.json({
+      reward: result.reward,
+      user: publicUser(getUserById(userId))
+    });
+  } catch (error) {
+    console.error("Daily bonus claim failed:", error);
+    res.status(500).json({ error: "Could not claim daily bonus." });
   }
-
-  const reward = getSettings().dailyBonus;
-
-  setSetting.run(key, today);
-
-  db.prepare(`
-    UPDATE users SET balance = balance + ? WHERE id = ?
-  `).run(reward, req.user.id);
-
-  recordEarning(req.user.id, reward, "daily_bonus");
-
-  res.json({
-    reward,
-    user: publicUser(getUserById(req.user.id))
-  });
 });
 
 // ======================================================
@@ -1383,38 +1407,51 @@ app.post("/api/bonus/daily", auth, requireUser, (req, res) => {
 // ======================================================
 
 app.post("/api/tasks/:id/claim", auth, requireUser, (req, res) => {
-  const task = db.prepare(`
-    SELECT * FROM tasks
-    WHERE id = ? AND enabled = 1
-  `).get(Number(req.params.id));
+  const taskId = Number(req.params.id);
 
-  if (!task) {
-    return res.status(404).json({
-      error: "Task not found."
-    });
+  if (!Number.isSafeInteger(taskId) || taskId < 1) {
+    return res.status(400).json({ error: "Invalid task ID." });
   }
 
   try {
-    db.prepare(`
-      INSERT INTO task_claims(user_id, task_id, claimed_at)
-      VALUES(?, ?, ?)
-    `).run(req.user.id, task.id, now());
-  } catch {
-    return res.status(409).json({
-      error: "Task already claimed."
+    const claimTask = db.transaction(() => {
+      const task = db.prepare(`
+        SELECT * FROM tasks
+        WHERE id = ? AND enabled = 1
+      `).get(taskId);
+
+      if (!task) return { notFound: true };
+
+      db.prepare(`
+        INSERT INTO task_claims(user_id, task_id, claimed_at)
+        VALUES(?, ?, ?)
+      `).run(req.user.id, task.id, now());
+
+      db.prepare(`
+        UPDATE users SET balance = balance + ? WHERE id = ?
+      `).run(task.reward, req.user.id);
+
+      recordEarning(req.user.id, task.reward, "task");
+      return { reward: task.reward };
     });
+
+    const result = claimTask();
+
+    if (result.notFound) {
+      return res.status(404).json({ error: "Task not found." });
+    }
+
+    res.json({
+      reward: result.reward,
+      user: publicUser(getUserById(req.user.id))
+    });
+  } catch (error) {
+    if (String(error.code || "").startsWith("SQLITE_CONSTRAINT")) {
+      return res.status(409).json({ error: "Task already claimed." });
+    }
+    console.error("Task claim failed:", error);
+    res.status(500).json({ error: "Could not claim task." });
   }
-
-  db.prepare(`
-    UPDATE users SET balance = balance + ? WHERE id = ?
-  `).run(task.reward, req.user.id);
-
-  recordEarning(req.user.id, task.reward, "task");
-
-  res.json({
-    reward: task.reward,
-    user: publicUser(getUserById(req.user.id))
-  });
 });
 
 // ======================================================
@@ -2077,53 +2114,72 @@ app.patch("/api/admin/withdrawals/:id", adminAuth, (req, res) => {
   const status = String(req.body?.status || "");
 
   if (!["pending", "approved", "paid", "rejected"].includes(status)) {
-    return res.status(400).json({
-      error: "Invalid status."
-    });
+    return res.status(400).json({ error: "Invalid status." });
   }
 
   const txid = cleanText(req.body?.txid, 160);
   const note = cleanText(req.body?.note, 250);
+  const withdrawalId = Number(req.params.id);
 
-  const withdrawal = db.prepare(`
-    SELECT * FROM withdrawals WHERE id = ?
-  `).get(Number(req.params.id));
-
-  if (!withdrawal) {
-    return res.status(404).json({
-      error: "Request not found."
-    });
+  if (!Number.isSafeInteger(withdrawalId) || withdrawalId < 1) {
+    return res.status(400).json({ error: "Invalid request ID." });
   }
 
-  const transaction = db.transaction(() => {
-    if (
-      status === "rejected" &&
-      withdrawal.status !== "rejected" &&
-      withdrawal.status !== "paid"
-    ) {
+  try {
+    const updateWithdrawal = db.transaction(() => {
+      const withdrawal = db.prepare(`
+        SELECT * FROM withdrawals WHERE id = ?
+      `).get(withdrawalId);
+
+      if (!withdrawal) return { notFound: true };
+
+      const current = withdrawal.status;
+      if (current === status) return { unchanged: true };
+
+      // Paid and rejected are final states. This prevents a later status
+      // toggle from issuing a second refund or reversing a completed payout.
+      if (current === "paid" || current === "rejected") {
+        return { invalidTransition: true, current };
+      }
+
+      const allowed =
+        (current === "pending" && ["approved", "rejected"].includes(status)) ||
+        (current === "approved" && ["paid", "rejected"].includes(status));
+
+      if (!allowed) {
+        return { invalidTransition: true, current };
+      }
+
+      if (status === "rejected") {
+        db.prepare(`
+          UPDATE users SET balance = balance + ? WHERE id = ?
+        `).run(withdrawal.amount, withdrawal.user_id);
+      }
+
       db.prepare(`
-        UPDATE users
-        SET balance = balance + ?
+        UPDATE withdrawals
+        SET status = ?, txid = ?, note = ?, updated_at = ?
         WHERE id = ?
-      `).run(withdrawal.amount, withdrawal.user_id);
+      `).run(status, txid, note, now(), withdrawal.id);
+
+      return { updated: true };
+    });
+
+    const result = updateWithdrawal();
+    if (result.notFound) {
+      return res.status(404).json({ error: "Request not found." });
+    }
+    if (result.invalidTransition) {
+      return res.status(409).json({
+        error: `Cannot change withdrawal from ${result.current} to ${status}.`
+      });
     }
 
-    db.prepare(`
-      UPDATE withdrawals
-      SET status = ?, txid = ?, note = ?, updated_at = ?
-      WHERE id = ?
-    `).run(
-      status,
-      txid,
-      note,
-      now(),
-      withdrawal.id
-    );
-  });
-
-  transaction();
-
-  res.json({ ok: true });
+    res.json({ ok: true, unchanged: Boolean(result.unchanged) });
+  } catch (error) {
+    console.error("Withdrawal update failed:", error);
+    res.status(500).json({ error: "Could not update withdrawal." });
+  }
 });
 
 // ======================================================
@@ -2172,7 +2228,7 @@ app.patch("/api/admin/users/:id", adminAuth, (req, res) => {
 // FALLBACK ROUTE
 // ======================================================
 
-app.get("*", (req, res) => {
+app.get(/.*/, (req, res) => {
   res.sendFile(
     path.join(__dirname, "public", "index.html")
   );
