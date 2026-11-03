@@ -18,7 +18,8 @@ const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "";
 const SESSION_SECRET = process.env.SESSION_SECRET || "";
 const BOT_USERNAME = (process.env.BOT_USERNAME || "").replace(/^@/, "");
 
-const ALLOW_DEMO_LOGIN = true;
+const ALLOW_DEMO_LOGIN =
+  process.env.ALLOW_DEMO_LOGIN === "true" && !PROD;
 
 const dbPath =
   process.env.DB_PATH ||
@@ -221,7 +222,7 @@ WHERE net_amount = 0 AND amount > 0
 `);
 
 // ======================================================
-// DEFAULT SETTINGS (Updated with customizable texts & category settings)
+// DEFAULT SETTINGS
 // ======================================================
 
 const now = () => Date.now();
@@ -233,17 +234,18 @@ const defaultSettings = {
   appLogo: "",
   loadingImage: "",
   loadingTitle: "Preparing your CoinNova account…",
+  loadingText: "VERIFYING TELEGRAM ACCOUNT",
 
-  // ইউজার প্যানেল টেক্সট ও নোটিশ কন্ট্রোল
-  homeNotice: "Keep your Telegram account secure. Never share your wallet seed phrase or password.",
-  withdrawNotice: "Select a withdrawal category first. E-Wallet and Crypto Network use separate selection screens. Verify the destination carefully before submitting.",
-  spinRulesText: "Invite qualified friends to unlock spins.",
-
-  // ক্যাটাগরি নাম ও লোগো কন্ট্রোল
-  ewalletCategoryName: "E-Wallet",
-  ewalletCategoryLogo: "",
-  networkCategoryName: "Select Network",
-  networkCategoryLogo: "",
+  // User Panel Custom Text Fields defaults
+  txtHomeTitle: "CoinNova Mining",
+  txtBalanceTitle: "Total Balance",
+  txtTapButton: "TAP TO MINE",
+  txtEnergyLabel: "Energy",
+  txtWithdrawBtn: "Withdraw Funds",
+  txtNetworkBtn: "🌐 Select Network",
+  txtEwalletBtn: "৳ E-Wallet",
+  txtReferralTitle: "Invite Friends & Earn",
+  txtNotice: "Welcome to CoinNova! Complete tasks and invite friends to boost earnings.",
 
   tapReward: 1,
   maxEnergy: 1000,
@@ -254,6 +256,7 @@ const defaultSettings = {
   referralRequired: 1,
   referralBonus: 100,
   withdrawalFeePercent: 0,
+  withdrawalNotice: "",
 
   maintenance: false,
   sound: true,
@@ -268,39 +271,6 @@ const defaultSettings = {
   buttons: [],
 
   paymentMethods: [
-    {
-      id: "binance",
-      name: "Binance Pay / Wallet",
-      type: "crypto",
-      category: "network",
-      color: "#F0B90B",
-      animation: "pulse",
-      url: "",
-      enabled: true,
-      logo: "https://cdn.simpleicons.org/binance/F0B90B"
-    },
-    {
-      id: "usdt_trc20",
-      name: "USDT · TRC20",
-      type: "crypto",
-      category: "network",
-      color: "#26A17B",
-      animation: "pulse",
-      url: "",
-      enabled: true,
-      logo: "https://cdn.simpleicons.org/tether/26A17B"
-    },
-    {
-      id: "usdt_bep20",
-      name: "USDT · BEP20",
-      type: "crypto",
-      category: "network",
-      color: "#26A17B",
-      animation: "pulse",
-      url: "",
-      enabled: true,
-      logo: "https://cdn.simpleicons.org/tether/26A17B"
-    },
     {
       id: "bkash",
       name: "bKash",
@@ -333,6 +303,61 @@ const defaultSettings = {
       url: "",
       enabled: true,
       logo: "https://cdn.simpleicons.org/dutchbanglabank/8B1E8B"
+    },
+    {
+      id: "usdt_trc20",
+      name: "USDT · TRC20",
+      type: "crypto",
+      category: "network",
+      color: "#26A17B",
+      animation: "pulse",
+      url: "",
+      enabled: true,
+      logo: "https://cdn.simpleicons.org/tether/26A17B"
+    },
+    {
+      id: "usdt_bep20",
+      name: "USDT · BEP20",
+      type: "crypto",
+      category: "network",
+      color: "#26A17B",
+      animation: "pulse",
+      url: "",
+      enabled: true,
+      logo: "https://cdn.simpleicons.org/tether/26A17B"
+    },
+    {
+      id: "binance",
+      name: "Binance Pay / Wallet",
+      type: "crypto",
+      category: "network",
+      color: "#F0B90B",
+      animation: "pulse",
+      url: "",
+      enabled: true,
+      logo: "https://cdn.simpleicons.org/binance/F0B90B"
+    },
+    {
+      id: "trustwallet",
+      name: "Trust Wallet",
+      type: "crypto",
+      category: "network",
+      color: "#3375BB",
+      animation: "pulse",
+      url: "",
+      enabled: true,
+      logo: "https://cdn.simpleicons.org/trustwallet/3375BB"
+    },
+    {
+      id: "bitget",
+      name: "Bitget Wallet",
+      type: "crypto",
+      category: "network",
+      color: "#00F0FF",
+      animation: "pulse",
+      url: "",
+      enabled: true,
+      logo: "https://cdn.simpleicons.org/bitget/00F0FF"
     }
   ],
 
@@ -494,19 +519,7 @@ function parseCookie(cookieString) {
 
 function auth(req, res, next) {
   const cookies = parseCookie(req.headers.cookie || "");
-  let payload = verify(cookies.cn_auth);
-
-  if (!payload && ALLOW_DEMO_LOGIN) {
-    let demoUser = db.prepare("SELECT * FROM users WHERE tg_id = ?").get("demo-miner");
-    if (!demoUser) {
-      db.prepare(`
-        INSERT INTO users (tg_id, name, username, balance, energy, last_energy_at, created_at)
-        VALUES (?, ?, '', 0, ?, ?, ?)
-      `).run("demo-miner", "Demo Miner", getSettings().maxEnergy, now(), now());
-      demoUser = db.prepare("SELECT * FROM users WHERE tg_id = ?").get("demo-miner");
-    }
-    payload = { role: "user", uid: demoUser.id, tgId: demoUser.tg_id };
-  }
+  const payload = verify(cookies.cn_auth);
 
   if (!payload) {
     return res.status(401).json({
@@ -590,7 +603,7 @@ function verifyTelegramInitData(initData) {
 // USER HELPERS
 // ======================================================
 
-function cleanText(value, max = 500) {
+function cleanText(value, max = 100) {
   return String(value || "").trim().slice(0, max);
 }
 
@@ -1782,7 +1795,7 @@ app.get("/api/admin/overview", adminAuth, (req, res) => {
 });
 
 // ======================================================
-// ADMIN SETTINGS (Updated to save all customizable texts & category names/logos)
+// ADMIN SETTINGS
 // ======================================================
 
 app.put("/api/admin/settings", adminAuth, (req, res) => {
@@ -1791,16 +1804,27 @@ app.put("/api/admin/settings", adminAuth, (req, res) => {
   const next = { ...oldSettings };
 
   for (const key of [
-    "appName", "tagline", "loadingTitle", 
-    "homeNotice", "withdrawNotice", "spinRulesText",
-    "ewalletCategoryName", "networkCategoryName"
+    "appName",
+    "tagline",
+    "loadingTitle",
+    "loadingText",
+    "txtHomeTitle",
+    "txtBalanceTitle",
+    "txtTapButton",
+    "txtEnergyLabel",
+    "txtWithdrawBtn",
+    "txtNetworkBtn",
+    "txtEwalletBtn",
+    "txtReferralTitle",
+    "txtNotice",
+    "withdrawalNotice"
   ]) {
     if (typeof incoming[key] === "string") {
-      next[key] = cleanText(incoming[key], 500);
+      next[key] = cleanText(incoming[key], 1000);
     }
   }
 
-  for (const key of ["appLogo", "loadingImage", "ewalletCategoryLogo", "networkCategoryLogo"]) {
+  for (const key of ["appLogo", "loadingImage"]) {
     if (typeof incoming[key] === "string") {
       next[key] = validUrl(incoming[key])
         ? incoming[key].slice(0, 1000)
