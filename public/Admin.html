@@ -194,7 +194,8 @@ tr:last-child td{border-bottom:0}
    <button class="active" data-page="dashboard"><span class="ico">▦</span>Dashboard</button>
 
    <div class="nav-label">APP CONTROL</div>
-   <button data-page="branding"><span class="ico">◈</span>App Branding & Text</button>
+   <button data-page="branding"><span class="ico">◈</span>App Branding & Loading</button>
+   <button data-page="texts"><span class="ico">✏️</span>User Panel Texts</button>
    <button data-page="buttons"><span class="ico">▣</span>Custom Buttons</button>
    <button data-page="wallets"><span class="ico">◇</span>E-Wallet & Network</button>
    <button data-page="withdrawSettings"><span class="ico">⇧</span>Withdrawal Settings</button>
@@ -243,10 +244,10 @@ tr:last-child td{border-bottom:0}
     </div>
     <div class="panel">
      <h3>Quick Actions</h3><p class="panel-desc">Open commonly used controls.</p>
-     <button class="btn" style="width:100%;margin:4px 0;text-align:left" onclick="go('branding')">◈ &nbsp; Change App Logo, Loading & Texts</button>
-     <button class="btn" style="width:100%;margin:4px 0;text-align:left" onclick="go('wallets')">◇ &nbsp; E-Wallet & Network Customization</button>
+     <button class="btn" style="width:100%;margin:4px 0;text-align:left" onclick="go('branding')">◈ &nbsp; Change App Logo / Loading Background</button>
+     <button class="btn" style="width:100%;margin:4px 0;text-align:left" onclick="go('texts')">✏️ &nbsp; Edit User Panel Texts</button>
+     <button class="btn" style="width:100%;margin:4px 0;text-align:left" onclick="go('wallets')">◇ &nbsp; Configure E-Wallet & Network</button>
      <button class="btn" style="width:100%;margin:4px 0;text-align:left" onclick="go('withdrawals')">⇧ &nbsp; Review Withdrawals</button>
-     <button class="btn" style="width:100%;margin:4px 0;text-align:left" onclick="go('commission')">♧ &nbsp; Edit 6-Level Commission</button>
     </div>
    </div>
 
@@ -254,40 +255,52 @@ tr:last-child td{border-bottom:0}
    <div class="panel"><div class="table-wrap"><table><thead><tr><th>ID</th><th>User</th><th>Method</th><th>Amount</th><th>Status</th><th>Action</th></tr></thead><tbody id="dashWithdrawalRows"></tbody></table></div></div>
   </section>
 
-  <!-- BRANDING & TEXTS -->
+  <!-- BRANDING -->
   <section id="page-branding" class="page">
    <div class="grid two">
     <div class="panel">
-     <h3>App Identity & Texts</h3><p class="panel-desc">Configure app name, logos, loading screen and all User Panel message texts.</p>
+     <h3>App Identity & Fullscreen Loading</h3><p class="panel-desc">Configure app branding and the full background loading screen image.</p>
      <form id="brandingForm">
       <div class="form-group"><label>App Name</label><input id="appName" placeholder="CoinNova" required></div>
       <div class="form-group" style="margin-top:12px"><label>Tagline</label><input id="tagline" placeholder="TAP • MINE • EARN"></div>
       <div class="form-group" style="margin-top:12px"><label>App Logo URL</label><input id="appLogo" type="url" placeholder="https://example.com/logo.png"></div>
-      <div class="form-group" style="margin-top:12px"><label>Loading Screen Background Image URL (Full Screen)</label><input id="loadingImage" type="url" placeholder="https://example.com/bg.png"></div>
+      <div class="form-group" style="margin-top:12px"><label>Fullscreen Loading Background Image URL</label><input id="loadingImage" type="url" placeholder="https://example.com/loading-bg.png"></div>
       <div class="form-group" style="margin-top:12px"><label>Loading Screen Title</label><input id="loadingTitle" placeholder="COINNOVA"></div>
-      
-      <!-- User Panel Text Customizations -->
-      <div class="form-group" style="margin-top:12px"><label>Home Notice Text</label><textarea id="homeNotice" placeholder="Keep your Telegram account secure..."></textarea></div>
-      <div class="form-group" style="margin-top:12px"><label>Withdrawal Notice Text</label><textarea id="withdrawNotice" placeholder="Select a withdrawal category first..."></textarea></div>
-      <div class="form-group" style="margin-top:12px"><label>Lucky Spin Rules Text</label><textarea id="spinRulesText" placeholder="Invite qualified friends to unlock spins."></textarea></div>
-
-      <!-- E-Wallet & Select Network Category Names & Logos -->
-      <div class="form-grid" style="margin-top:12px">
-       <div class="form-group"><label>E-Wallet Category Name</label><input id="ewalletCategoryName" placeholder="E-Wallet"></div>
-       <div class="form-group"><label>E-Wallet Category Logo URL</label><input id="ewalletCategoryLogo" type="url" placeholder="https://..."></div>
-       <div class="form-group"><label>Network Category Name</label><input id="networkCategoryName" placeholder="Select Network"></div>
-       <div class="form-group"><label>Network Category Logo URL</label><input id="networkCategoryLogo" type="url" placeholder="https://..."></div>
-      </div>
-
-      <div class="form-actions"><button class="btn primary" type="submit">SAVE BRANDING & TEXTS ✓</button></div>
+      <div class="form-group" style="margin-top:12px"><label>Loading Status Text</label><input id="loadingText" placeholder="VERIFYING TELEGRAM ACCOUNT"></div>
+      <div class="form-actions"><button class="btn primary" type="submit">SAVE BRANDING ✓</button></div>
      </form>
     </div>
     <div class="panel">
-     <h3>Live Preview</h3><p class="panel-desc">Preview of app identity and images.</p>
-     <div class="preview"><img id="brandPreviewImg" alt="" src="" onerror="this.style.display='none'"><b id="brandPreviewName">CoinNova</b><small id="brandPreviewTag">TAP • MINE • EARN</small></div>
-     <div style="margin-top:15px" class="preview"><img id="loadingPreviewImg" alt="" src="" onerror="this.style.display='none'"><b id="loadingPreviewTitle">COINNOVA</b></div>
-     <div class="help">All text messages and category names updated here will instantly apply to the User Panel.</div>
+     <h3>Live Preview</h3><p class="panel-desc">Preview of app identity and fullscreen loading screen styling.</p>
+     <div class="preview"><img id="brandPreviewImg" alt="App logo preview" src="" onerror="this.style.display='none'"><b id="brandPreviewName">CoinNova</b><small id="brandPreviewTag">TAP • MINE • EARN</small></div>
+     <div style="margin-top:15px; background-size:cover; background-position:center;" id="loadingPreviewBox" class="preview">
+      <img id="loadingPreviewImg" alt="Loading preview" src="" onerror="this.style.display='none'">
+      <b id="loadingPreviewTitle" style="color:#fff; text-shadow:0 2px 4px #000">COINNOVA</b>
+      <small id="loadingPreviewText" style="color:#ffd66b">VERIFYING TELEGRAM ACCOUNT</small>
+     </div>
+     <div class="help">The loading image will display in full screen background mode on the user panel startup.</div>
     </div>
+   </div>
+  </section>
+
+  <!-- USER PANEL TEXTS -->
+  <section id="page-texts" class="page">
+   <div class="panel">
+    <h3>User Panel Custom Texts & Headings</h3><p class="panel-desc">Customize all text messages, headings, and prompts displayed across the user panel.</p>
+    <form id="textsForm">
+     <div class="form-grid">
+      <div class="form-group"><label>Home Header Title</label><input id="txtHomeTitle" placeholder="CoinNova Mining"></div>
+      <div class="form-group"><label>Balance Card Title</label><input id="txtBalanceTitle" placeholder="Total Balance"></div>
+      <div class="form-group"><label>Tap Button Text</label><input id="txtTapButton" placeholder="TAP TO MINE"></div>
+      <div class="form-group"><label>Energy Bar Label</label><input id="txtEnergyLabel" placeholder="Energy"></div>
+      <div class="form-group"><label>Withdraw Button Text</label><input id="txtWithdrawBtn" placeholder="Withdraw Funds"></div>
+      <div class="form-group"><label>Select Network Button Text</label><input id="txtNetworkBtn" placeholder="🌐 Select Network"></div>
+      <div class="form-group"><label>E-Wallet Button Text</label><input id="txtEwalletBtn" placeholder="৳ E-Wallet"></div>
+      <div class="form-group"><label>Referral Section Title</label><input id="txtReferralTitle" placeholder="Invite Friends & Earn"></div>
+      <div class="form-group full"><label>Notice / Announcement Text</label><textarea id="txtNotice" placeholder="Welcome to CoinNova! Complete tasks and invite friends to boost earnings."></textarea></div>
+     </div>
+     <div class="form-actions"><button class="btn primary" type="submit">SAVE USER TEXTS ✓</button></div>
+    </form>
    </div>
   </section>
 
@@ -306,7 +319,7 @@ tr:last-child td{border-bottom:0}
      <input type="hidden" id="buttonId">
      <div class="form-grid">
       <div class="form-group"><label>Button Name</label><input id="buttonName" required placeholder="VIP GROUP JOIN"></div>
-      <div class="form-group"><label>Button Logo URL</label><input id="buttonLogo" type="url" placeholder="https://..."></div>
+      <div class="form-group"><label>Button Logo URL</label><input id="buttonLogo" type="url" placeholder="https://example.com/icon.png"></div>
       <div class="form-group full"><label>Target URL</label><input id="buttonUrl" type="url" placeholder="https://t.me/yourchannel"></div>
       <div class="form-group"><label>Button Color</label><input id="buttonColor" type="color" value="#ffd66b"></div>
       <div class="form-group"><label>Animation</label><select id="buttonAnimation"><option value="none">None</option><option value="pulse">Pulse</option><option value="bounce">Bounce</option><option value="glow">Glow</option><option value="shake">Shake</option></select></div>
@@ -321,13 +334,13 @@ tr:last-child td{border-bottom:0}
   <section id="page-wallets" class="page">
    <div class="panel">
     <div class="section-head" style="margin-top:0"><h2>Withdrawal Method Manager</h2><span class="badge">SEPARATE CATEGORIES</span></div>
-    <p class="panel-desc">Manage E-Wallet and Network methods independently.</p>
+    <p class="panel-desc">Manage E-Wallet and Select Network (with Binance popup integration) independently with full customization for names, logos, and methods.</p>
     <div class="tabs">
-     <button class="active" data-wallet-tab="ewallet">৳ E-Wallet Methods</button>
-     <button data-wallet-tab="network">🌐 Network Methods</button>
+     <button class="active" data-wallet-tab="ewallet">৳ E-Wallet</button>
+     <button data-wallet-tab="network">🌐 Select Network</button>
     </div>
     <div id="walletList"></div>
-    <button class="btn primary" id="addWallet">＋ Add Method</button>
+    <button class="btn primary" id="addWallet">＋ Add Wallet / Network</button>
     <button class="btn" id="saveWallets">SAVE ALL METHODS ✓</button>
    </div>
 
@@ -336,17 +349,17 @@ tr:last-child td{border-bottom:0}
     <form id="walletForm">
      <input type="hidden" id="walletId">
      <div class="form-grid">
-      <div class="form-group"><label>Method Name</label><input id="walletName" required placeholder="bKash / Binance"></div>
+      <div class="form-group"><label>Method Name</label><input id="walletName" required placeholder="Binance / bKash / USDT TRC20"></div>
       <div class="form-group"><label>Category</label><select id="walletCategory"><option value="ewallet">E-Wallet</option><option value="network">Select Network</option></select></div>
-      <div class="form-group full"><label>Logo Image URL</label><input id="walletLogo" type="url" placeholder="https://..."></div>
+      <div class="form-group full"><label>Logo Image URL</label><input id="walletLogo" type="url" placeholder="https://example.com/wallet-logo.png"></div>
       <div class="form-group"><label>Button Color</label><input id="walletColor" type="color" value="#45e8ff"></div>
       <div class="form-group"><label>Animation</label><select id="walletAnimation"><option value="none">None</option><option value="pulse">Pulse</option><option value="bounce">Bounce</option><option value="glow">Glow</option><option value="shake">Shake</option></select></div>
       <div class="form-group"><label>Withdrawal Fee (%)</label><input id="walletFee" type="number" min="0" max="100" step=".01" value="0"></div>
-      <div class="form-group"><label>Minimum Withdrawal (CNV)</label><input id="walletMin" type="number" min="1" step="1" value="1000"></div>
-      <div class="form-group full"><label>Instructions</label><textarea id="walletHint" placeholder="Instructions"></textarea></div>
+      <div class="form-group"><label>Minimum Withdrawal</label><input id="walletMin" type="number" min="1" step="1" value="1000"></div>
+      <div class="form-group full"><label>Instructions / Popup Address Details</label><textarea id="walletHint" placeholder="Enter wallet instructions, network prefix or popup details"></textarea></div>
       <div class="form-group full"><label>Method Status</label><select id="walletEnabled"><option value="true">Enabled</option><option value="false">Disabled</option></select></div>
      </div>
-     <div class="form-actions"><button class="btn" type="button" id="clearWalletForm">Clear</button><button class="btn primary" type="submit">SAVE METHOD ✓</button></div>
+     <div class="form-actions"><button class="btn" type="button" id="clearWalletForm">Clear Form</button><button class="btn primary" type="submit">SAVE METHOD ✓</button></div>
     </form>
    </div>
   </section>
@@ -355,18 +368,19 @@ tr:last-child td{border-bottom:0}
   <section id="page-withdrawSettings" class="page">
    <div class="grid two">
     <div class="panel">
-     <h3>Global Withdrawal Rules</h3>
+     <h3>Global Withdrawal Rules</h3><p class="panel-desc">Set global minimum, fee and referral requirements.</p>
      <form id="withdrawSettingsForm">
       <div class="form-group"><label>Minimum Withdrawal (CNV)</label><input id="minimumWithdrawal" type="number" min="1" required></div>
       <div class="form-group" style="margin-top:12px"><label>Default Withdrawal Fee (%)</label><input id="withdrawalFeePercent" type="number" min="0" max="100" step=".01" required></div>
       <div class="form-group" style="margin-top:12px"><label>Required Qualified Referrals</label><input id="referralRequirement" type="number" min="0" step="1" required></div>
-      <div class="form-actions"><button class="btn primary" type="submit">SAVE RULES ✓</button></div>
+      <div class="form-group" style="margin-top:12px"><label>Withdrawal Notice</label><textarea id="withdrawalNotice" placeholder="Withdrawal processing notice"></textarea></div>
+      <div class="form-actions"><button class="btn primary" type="submit">SAVE WITHDRAWAL RULES ✓</button></div>
      </form>
     </div>
     <div class="panel">
-     <h3>Status</h3>
-     <div class="switch-row"><div><b>Withdrawal System</b><small>Enable or disable requests.</small></div><label class="switch"><input id="withdrawEnabled" type="checkbox"><span></span></label></div>
-     <button class="btn primary" id="saveWithdrawToggle" style="margin-top:15px">SAVE STATUS</button>
+     <h3>Withdrawal Status</h3>
+     <div class="switch-row"><div><b>Withdrawal System</b><small>Enable or disable new requests.</small></div><label class="switch"><input id="withdrawEnabled" type="checkbox"><span></span></label></div>
+     <button class="btn primary" id="saveWithdrawToggle" style="margin-top:12px">SAVE STATUS</button>
     </div>
    </div>
   </section>
@@ -377,14 +391,15 @@ tr:last-child td{border-bottom:0}
     <div class="panel">
      <h3>Lucky Spin Settings</h3>
      <form id="spinForm">
-      <div class="switch-row"><div><b>Enable Lucky Spin</b></div><label class="switch"><input id="spinEnabled" type="checkbox"><span></span></label></div>
-      <div class="form-group" style="margin-top:14px"><label>Referrals Per Spin</label><input id="referralsPerSpin" type="number" min="1" required></div>
-      <div class="form-group" style="margin-top:12px"><label>Spin Prizes (Comma separated)</label><input id="spinRewards" placeholder="10,25,50,100" required></div>
-      <div class="form-actions"><button class="btn primary" type="submit">SAVE SPIN ✓</button></div>
+      <div class="switch-row"><div><b>Enable Lucky Spin</b><small>Allow eligible users to spin.</small></div><label class="switch"><input id="spinEnabled" type="checkbox"><span></span></label></div>
+      <div class="form-group" style="margin-top:14px"><label>Qualified Referrals Required Per Spin</label><input id="referralsPerSpin" type="number" min="1" step="1" required></div>
+      <div class="form-group" style="margin-top:12px"><label>Spin Prize Values (CNV)</label><input id="spinRewards" placeholder="10,25,50,100,250,500" required></div>
+      <div class="form-group" style="margin-top:12px"><label>Referral Reward (CNV)</label><input id="referralReward" type="number" min="0" step="1" required></div>
+      <div class="form-actions"><button class="btn primary" type="submit">SAVE SPIN SETTINGS ✓</button></div>
      </form>
     </div>
     <div class="panel">
-     <h3>Prizes Preview</h3>
+     <h3>Prize Preview</h3>
      <div id="spinPrizePreview" class="grid two"></div>
     </div>
    </div>
@@ -392,12 +407,19 @@ tr:last-child td{border-bottom:0}
 
   <!-- COMMISSION -->
   <section id="page-commission" class="page">
-   <div class="panel">
-    <h3>6-Level Referral Commission</h3>
-    <form id="commissionForm">
-     <div id="commissionRates"></div>
-     <div class="form-actions"><button class="btn primary" type="submit">SAVE RATES ✓</button></div>
-    </form>
+   <div class="grid two">
+    <div class="panel">
+     <h3>6-Level Referral Commission</h3>
+     <form id="commissionForm">
+      <div id="commissionRates"></div>
+      <div class="form-actions"><button class="btn primary" type="submit">SAVE COMMISSION RATES ✓</button></div>
+     </form>
+    </div>
+    <div class="panel">
+     <h3>Automatic Commission Payout</h3>
+     <div class="switch-row"><div><b>Daily Auto Payout</b><small>Scheduled at 01:00 AM Asia/Dhaka.</small></div><label class="switch"><input id="commissionAutoPayout" type="checkbox"><span></span></label></div>
+     <button class="btn primary" id="saveCommissionSchedule" style="margin-top:12px">SAVE PAYOUT SETTING</button>
+    </div>
    </div>
   </section>
 
@@ -412,11 +434,11 @@ tr:last-child td{border-bottom:0}
     <form id="taskForm">
      <input type="hidden" id="taskId">
      <div class="form-grid">
-      <div class="form-group"><label>Task Name</label><input id="taskTitle" required placeholder="Join Channel"></div>
-      <div class="form-group"><label>Platform</label><select id="taskPlatform"><option>Telegram</option><option>YouTube</option><option>Facebook</option><option>Instagram</option><option>TikTok</option><option>X</option><option>Daily</option></select></div>
-      <div class="form-group full"><label>Task URL</label><input id="taskUrl" type="url" placeholder="https://..."></div>
+      <div class="form-group"><label>Task Name</label><input id="taskTitle" required placeholder="Join Telegram Channel"></div>
+      <div class="form-group"><label>Platform</label><select id="taskPlatform"><option>Telegram</option><option>YouTube</option><option>Facebook</option><option>Instagram</option><option>TikTok</option><option>X</option><option>Daily</option><option>Other</option></select></div>
+      <div class="form-group full"><label>Task URL</label><input id="taskUrl" type="url" placeholder="https://t.me/yourchannel"></div>
       <div class="form-group"><label>Reward (CNV)</label><input id="taskReward" type="number" min="0" required></div>
-      <div class="form-group"><label>Status</label><select id="taskEnabled"><option value="true">Enabled</option><option value="false">Disabled</option></select></div>
+      <div class="form-group"><label>Task Status</label><select id="taskEnabled"><option value="true">Enabled</option><option value="false">Disabled</option></select></div>
      </div>
      <div class="form-actions"><button class="btn" type="button" id="clearTask">Clear</button><button class="btn primary" type="submit">SAVE TASK ✓</button></div>
     </form>
@@ -426,7 +448,7 @@ tr:last-child td{border-bottom:0}
   <!-- WITHDRAWAL REQUESTS -->
   <section id="page-withdrawals" class="page">
    <div class="panel">
-    <div class="section-head" style="margin-top:0"><h2>Withdrawals</h2><button class="btn" id="refreshWithdrawals">↻ Refresh</button></div>
+    <div class="section-head" style="margin-top:0"><h2>Withdrawal Requests</h2><button class="btn" id="refreshWithdrawals">↻ Refresh</button></div>
     <div class="tabs" id="withdrawalTabs">
      <button class="active" data-status="all">All</button>
      <button data-status="pending">Pending</button>
@@ -434,24 +456,24 @@ tr:last-child td{border-bottom:0}
      <button data-status="paid">Paid</button>
      <button data-status="rejected">Rejected</button>
     </div>
-    <div class="table-wrap"><table><thead><tr><th>ID</th><th>User</th><th>Method</th><th>Destination</th><th>Amount</th><th>Status</th><th>Action</th></tr></thead><tbody id="withdrawalRows"></tbody></table></div>
+    <div class="table-wrap"><table><thead><tr><th>ID</th><th>User</th><th>Method</th><th>Destination</th><th>Requested</th><th>Fee</th><th>Net</th><th>Status</th><th>Action</th></tr></thead><tbody id="withdrawalRows"></tbody></table></div>
    </div>
   </section>
 
   <!-- USERS -->
   <section id="page-users" class="page">
    <div class="panel">
-    <div class="section-head" style="margin-top:0"><h2>User Management</h2></div>
-    <div class="form-group" style="max-width:350px;margin-bottom:13px"><label>Search user</label><input id="userSearch" placeholder="Name or ID"></div>
-    <div class="table-wrap"><table><thead><tr><th>ID</th><th>Name</th><th>Telegram ID</th><th>Balance</th><th>Status</th><th>Actions</th></tr></thead><tbody id="userRows"></tbody></table></div>
+    <div class="section-head" style="margin-top:0"><h2>User Management</h2><button class="btn" id="refreshUsers">↻ Refresh</button></div>
+    <div class="form-group" style="max-width:350px;margin-bottom:13px"><label>Search user</label><input id="userSearch" placeholder="Search name or Telegram ID"></div>
+    <div class="table-wrap"><table><thead><tr><th>ID</th><th>Name</th><th>Telegram ID</th><th>Balance</th><th>Referrals</th><th>Status</th><th>Actions</th></tr></thead><tbody id="userRows"></tbody></table></div>
    </div>
    <div class="panel">
     <h3>Edit User</h3>
     <form id="userForm">
      <input type="hidden" id="editUserId">
      <div class="form-grid">
-      <div class="form-group"><label>Balance (CNV)</label><input id="editUserBalance" type="number" min="0" required></div>
-      <div class="form-group"><label>Status</label><select id="editUserBlocked"><option value="false">Active</option><option value="true">Blocked</option></select></div>
+      <div class="form-group"><label>Balance (CNV)</label><input id="editUserBalance" type="number" min="0" step="1" required></div>
+      <div class="form-group"><label>Account Status</label><select id="editUserBlocked"><option value="false">Active</option><option value="true">Blocked</option></select></div>
      </div>
      <div class="form-actions"><button class="btn primary" type="submit">SAVE USER ✓</button></div>
     </form>
@@ -464,20 +486,25 @@ tr:last-child td{border-bottom:0}
     <div class="panel">
      <h3>Core Settings</h3>
      <form id="systemForm">
-      <div class="form-group"><label>Tap Reward (CNV)</label><input id="miningReward" type="number" min="0"></div>
-      <div class="form-group" style="margin-top:12px"><label>Max Energy</label><input id="maxEnergy" type="number" min="1"></div>
-      <div class="form-group" style="margin-top:12px"><label>Energy Per Second</label><input id="energyPerSecond" type="number" min="0" step=".1"></div>
-      <div class="form-group" style="margin-top:12px"><label>Daily Bonus (CNV)</label><input id="dailyReward" type="number" min="0"></div>
-      <div class="form-actions"><button class="btn primary" type="submit">SAVE CORE ✓</button></div>
+      <div class="form-group"><label>Tap Reward (CNV)</label><input id="miningReward" type="number" min="0" step="1"></div>
+      <div class="form-group" style="margin-top:12px"><label>Maximum Energy</label><input id="maxEnergy" type="number" min="1" step="1"></div>
+      <div class="form-group" style="margin-top:12px"><label>Energy Restored Per Second</label><input id="energyPerSecond" type="number" min="0" step=".1"></div>
+      <div class="form-group" style="margin-top:12px"><label>Daily Bonus (CNV)</label><input id="dailyReward" type="number" min="0" step="1"></div>
+      <div class="form-actions"><button class="btn primary" type="submit">SAVE CORE SETTINGS ✓</button></div>
      </form>
     </div>
     <div class="panel">
-     <h3>Controls</h3>
-     <div class="switch-row"><div><b>Registration</b></div><label class="switch"><input id="systemRegistration" type="checkbox"><span></span></label></div>
-     <div class="switch-row"><div><b>Mining</b></div><label class="switch"><input id="systemMining" type="checkbox"><span></span></label></div>
-     <div class="switch-row"><div><b>Sound Effects</b></div><label class="switch"><input id="systemSound" type="checkbox"><span></span></label></div>
-     <button class="btn primary" id="saveSystemToggles" style="margin-top:15px">SAVE CONTROLS</button>
+     <h3>System Controls</h3>
+     <div class="switch-row"><div><b>Registration</b><small>New accounts can register.</small></div><label class="switch"><input id="systemRegistration" type="checkbox"><span></span></label></div>
+     <div class="switch-row"><div><b>Mining</b><small>Allow coin tapping.</small></div><label class="switch"><input id="systemMining" type="checkbox"><span></span></label></div>
+     <div class="switch-row"><div><b>Withdrawal</b><small>Accept withdrawal requests.</small></div><label class="switch"><input id="systemWithdrawal" type="checkbox"><span></span></label></div>
+     <div class="switch-row"><div><b>Sound Effects</b><small>Enable app tap/spin sound.</small></div><label class="switch"><input id="systemSound" type="checkbox"><span></span></label></div>
+     <div class="form-actions"><button class="btn primary" id="saveSystemToggles">SAVE SYSTEM STATUS ✓</button></div>
     </div>
+   </div>
+   <div class="panel">
+    <h3>Admin Security</h3>
+    <button class="btn" id="changePasswordBtn">Change Admin Password</button>
    </div>
   </section>
  </main>
@@ -485,7 +512,7 @@ tr:last-child td{border-bottom:0}
 
 <div id="modalBg" class="modal-bg">
  <div class="modal">
-  <div class="modal-head"><h3 id="modalTitle">Confirm</h3><button class="btn" id="modalClose">✕</button></div>
+  <div class="modal-head"><h3 id="modalTitle">Confirm action</h3><button class="btn" id="modalClose">✕</button></div>
   <div id="modalBody"></div>
  </div>
 </div>
@@ -506,6 +533,9 @@ const S={
  paymentMethods:[],
  walletTab:"ewallet",
  withdrawalFilter:"all",
+ editingButton:null,
+ editingWallet:null,
+ editingTask:null,
  currentPage:"dashboard"
 };
 
@@ -517,6 +547,7 @@ function api(path,opts={}){
  return fetch(path,{credentials:"same-origin",...opts,headers:{"Content-Type":"application/json",...(opts.headers||{})}})
  .then(async r=>{const d=await r.json().catch(()=>({}));if(!r.ok)throw Error(d.error||`Request failed (${r.status})`);return d});
 }
+function payload(method,data){return api(method,{method:"PUT",body:JSON.stringify(data)})}
 function checked(id){return $(id).checked}
 function number(id,def=0){const n=Number($(id).value);return Number.isFinite(n)?n:def}
 function setVal(id,v){if($(id))$(id).value=v??""}
@@ -525,19 +556,21 @@ function urlImage(el,url,fallback="C"){
  const clean=safeUrl(url);
  el.innerHTML=clean?`<img src="${esc(clean)}" alt="" onerror="this.parentElement.textContent='${esc(fallback)}'">`:esc(fallback);
 }
+function animClass(a){return ({pulse:"anim-pulse",bounce:"anim-bounce",glow:"anim-glow",shake:"anim-shake"})[a]||""}
 
 const pageInfo={
  dashboard:["Dashboard","Your app performance at a glance."],
- branding:["App Branding & Text","Control app identity, loading screen and text messages."],
+ branding:["App Branding & Loading","Control app name, logo and fullscreen loading screen."],
+ texts:["User Panel Texts","Customize all user panel headings, button names and messages."],
  buttons:["Custom Buttons","Build custom links and buttons for the user app."],
- wallets:["E-Wallet & Network","Manage withdrawal methods and names."],
- withdrawSettings:["Withdrawal Settings","Configure minimums and fees."],
- spin:["Lucky Spin","Configure spin rewards."],
+ wallets:["E-Wallet & Network","Manage E-Wallet and Select Network independently."],
+ withdrawSettings:["Withdrawal Settings","Configure withdrawal minimums and fees."],
+ spin:["Lucky Spin","Configure spin rewards and referral requirements."],
  commission:["Referral Commission","Manage all six commission levels."],
  tasks:["Task Manager","Create and manage user tasks."],
  withdrawals:["Withdrawal Requests","Review and process payout requests."],
  users:["User Management","Manage accounts and balances."],
- system:["System Settings","Configure core rewards."]
+ system:["System Settings","Configure core rewards and system controls."]
 };
 function go(name){
  if(!pageInfo[name])return;
@@ -557,13 +590,14 @@ function closeModal(){$("modalBg").classList.remove("show")}
 $("modalClose").onclick=closeModal;
 $("modalBg").addEventListener("click",e=>{if(e.target===$("modalBg"))closeModal()});
 
-function getSettings(){return S.settings||{};}
+function getSettings(){
+ return S.settings||{};
+}
 function normalizeSettings(){
  const s=getSettings();
  S.buttons=Array.isArray(s.buttons)?s.buttons:[];
  S.paymentMethods=Array.isArray(s.paymentMethods)?s.paymentMethods:[];
 }
-
 function fillSettings(){
  const s=getSettings();
  setVal("appName",s.appName||"CoinNova");
@@ -571,30 +605,34 @@ function fillSettings(){
  setVal("appLogo",s.appLogo||"");
  setVal("loadingImage",s.loadingImage||"");
  setVal("loadingTitle",s.loadingTitle||s.appName||"COINNOVA");
- 
- // ইউজার প্যানেল টেক্সট ফিল্ডগুলো লোড করা
- setVal("homeNotice", s.homeNotice || "Keep your Telegram account secure. Never share your wallet seed phrase or password.");
- setVal("withdrawNotice", s.withdrawNotice || "Select a withdrawal category first. E-Wallet and Crypto Network use separate selection screens.");
- setVal("spinRulesText", s.spinRulesText || "Invite qualified friends to unlock spins.");
+ setVal("loadingText",s.loadingText||"VERIFYING TELEGRAM ACCOUNT");
 
- // ই-ওয়ালেট ও নেটওয়ার্ক ক্যাটাগরি নাম ও লোগো
- setVal("ewalletCategoryName", s.ewalletCategoryName || "E-Wallet");
- setVal("ewalletCategoryLogo", s.ewalletCategoryLogo || "");
- setVal("networkCategoryName", s.networkCategoryName || "Select Network");
- setVal("networkCategoryLogo", s.networkCategoryLogo || "");
+ // User Panel custom text fields
+ setVal("txtHomeTitle",s.txtHomeTitle||"CoinNova Mining");
+ setVal("txtBalanceTitle",s.txtBalanceTitle||"Total Balance");
+ setVal("txtTapButton",s.txtTapButton||"TAP TO MINE");
+ setVal("txtEnergyLabel",s.txtEnergyLabel||"Energy");
+ setVal("txtWithdrawBtn",s.txtWithdrawBtn||"Withdraw Funds");
+ setVal("txtNetworkBtn",s.txtNetworkBtn||"🌐 Select Network");
+ setVal("txtEwalletBtn",s.txtEwalletBtn||"৳ E-Wallet");
+ setVal("txtReferralTitle",s.txtReferralTitle||"Invite Friends & Earn");
+ setVal("txtNotice",s.txtNotice||"Welcome to CoinNova! Complete tasks and invite friends to boost earnings.");
 
  setVal("minimumWithdrawal",s.minimumWithdrawal??1000);
  setVal("withdrawalFeePercent",s.withdrawalFeePercent??0);
  setVal("referralRequirement",s.referralRequirement??1);
+ setVal("withdrawalNotice",s.withdrawalNotice||"");
 
  setCheck("withdrawEnabled",s.withdrawalEnabled!==false);
  setCheck("spinEnabled",s.spinEnabled!==false);
  setVal("referralsPerSpin",s.referralsPerSpin??1);
  setVal("spinRewards",Array.isArray(s.spinRewards)?s.spinRewards.join(","):"10,25,50,100,250,500");
+ setVal("referralReward",s.referralReward??250);
 
  let rates=Array.isArray(s.commissionRates)?s.commissionRates:[10,5,3,2,1,.5];
  $("commissionRates").innerHTML=Array.from({length:6},(_,i)=>`
- <div class="rate-row"><div class="rate-badge">L${i+1}</div><div><b>Level ${i+1}</b></div><div class="rate-input"><input id="rate${i+1}" type="number" min="0" max="100" step=".01" value="${esc(rates[i]??0)}"><span>%</span></div></div>`).join("");
+ <div class="rate-row"><div class="rate-badge">L${i+1}</div><div><b>Level ${i+1}</b><small>Commission from level ${i+1} eligible activity</small></div><div class="rate-input"><input aria-label="Level ${i+1} commission rate" id="rate${i+1}" type="number" min="0" max="100" step=".01" value="${esc(rates[i]??0)}"><span>%</span></div></div>`).join("");
+ setCheck("commissionAutoPayout",s.commissionAutoPayout!==false);
 
  setVal("miningReward",s.miningReward??1);
  setVal("maxEnergy",s.maxEnergy??1000);
@@ -602,6 +640,7 @@ function fillSettings(){
  setVal("dailyReward",s.dailyReward??100);
  setCheck("systemRegistration",s.registrationEnabled!==false);
  setCheck("systemMining",s.miningEnabled!==false);
+ setCheck("systemWithdrawal",s.withdrawalEnabled!==false);
  setCheck("systemSound",s.sound!==false);
  setCheck("dashMining",s.miningEnabled!==false);
  setCheck("dashRegistration",s.registrationEnabled!==false);
@@ -612,16 +651,23 @@ function fillSettings(){
  urlImage($("sideLogo"),s.appLogo,"C");urlImage($("loginLogo"),s.appLogo,"C");
  previewBranding();renderSpinPrizes();renderButtons();renderWallets();renderTasks();
 }
-
 function previewBranding(){
+ setVal("brandPreviewName", $("appName").value||"CoinNova");
  $("brandPreviewName").textContent=$("appName").value||"CoinNova";
  $("brandPreviewTag").textContent=$("tagline").value||"";
  $("loadingPreviewTitle").textContent=$("loadingTitle").value||$("appName").value||"COINNOVA";
+ $("loadingPreviewText").textContent=$("loadingText").value||"";
  const a=safeUrl($("appLogo").value),b=safeUrl($("loadingImage").value);
  $("brandPreviewImg").style.display=a?"block":"none";if(a)$("brandPreviewImg").src=a;
- $("loadingPreviewImg").style.display=b?"block":"none";if(b)$("loadingPreviewImg").src=b;
+ if(b){
+  $("loadingPreviewBox").style.backgroundImage=`url(${b})`;
+  $("loadingPreviewImg").style.display="none";
+ }else{
+  $("loadingPreviewBox").style.backgroundImage="none";
+  $("loadingPreviewImg").style.display="none";
+ }
 }
-["appName","tagline","appLogo","loadingImage","loadingTitle"].forEach(id=>$(id).addEventListener("input",previewBranding));
+["appName","tagline","appLogo","loadingImage","loadingTitle","loadingText"].forEach(id=>$(id).addEventListener("input",previewBranding));
 
 async function loadAll(){
  try{
@@ -642,7 +688,6 @@ async function loadAll(){
   }else toast(e.message);
  }
 }
-
 $("loginForm").onsubmit=async e=>{
  e.preventDefault();$("loginError").textContent="";
  try{
@@ -664,9 +709,62 @@ function renderDashboard(){
  $("statTasks").textContent=S.tasks.length;
  const recent=[...S.withdrawals].slice(-8).reverse();
  $("dashWithdrawalRows").innerHTML=recent.map(w=>`
- <tr><td>#${esc(w.id)}</td><td>${esc(w.userName||w.name||w.userId||"User")}</td><td>${esc(w.method)}</td><td>${fmt(w.amount)} CNV</td><td>${esc(w.status)}</td><td><button class="btn small" onclick="editWithdrawal('${esc(w.id)}')">Review</button></td></tr>`).join("")||'<tr><td colspan="6" class="empty">No requests.</td></tr>';
+ <tr><td>#${esc(w.id)}</td><td>${esc(w.userName||w.name||w.userId||"User")}</td><td>${esc(methodName(w.method))}</td><td>${fmt(w.amount)} CNV</td><td>${statusBadge(w.status)}</td><td><button class="btn small" onclick="editWithdrawal('${esc(w.id)}')">Review</button></td></tr>`).join("")||'<tr><td colspan="6" class="empty">No withdrawal requests found.</td></tr>';
 }
 function fmt(n){return Number(n||0).toLocaleString("en-US")}
+function statusBadge(status){
+ const s=String(status||"pending").toLowerCase();
+ const cls=["paid","approved","completed"].includes(s)?"on":["rejected","blocked"].includes(s)?"off":"pending";
+ return `<span class="badge ${cls}">${esc(s.toUpperCase())}</span>`;
+}
+function methodName(id){return S.paymentMethods.find(m=>String(m.id)===String(id))?.name||String(id||"Unknown")}
+function renderWithdrawalRows(){
+ const list=S.withdrawals.filter(w=>S.withdrawalFilter==="all"||String(w.status).toLowerCase()===S.withdrawalFilter);
+ $("withdrawalRows").innerHTML=list.map(w=>`
+ <tr><td>#${esc(w.id)}</td><td>${esc(w.userName||w.name||w.userId||"User")}</td><td>${esc(methodName(w.method))}</td><td>${esc(w.address||"—")}</td><td>${fmt(w.amount)} CNV</td><td>${fmt(w.feeAmount)} CNV</td><td>${fmt(w.netAmount??(Number(w.amount||0)-Number(w.feeAmount||0)))} CNV</td><td>${statusBadge(w.status)}</td><td><button class="btn small" onclick="editWithdrawal('${esc(w.id)}')">Manage</button></td></tr>`).join("")||'<tr><td colspan="9" class="empty">No matching withdrawal requests.</td></tr>';
+}
+document.querySelectorAll("#withdrawalTabs button").forEach(b=>b.onclick=()=>{
+ S.withdrawalFilter=b.dataset.status;
+ document.querySelectorAll("#withdrawalTabs button").forEach(x=>x.classList.toggle("active",x===b));
+ renderWithdrawalRows();
+});
+window.editWithdrawal=id=>{
+ const w=S.withdrawals.find(x=>String(x.id)===String(id));if(!w)return;
+ openModal("Manage Withdrawal",`
+ <div class="help">Request #${esc(w.id)} · ${esc(w.userName||w.userId||"User")} · ${fmt(w.amount)} CNV</div>
+ <label>Request Status</label><select id="modalWithdrawalStatus">
+ <option value="pending">Pending</option><option value="approved">Approved</option><option value="paid">Paid</option><option value="rejected">Rejected</option></select>
+ <label style="margin-top:12px">Admin Note</label><textarea id="modalWithdrawalNote" placeholder="Optional processing note"></textarea>
+ <div class="form-actions"><button class="btn" onclick="closeModal()">Cancel</button><button class="btn primary" id="confirmWithdrawal">SAVE STATUS</button></div>`);
+ $("modalWithdrawalStatus").value=String(w.status||"pending").toLowerCase();
+ $("confirmWithdrawal").onclick=async()=>{
+  try{
+   await api(`/api/admin/withdrawals/${encodeURIComponent(id)}`,{method:"PATCH",body:JSON.stringify({status:$("modalWithdrawalStatus").value,note:$("modalWithdrawalNote").value})});
+   closeModal();await loadAll();toast("Withdrawal status updated");
+  }catch(e){toast(e.message)}
+ };
+};
+
+function renderUsers(filter=""){
+ const q=filter.trim().toLowerCase();
+ const users=S.users.filter(u=>`${u.name||""} ${u.telegramId||u.telegram_id||""} ${u.id||""}`.toLowerCase().includes(q));
+ $("userRows").innerHTML=users.map(u=>`
+ <tr><td>${esc(u.id)}</td><td>${esc(u.name||"Miner")}</td><td>${esc(u.telegramId||u.telegram_id||"—")}</td><td>${fmt(u.balance)} CNV</td><td>${fmt(u.referrals||u.referralCount||0)}</td><td>${u.blocked?'<span class="badge off">BLOCKED</span>':'<span class="badge on">ACTIVE</span>'}</td>
+ <td><button class="btn small" onclick="editUser('${esc(u.id)}')">Edit</button></td></tr>`).join("")||'<tr><td colspan="7" class="empty">No users found.</td></tr>';
+}
+$("userSearch").oninput=e=>renderUsers(e.target.value);
+window.editUser=id=>{
+ const u=S.users.find(x=>String(x.id)===String(id));if(!u)return;
+ setVal("editUserId",u.id);setVal("editUserBalance",u.balance||0);setVal("editUserBlocked",String(!!u.blocked));
+ $("editUserId").scrollIntoView({behavior:"smooth",block:"center"});
+};
+$("userForm").onsubmit=async e=>{
+ e.preventDefault();const id=$("editUserId").value;if(!id)return toast("Select a user first.");
+ try{
+  await api(`/api/admin/users/${encodeURIComponent(id)}`,{method:"PATCH",body:JSON.stringify({balance:number("editUserBalance"),blocked:$("editUserBlocked").value==="true"})});
+  await loadAll();toast("User updated");
+ }catch(err){toast(err.message)}
+};
 
 async function saveSettings(patch,success="Settings saved"){
  const merged={...S.settings,...patch};
@@ -675,8 +773,6 @@ async function saveSettings(patch,success="Settings saved"){
   S.settings=d.settings||merged;normalizeSettings();fillSettings();toast(success);return true;
  }catch(e){toast(e.message);return false}
 }
-
-// ব્રાন্ডিং এবং ইউজার প্যানেল টেক্সট সেভ করার ফর্ম
 $("brandingForm").onsubmit=async e=>{
  e.preventDefault();
  await saveSettings({
@@ -685,23 +781,33 @@ $("brandingForm").onsubmit=async e=>{
   appLogo:$("appLogo").value.trim(),
   loadingImage:$("loadingImage").value.trim(),
   loadingTitle:$("loadingTitle").value.trim(),
-  homeNotice:$("homeNotice").value.trim(),
-  withdrawNotice:$("withdrawNotice").value.trim(),
-  spinRulesText:$("spinRulesText").value.trim(),
-  ewalletCategoryName:$("ewalletCategoryName").value.trim(),
-  ewalletCategoryLogo:$("ewalletCategoryLogo").value.trim(),
-  networkCategoryName:$("networkCategoryName").value.trim(),
-  networkCategoryLogo:$("networkCategoryLogo").value.trim()
- },"Branding and texts saved successfully");
+  loadingText:$("loadingText").value.trim()
+ },"Branding saved");
 };
 
-// Custom Buttons
+$("textsForm").onsubmit=async e=>{
+ e.preventDefault();
+ await saveSettings({
+  txtHomeTitle:$("txtHomeTitle").value.trim(),
+  txtBalanceTitle:$("txtBalanceTitle").value.trim(),
+  txtTapButton:$("txtTapButton").value.trim(),
+  txtEnergyLabel:$("txtEnergyLabel").value.trim(),
+  txtWithdrawBtn:$("txtWithdrawBtn").value.trim(),
+  txtNetworkBtn:$("txtNetworkBtn").value.trim(),
+  txtEwalletBtn:$("txtEwalletBtn").value.trim(),
+  txtReferralTitle:$("txtReferralTitle").value.trim(),
+  txtNotice:$("txtNotice").value.trim()
+ },"User panel texts saved");
+};
+
 function clearButtonForm(){
+ S.editingButton=null;
  $("buttonForm").reset();setVal("buttonId","");
  setVal("buttonColor","#ffd66b");setVal("buttonAnimation","none");setVal("buttonEnabled","true");
 }
 $("clearButtonForm").onclick=clearButtonForm;
-$("addButton").onclick=()=>{clearButtonForm();$("buttonName").focus();};
+$("addButton").onclick=()=>{clearButtonForm();$("buttonName").focus();$("buttonForm").scrollIntoView({behavior:"smooth",block:"start"})};
+
 $("buttonForm").onsubmit=e=>{
  e.preventDefault();
  const id=$("buttonId").value||uid();
@@ -712,39 +818,43 @@ $("buttonForm").onsubmit=e=>{
  };
  const idx=S.buttons.findIndex(b=>String(b.id)===String(id));
  if(idx>=0)S.buttons[idx]=item;else S.buttons.push(item);
- renderButtons();toast("Button added to draft. Click SAVE ALL BUTTONS.");
+ renderButtons();toast("Button added to draft. Click SAVE ALL BUTTONS to publish.");
  clearButtonForm();
 };
 function renderButtons(){
  $("buttonList").innerHTML=S.buttons.map(b=>`
  <div class="list-item">
-  <div class="item-info"><b>${esc(b.name)}</b><small>${esc(b.url)}</small></div>
+  <div class="item-logo" style="color:${esc(b.color||"#ffd66b")}">${safeUrl(b.logo)?`<img src="${esc(safeUrl(b.logo))}" alt="" onerror="this.remove()">`:esc((b.name||"B").slice(0,1).toUpperCase())}</div>
+  <div class="item-info"><b>${esc(b.name||"Unnamed Button")}</b><small>${esc(b.url||"No URL")} · ${esc(b.animation||"none")}</small><span class="badge ${b.enabled?"on":"off"}">${b.enabled?"ENABLED":"DISABLED"}</span></div>
   <div class="item-actions"><button class="btn small" onclick="editButton('${esc(b.id)}')">Edit</button><button class="btn small danger" onclick="deleteButton('${esc(b.id)}')">Delete</button></div>
- </div>`).join("")||'<div class="empty">No buttons.</div>';
+ </div>`).join("")||'<div class="empty">No custom buttons yet. Click + Add Button.</div>';
 }
 window.editButton=id=>{
  const b=S.buttons.find(x=>String(x.id)===String(id));if(!b)return;
  setVal("buttonId",b.id);setVal("buttonName",b.name);setVal("buttonLogo",b.logo);
  setVal("buttonUrl",b.url);setVal("buttonColor",b.color||"#ffd66b");
  setVal("buttonAnimation",b.animation||"none");setVal("buttonEnabled",String(b.enabled!==false));
+ $("buttonForm").scrollIntoView({behavior:"smooth",block:"start"});
 };
 window.deleteButton=id=>{
- S.buttons=S.buttons.filter(b=>String(b.id)!==String(id));renderButtons();toast("Removed.");
+ S.buttons=S.buttons.filter(b=>String(b.id)!==String(id));renderButtons();toast("Button removed from draft. Save all buttons to publish.");
 };
-$("saveButtons").onclick=()=>saveSettings({buttons:S.buttons},"Custom buttons saved");
+$("saveButtons").onclick=async()=>{if(await saveSettings({buttons:S.buttons},"Custom buttons saved"))renderButtons()};
 
-// E-Wallet & Network Methods
 document.querySelectorAll("[data-wallet-tab]").forEach(b=>b.onclick=()=>{
  S.walletTab=b.dataset.walletTab;
  document.querySelectorAll("[data-wallet-tab]").forEach(x=>x.classList.toggle("active",x===b));
  setVal("walletCategory",S.walletTab);renderWallets();
 });
 function clearWalletForm(){
- $("walletForm").reset();setVal("walletId","");
- setVal("walletCategory",S.walletTab);
+ S.editingWallet=null;$("walletForm").reset();setVal("walletId","");
+ setVal("walletCategory",S.walletTab);setVal("walletColor",S.walletTab==="ewallet"?"#45e8ff":"#a78bfa");
+ setVal("walletFee",S.settings.withdrawalFeePercent??0);setVal("walletMin",S.settings.minimumWithdrawal??1000);
+ $("walletEditorTitle").textContent=S.walletTab==="ewallet"?"Add E-Wallet":"Add Network (Binance Popup)";
 }
-$("addWallet").onclick=()=>{clearWalletForm();};
+$("addWallet").onclick=()=>{clearWalletForm();$("walletForm").scrollIntoView({behavior:"smooth",block:"start"});$("walletName").focus()};
 $("clearWalletForm").onclick=clearWalletForm;
+
 $("walletForm").onsubmit=e=>{
  e.preventDefault();
  const id=$("walletId").value||uid();
@@ -759,139 +869,152 @@ $("walletForm").onsubmit=e=>{
  };
  const idx=S.paymentMethods.findIndex(m=>String(m.id)===String(id));
  if(idx>=0)S.paymentMethods[idx]=item;else S.paymentMethods.push(item);
- renderWallets();clearWalletForm();toast("Method added to draft. Click SAVE ALL METHODS.");
+ S.walletTab=category;
+ document.querySelectorAll("[data-wallet-tab]").forEach(b=>b.classList.toggle("active",b.dataset.walletTab===category));
+ renderWallets();clearWalletForm();toast("Method added to draft. Click SAVE ALL METHODS to publish.");
 };
 function renderWallets(){
- const list=S.paymentMethods.filter(m=>(m.category||(m.type==="crypto"?"network":"ewallet"))===S.walletTab);
+ const list=S.paymentMethods.filter(m=>(m.category|| (m.type==="crypto"?"network":"ewallet"))===S.walletTab);
  $("walletList").innerHTML=list.map(m=>`
  <div class="list-item">
-  <div class="item-info"><b>${esc(m.name)}</b><small>Fee: ${m.feePercent}% · Min: ${m.minWithdrawal} CNV</small></div>
+  <div class="item-logo" style="color:${esc(m.color||"#45e8ff")}">${safeUrl(m.logo)?`<img src="${esc(safeUrl(m.logo))}" alt="" onerror="this.remove()">`:esc((m.name||"W").slice(0,1).toUpperCase())}</div>
+  <div class="item-info"><b>${esc(m.name)}</b><small>Fee: ${Number(m.feePercent??0)}% · Minimum: ${fmt(m.minWithdrawal??S.settings.minimumWithdrawal)} CNV</small><span class="badge ${m.enabled!==false?"on":"off"}">${m.enabled!==false?"ENABLED":"DISABLED"}</span></div>
   <div class="item-actions"><button class="btn small" onclick="editWallet('${esc(m.id)}')">Edit</button><button class="btn small danger" onclick="deleteWallet('${esc(m.id)}')">Delete</button></div>
- </div>`).join("")||'<div class="empty">No methods in this category.</div>';
+ </div>`).join("")||'<div class="empty">No methods in this category. Click + Add Wallet / Network.</div>';
 }
 window.editWallet=id=>{
  const m=S.paymentMethods.find(x=>String(x.id)===String(id));if(!m)return;
- setVal("walletId",m.id);setVal("walletName",m.name);setVal("walletCategory",m.category||"ewallet");
+ S.walletTab=m.category||(m.type==="crypto"?"network":"ewallet");
+ document.querySelectorAll("[data-wallet-tab]").forEach(b=>b.classList.toggle("active",b.dataset.walletTab===S.walletTab));
+ setVal("walletId",m.id);setVal("walletName",m.name);setVal("walletCategory",S.walletTab);
  setVal("walletLogo",m.logo);setVal("walletColor",m.color||"#45e8ff");
  setVal("walletAnimation",m.animation||"none");setVal("walletFee",m.feePercent??0);
- setVal("walletMin",m.minWithdrawal??1000);setVal("walletHint",m.hint||"");
- setVal("walletEnabled",String(m.enabled!==false));
+ setVal("walletMin",m.minWithdrawal??S.settings.minimumWithdrawal??1000);
+ setVal("walletHint",m.hint||"");setVal("walletEnabled",String(m.enabled!==false));
+ $("walletEditorTitle").textContent="Edit "+m.name;
+ $("walletForm").scrollIntoView({behavior:"smooth",block:"start"});
 };
 window.deleteWallet=id=>{
- S.paymentMethods=S.paymentMethods.filter(m=>String(m.id)!==String(id));renderWallets();toast("Removed.");
+ S.paymentMethods=S.paymentMethods.filter(m=>String(m.id)!==String(id));renderWallets();toast("Method removed from draft. Save all methods to publish.");
 };
-$("saveWallets").onclick=()=>saveSettings({paymentMethods:S.paymentMethods},"Wallet methods saved");
+$("saveWallets").onclick=async()=>{
+ const valid=S.paymentMethods.map(m=>({...m,category:m.category||(m.type==="crypto"?"network":"ewallet")}));
+ if(await saveSettings({paymentMethods:valid},"Wallet and network methods saved"))renderWallets();
+};
 
-$("withdrawSettingsForm").onsubmit=e=>{
+$("withdrawSettingsForm").onsubmit=async e=>{
  e.preventDefault();
- saveSettings({
+ await saveSettings({
   minimumWithdrawal:number("minimumWithdrawal",1),
   withdrawalFeePercent:number("withdrawalFeePercent"),
   referralRequirement:number("referralRequirement"),
+  withdrawalNotice:$("withdrawalNotice").value.trim(),
   withdrawalEnabled:checked("withdrawEnabled")
  },"Withdrawal settings saved");
 };
-$("saveWithdrawToggle").onclick=()=>saveSettings({withdrawalEnabled:checked("withdrawEnabled")},"Status saved");
+$("saveWithdrawToggle").onclick=()=>saveSettings({withdrawalEnabled:checked("withdrawEnabled")},"Withdrawal status saved");
 
 function renderSpinPrizes(){
- const vals=String($("spinRewards")?.value||"10,25,50").split(",").map(x=>Number(x.trim())).filter(x=>Number.isFinite(x));
- $("spinPrizePreview").innerHTML=vals.map((v,i)=>`<div class="stat-card"><small>Prize ${i+1}</small><strong style="font-size:18px;color:var(--gold)">+${fmt(v)}</strong></div>`).join("");
+ const vals=String($("spinRewards")?.value||"10,25,50,100,250,500").split(",").map(x=>Number(x.trim())).filter(x=>Number.isFinite(x)&&x>=0);
+ $("spinPrizePreview").innerHTML=vals.map((v,i)=>`<div class="stat-card"><small>Prize ${i+1}</small><strong style="font-size:18px;color:var(--gold)">+${fmt(v)}</strong><small>CNV</small></div>`).join("")||'<div class="empty">Enter valid prize values.</div>';
 }
 $("spinRewards").addEventListener("input",renderSpinPrizes);
-$("spinForm").onsubmit=e=>{
+$("spinForm").onsubmit=async e=>{
  e.preventDefault();
  const rewards=$("spinRewards").value.split(",").map(x=>Number(x.trim()));
- saveSettings({
+ if(!rewards.length||rewards.some(x=>!Number.isFinite(x)||x<0))return toast("Enter valid comma-separated prize values.");
+ await saveSettings({
   spinEnabled:checked("spinEnabled"),
   referralsPerSpin:number("referralsPerSpin",1),
-  spinRewards:rewards
- },"Spin settings saved");
+  spinRewards:rewards,
+  referralReward:number("referralReward")
+ },"Lucky Spin settings saved");
 };
-$("commissionForm").onsubmit=e=>{
+$("saveCommissionSchedule").onclick=()=>saveSettings({commissionAutoPayout:checked("commissionAutoPayout"),commissionPayoutTime:"01:00",commissionTimezone:"Asia/Dhaka"},"Commission payout settings saved");
+$("commissionForm").onsubmit=async e=>{
  e.preventDefault();
  const rates=Array.from({length:6},(_,i)=>Number($("rate"+(i+1)).value));
- saveSettings({commissionRates:rates},"Commission rates saved");
+ if(rates.some(x=>!Number.isFinite(x)||x<0||x>100))return toast("Commission rates must be between 0 and 100%.");
+ await saveSettings({commissionRates:rates},"Six commission rates saved");
 };
 
 function renderTasks(){
  $("taskRows").innerHTML=S.tasks.map(t=>`
- <tr><td>${esc(t.id)}</td><td>${esc(t.title)}</td><td>${esc(t.platform)}</td><td>${fmt(t.reward)} CNV</td><td>${t.enabled===false?"Disabled":"Enabled"}</td><td><button class="btn small" onclick="editTask('${esc(t.id)}')">Edit</button> <button class="btn small danger" onclick="deleteTask('${esc(t.id)}')">Delete</button></td></tr>`).join("")||'<tr><td colspan="6" class="empty">No tasks.</td></tr>';
+ <tr><td>${esc(t.id)}</td><td>${esc(t.title)}</td><td>${esc(t.platform||"Other")}</td><td>${fmt(t.reward)} CNV</td><td>${statusBadge(t.enabled===false?"disabled":"enabled")}</td><td><button class="btn small" onclick="editTask('${esc(t.id)}')">Edit</button> <button class="btn small" onclick="toggleTask('${esc(t.id)}')">${t.enabled===false?"Enable":"Disable"}</button> <button class="btn small danger" onclick="deleteTask('${esc(t.id)}')">Delete</button></td></tr>`).join("")||'<tr><td colspan="6" class="empty">No tasks configured.</td></tr>';
 }
 function clearTaskForm(){
- setVal("taskId","");setVal("taskTitle","");setVal("taskUrl","");setVal("taskReward",0);
+ setVal("taskId","");setVal("taskTitle","");setVal("taskUrl","");setVal("taskReward",0);setVal("taskPlatform","Telegram");setVal("taskEnabled","true");$("taskEditorTitle").textContent="Add Task";
 }
-$("addTask").onclick=clearTaskForm;
+$("addTask").onclick=()=>{clearTaskForm();$("taskForm").scrollIntoView({behavior:"smooth",block:"start"})};
 $("clearTask").onclick=clearTaskForm;
 window.editTask=id=>{
  const t=S.tasks.find(x=>String(x.id)===String(id));if(!t)return;
  setVal("taskId",t.id);setVal("taskTitle",t.title);setVal("taskUrl",t.url);
- setVal("taskReward",t.reward);setVal("taskPlatform",t.platform||"Telegram");
- setVal("taskEnabled",String(t.enabled!==false));
+ setVal("taskReward",t.reward);setVal("taskPlatform",t.platform||"Other");setVal("taskEnabled",String(t.enabled!==false));
+ $("taskEditorTitle").textContent="Edit Task";$("taskForm").scrollIntoView({behavior:"smooth",block:"start"});
 };
 $("taskForm").onsubmit=async e=>{
  e.preventDefault();
  const id=$("taskId").value;
  const data={title:$("taskTitle").value.trim(),url:$("taskUrl").value.trim(),reward:number("taskReward"),platform:$("taskPlatform").value,enabled:$("taskEnabled").value==="true"};
  try{
-  if(id) await api(`/api/admin/tasks/${encodeURIComponent(id)}`,{method:"PATCH",body:JSON.stringify(data)});
-  else await api("/api/admin/tasks",{method:"POST",body:JSON.stringify(data)});
+  if(id){
+   await api(`/api/admin/tasks/${encodeURIComponent(id)}`,{method:"PATCH",body:JSON.stringify(data)});
+  }else{
+   await api("/api/admin/tasks",{method:"POST",body:JSON.stringify(data)});
+  }
   clearTaskForm();await loadAll();toast("Task saved");
  }catch(err){toast(err.message)}
 };
+window.toggleTask=async id=>{
+ const t=S.tasks.find(x=>String(x.id)===String(id));if(!t)return;
+ try{await api(`/api/admin/tasks/${encodeURIComponent(id)}`,{method:"PATCH",body:JSON.stringify({enabled:t.enabled===false})});await loadAll();toast("Task status updated")}
+ catch(e){toast(e.message)}
+};
 window.deleteTask=async id=>{
- if(!confirm("Delete?"))return;
- try{await api(`/api/admin/tasks/${encodeURIComponent(id)}`,{method:"DELETE"});await loadAll();toast("Deleted")}catch(e){toast(e.message)}
+ if(!confirm("Delete this task?"))return;
+ try{await api(`/api/admin/tasks/${encodeURIComponent(id)}`,{method:"DELETE"});await loadAll();toast("Task deleted")}
+ catch(e){toast(e.message)}
 };
 
-function renderWithdrawalRows(){
- const list=S.withdrawals.filter(w=>S.withdrawalFilter==="all"||String(w.status).toLowerCase()===S.withdrawalFilter);
- $("withdrawalRows").innerHTML=list.map(w=>`
- <tr><td>#${esc(w.id)}</td><td>${esc(w.userName||w.userId)}</td><td>${esc(w.method)}</td><td>${esc(w.address)}</td><td>${fmt(w.amount)} CNV</td><td>${esc(w.status)}</td><td><button class="btn small" onclick="editWithdrawal('${esc(w.id)}')">Review</button></td></tr>`).join("")||'<tr><td colspan="7" class="empty">No requests.</td></tr>';
-}
-document.querySelectorAll("#withdrawalTabs button").forEach(b=>b.onclick=()=>{
- S.withdrawalFilter=b.dataset.status;
- document.querySelectorAll("#withdrawalTabs button").forEach(x=>x.classList.toggle("active",x===b));
- renderWithdrawalRows();
-});
-window.editWithdrawal=id=>{
- const w=S.withdrawals.find(x=>String(x.id)===String(id));if(!w)return;
- openModal("Manage Withdrawal",`
- <label>Status</label><select id="modalWithdrawalStatus"><option value="pending">Pending</option><option value="approved">Approved</option><option value="paid">Paid</option><option value="rejected">Rejected</option></select>
- <div class="form-actions" style="margin-top:15px"><button class="btn primary" id="confirmWithdrawal">SAVE</button></div>`);
- $("modalWithdrawalStatus").value=w.status||"pending";
- $("confirmWithdrawal").onclick=async()=>{
-  try{
-   await api(`/api/admin/withdrawals/${encodeURIComponent(id)}`,{method:"PATCH",body:JSON.stringify({status:$("modalWithdrawalStatus").value})});
-   closeModal();await loadAll();toast("Updated");
-  }catch(e){toast(e.message)}
- };
-};
-
-function renderUsers(q=""){
- const users=S.users.filter(u=>`${u.name||""}`.toLowerCase().includes(q.toLowerCase()));
- $("userRows").innerHTML=users.map(u=>`
- <tr><td>${esc(u.id)}</td><td>${esc(u.name)}</td><td>${esc(u.telegramId||u.tg_id)}</td><td>${fmt(u.balance)} CNV</td><td>${u.is_banned?"Blocked":"Active"}</td><td><button class="btn small" onclick="editUser('${esc(u.id)}')">Edit</button></td></tr>`).join("")||'<tr><td colspan="6" class="empty">No users.</td></tr>';
-}
-$("userSearch").oninput=e=>renderUsers(e.target.value);
-window.editUser=id=>{
- const u=S.users.find(x=>String(x.id)===String(id));if(!u)return;
- setVal("editUserId",u.id);setVal("editUserBalance",u.balance||0);setVal("editUserBlocked",String(!!u.is_banned));
-};
-$("userForm").onsubmit=async e=>{
+$("saveDashboard").onclick=()=>saveSettings({
+ miningEnabled:checked("dashMining"),
+ registrationEnabled:checked("dashRegistration"),
+ withdrawalEnabled:checked("dashWithdrawal"),
+ spinEnabled:checked("dashSpin")
+},"Dashboard feature statuses saved");
+$("saveSystemToggles").onclick=()=>saveSettings({
+ registrationEnabled:checked("systemRegistration"),
+ miningEnabled:checked("systemMining"),
+ withdrawalEnabled:checked("systemWithdrawal"),
+ sound:checked("systemSound")
+},"System settings saved");
+$("systemForm").onsubmit=async e=>{
  e.preventDefault();
- const id=$("editUserId").value;
+ await saveSettings({
+  miningReward:number("miningReward"),
+  maxEnergy:number("maxEnergy",1000),
+  energyPerSecond:number("energyPerSecond"),
+  dailyReward:number("dailyReward")
+ },"Core settings saved");
+};
+$("changePasswordBtn").onclick=()=>openModal("Change Admin Password",`
+ <form id="passwordChangeForm">
+  <label>Current Password</label><input id="oldPassword" type="password" required autocomplete="current-password">
+  <label style="margin-top:12px">New Password</label><input id="newPassword" type="password" required minlength="12" autocomplete="new-password">
+  <label style="margin-top:12px">Confirm New Password</label><input id="confirmPassword" type="password" required minlength="12" autocomplete="new-password">
+  <div class="form-actions"><button class="btn primary" type="submit">CHANGE PASSWORD</button></div>
+ </form>`);
+document.addEventListener("submit",async e=>{
+ if(e.target.id!=="passwordChangeForm")return;
+ e.preventDefault();
+ const oldPassword=$("oldPassword").value,newPassword=$("newPassword").value,confirmPassword=$("confirmPassword").value;
+ if(newPassword!==confirmPassword)return toast("New passwords do not match.");
  try{
-  await api(`/api/admin/users/${encodeURIComponent(id)}`,{method:"PATCH",body:JSON.stringify({balance:number("editUserBalance"),banned:$("editUserBlocked").value==="true"})});
-  await loadAll();toast("User updated");
+  await api("/api/admin/change-password",{method:"POST",body:JSON.stringify({currentPassword:oldPassword,newPassword})});
+  closeModal();toast("Password changed");
  }catch(err){toast(err.message)}
-};
-
-$("saveDashboard").onclick=()=>saveSettings({miningEnabled:checked("dashMining"),registrationEnabled:checked("dashRegistration"),withdrawalEnabled:checked("dashWithdrawal"),spinEnabled:checked("dashSpin")},"Status saved");
-$("saveSystemToggles").onclick=()=>saveSettings({registrationEnabled:checked("systemRegistration"),miningEnabled:checked("systemMining"),sound:checked("systemSound")},"Controls saved");
-$("systemForm").onsubmit=e=>{
- e.preventDefault();
- saveSettings({miningReward:number("miningReward"),maxEnergy:number("maxEnergy",1000),energyPerSecond:number("energyPerSecond"),dailyReward:number("dailyReward")},"Core saved");
-};
+});
 
 $("adminApp").style.display="none";
 $("loginScreen").style.display="grid";
