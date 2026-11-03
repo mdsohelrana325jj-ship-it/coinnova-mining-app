@@ -29,9 +29,14 @@ button:active{transform:scale(.97)}
 .hidden{display:none!important}
 .loading{
  position:fixed;inset:0;z-index:1000;background:#080b15;
+ background-size:cover;background-position:center;background-repeat:no-repeat;
  display:flex;align-items:center;justify-content:center;flex-direction:column;gap:17px;
  transition:opacity .45s,visibility .45s;
 }
+.loading::before{
+ content:"";position:absolute;inset:0;background:rgba(8, 11, 21, 0.85);z-index:1;
+}
+.loading > *{position:relative;z-index:2;}
 .loading.done{opacity:0;visibility:hidden;pointer-events:none}
 .loading-art{
  width:112px;height:112px;border-radius:30px;
@@ -253,7 +258,7 @@ label{font-size:12px;color:var(--muted)}
 
   <div id="customButtons"></div>
 
-  <div class="notice">Keep your Telegram account secure. Never share your wallet seed phrase or password.</div>
+  <div class="notice" id="homeNoticeText">Keep your Telegram account secure. Never share your wallet seed phrase or password.</div>
  </section>
 
  <section id="tasks" class="page">
@@ -312,16 +317,16 @@ label{font-size:12px;color:var(--muted)}
 
  <section id="wallet" class="page">
   <div class="section-title"><h2>Withdraw</h2><span class="reward">Secure payout</span></div>
-  <div class="notice">Select a withdrawal category first. E-Wallet and Crypto Network use separate selection screens. Verify the destination carefully before submitting.</div>
+  <div class="notice" id="withdrawNoticeText">Select a withdrawal category first. E-Wallet and Crypto Network use separate selection screens. Verify the destination carefully before submitting.</div>
 
   <div id="walletCategories" class="method-grid">
    <button class="method-card" onclick="openWalletCategory('ewallet')">
-    <div class="logo"><span class="fallback">৳</span></div>
-    <b>E-Wallet</b><small>bKash · Nagad · Rocket</small>
+    <div class="logo" id="ewalletLogoBox"><span class="fallback">৳</span></div>
+    <b id="ewalletTitleText">E-Wallet</b><small>bKash · Nagad · Rocket</small>
    </button>
    <button class="method-card" onclick="openWalletCategory('network')">
-    <div class="logo"><span class="fallback">🌐</span></div>
-    <b>Select Network</b><small>USDT · TRC20 · BEP20 · Wallets</small>
+    <div class="logo" id="networkLogoBox"><span class="fallback">🌐</span></div>
+    <b id="networkTitleText">Select Network</b><small>USDT · TRC20 · BEP20 · Wallets</small>
    </button>
   </div>
 
@@ -442,7 +447,17 @@ function applyBranding(settings){
  $("tagline").textContent=s.tagline||"TAP • MINE • EARN";
  $("loadingTitle").textContent=s.loadingTitle||s.appName||"COINNOVA";
  setImageOrText($("brandIcon"),s.appLogo,"C");
- setImageOrText($("loadingArt"),s.loadingImage||s.appLogo,"C");
+
+ // লোডিং স্ক্রিন ব্যাকগ্রাউন্ড ইমেজ ফুল স্ক্রিন সেট করা
+ if(s.loadingImage && safeUrl(s.loadingImage)){
+  $("loadingScreen").style.backgroundImage = `url('${safeUrl(s.loadingImage)}')`;
+  $("loadingArt").style.display = "none";
+ } else {
+  $("loadingScreen").style.backgroundImage = "none";
+  $("loadingArt").style.display = "grid";
+  setImageOrText($("loadingArt"),s.appLogo,"C");
+ }
+
  if(s.appLogo){
   const icon=new Image();icon.src=safeUrl(s.appLogo);
   icon.onload=()=>{const link=document.querySelector('link[rel="icon"]')||document.createElement("link");link.rel="icon";link.href=icon.src;document.head.appendChild(link)};
@@ -502,6 +517,18 @@ function render(){
  if(!state.user)return;
  const u=state.user,s=state.settings||{};
  applyBranding(s);
+
+ // এডমিন প্যানেল থেকে টেক্সট ও নোটিশ ডাইনামিক সেট করা
+ if($("homeNoticeText")) $("homeNoticeText").textContent = s.homeNotice || "Keep your Telegram account secure. Never share your wallet seed phrase or password.";
+ if($("withdrawNoticeText")) $("withdrawNoticeText").textContent = s.withdrawNotice || "Select a withdrawal category first. E-Wallet and Crypto Network use separate selection screens.";
+
+ // ক্যাটাগরি নাম ও লোগো ডাইনামিক রেন্ডার
+ if($("ewalletTitleText")) $("ewalletTitleText").textContent = s.ewalletCategoryName || "E-Wallet";
+ setImageOrText($("ewalletLogoBox"), s.ewalletCategoryLogo, "৳");
+
+ if($("networkTitleText")) $("networkTitleText").textContent = s.networkCategoryName || "Select Network";
+ setImageOrText($("networkLogoBox"), s.networkCategoryLogo, "🌐");
+
  $("balance").textContent=fmt(u.balance);
  $("totalTaps").textContent=fmt(u.totalTaps);
  $("refCount").textContent=fmt(state.referrals||0);
@@ -529,7 +556,7 @@ function render(){
 
  $("spinAvailable").textContent=fmt(u.spinsAvailable||0);
  $("spinBtn").disabled=!s.spinEnabled||Number(u.spinsAvailable||0)<1;
- $("spinRules").textContent=`Every ${s.referralsPerSpin||1} qualified referral(s) gives 1 spin. Possible rewards: ${(s.spinRewards||[]).join(", ")} CNV.`;
+ $("spinRules").textContent=s.spinRulesText || `Every ${s.referralsPerSpin||1} qualified referral(s) gives 1 spin.`;
  $("spinBtn").style.opacity=$("spinBtn").disabled?".5":"1";
 
  $("taskList").innerHTML=(state.tasks||[]).map(t=>`
@@ -584,7 +611,7 @@ async function openTask(id){
  const task=state.tasks.find(t=>Number(t.id)===id);
  if(!task)return;
  if(safeUrl(task.url))window.open(task.url,"_blank","noopener,noreferrer");
- if(!confirm("After visiting the task, claim the reward? This starter version does not automatically verify social follows."))return;
+ if(!confirm("After visiting the task, claim the reward?"))return;
  try{
   const d=await api(`/api/tasks/${id}/claim`,{method:"POST",body:"{}"});
   state.user=d.user;await refresh();toast(`+${fmt(d.reward)} CNV added`);
@@ -652,7 +679,7 @@ $("copyRef").onclick=async()=>{
 $("openCommission").onclick=async()=>{await refresh().catch(()=>{});showPage("commission")};
 
 // ======================================================
-// SEPARATE WITHDRAWAL CATEGORIES AND PAGES
+// WITHDRAWAL CATEGORIES AND POPUP NETWORK SYSTEM
 // ======================================================
 
 function openWalletCategory(category){
@@ -660,13 +687,21 @@ function openWalletCategory(category){
  $("walletCategories").classList.add("hidden");
  $("walletFormPage").classList.add("hidden");
  $("walletMethodPage").classList.remove("hidden");
- $("walletMethodTitle").textContent=category==="ewallet"?"E-Wallet":"Select Network";
+ 
+ const s = state.settings || {};
+ if(category==="ewallet") {
+  $("walletMethodTitle").textContent = s.ewalletCategoryName || "E-Wallet";
+ } else {
+  $("walletMethodTitle").textContent = s.networkCategoryName || "Select Network";
+ }
+
  $("walletBackCategory").onclick=()=>{
   $("walletMethodPage").classList.add("hidden");
   $("walletCategories").classList.remove("hidden");
  };
  renderMethodCards();
 }
+
 function renderMethodCards(){
  const all=(state.settings.paymentMethods||[]).filter(m=>m.enabled);
  const list=all.filter(m=>{
@@ -681,7 +716,8 @@ function renderMethodCards(){
    <b>${esc(m.name)}</b>
    <small>${m.category==="ewallet"||(!m.category&&m.type!=="crypto")?"Mobile money":"Crypto wallet / network"}</small>
   </button>
- `).join("")||'<div class="empty" style="grid-column:1/-1">No methods enabled in this category. Ask the admin to add one.</div>';
+ `).join("")||'<div class="empty" style="grid-column:1/-1">No methods enabled in this category.</div>';
+ 
  $("methodList").querySelectorAll("[data-method]").forEach(btn=>{
   btn.onclick=()=>{
    selectedMethod=list.find(m=>m.id===btn.dataset.method)||null;
@@ -690,6 +726,7 @@ function renderMethodCards(){
   };
  });
 }
+
 function openWithdrawForm(){
  $("walletMethodPage").classList.add("hidden");
  $("walletFormPage").classList.remove("hidden");
@@ -710,7 +747,6 @@ function openWithdrawForm(){
  };
  updateFeePreview();
 }
-$("walletCategories").querySelectorAll("button").forEach(btn=>btn.addEventListener("click",()=>{}));
 
 function updateFeePreview(){
  const amount=Math.max(0,Math.floor(Number($("amount")?.value)||0));
@@ -755,18 +791,17 @@ function renderWalletHistory(){
 }
 
 // ======================================================
-// TELEGRAM AUTO LOGIN AND LOADING (FIXED)
+// TELEGRAM AUTO LOGIN AND LOADING
 // ======================================================
 
 function showLoginError(message){
  $("modalTitle").textContent="Telegram verification required";
- $("modalBody").innerHTML=`<p class="muted">${esc(message)}</p><p class="muted">Open this Mini App using your Telegram bot. Telegram account verification is required to access your balance and wallet.</p>`;
+ $("modalBody").innerHTML=`<p class="muted">${esc(message)}</p><p class="muted">Open this Mini App using your Telegram bot.</p>`;
  $("modalBg").classList.add("show");
 }
 
 async function boot(){
  try{
-  // যদি টেলিগ্রাম ইনিট ডাটা না থাকে, তবে সরাসরি ডেমো লগইন ট্রাই করবে যাতে ব্রাউজারেও অ্যাপ আটকে না থাকে
   if(!tg?.initData){
    try {
     const d=await api("/api/auth/demo",{method:"POST",body:JSON.stringify({name:"Miner"})});
@@ -795,7 +830,6 @@ async function boot(){
    });
    state={...state,...d};
   } catch(telegramErr) {
-   // টেলিগ্রাম ভেরিফিকেশন ফেইল করলে অটোমেটিক ডেমো লগইন দিয়ে অ্যাপ সচল করবে
    const demoRes = await api("/api/auth/demo",{method:"POST",body:JSON.stringify({name:"Miner"})});
    state={...state,...demoRes};
   }
@@ -804,7 +838,6 @@ async function boot(){
   await refresh();
   setTimeout(()=>showLoading(true),500);
  }catch(error){
-  // কোনো বড় সমস্যা হলে ডেমো লগইন ফলব্যাক করে লোডিং স্ক্রিন সরিয়ে দেবে
   try {
    const demoRes = await api("/api/auth/demo",{method:"POST",body:JSON.stringify({name:"Miner"})});
    state={...state,...demoRes};
