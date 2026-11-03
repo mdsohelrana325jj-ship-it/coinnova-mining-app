@@ -676,7 +676,7 @@ async function saveSettings(patch,success="Settings saved"){
  }catch(e){toast(e.message);return false}
 }
 
-// બ્રાন্ডিং এবং ইউজার প্যানেল টেক্সট সেভ করার ফর্ম
+// ব્રાন্ডিং এবং ইউজার প্যানেল টেক্সট সেভ করার ফর্ম
 $("brandingForm").onsubmit=async e=>{
  e.preventDefault();
  await saveSettings({
@@ -731,7 +731,7 @@ window.editButton=id=>{
 window.deleteButton=id=>{
  S.buttons=S.buttons.filter(b=>String(b.id)!==String(id));renderButtons();toast("Removed.");
 };
-$("saveButtons").onclick=async()=>saveSettings({buttons:S.buttons},"Custom buttons saved");
+$("saveButtons").onclick=()=>saveSettings({buttons:S.buttons},"Custom buttons saved");
 
 // E-Wallet & Network Methods
 document.querySelectorAll("[data-wallet-tab]").forEach(b=>b.onclick=()=>{
