@@ -5,398 +5,1042 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
 <meta name="theme-color" content="#080b15">
 <title>CoinNova • Admin Control</title>
+
 <style>
-:root{--bg:#080b15;--side:#0d1322;--panel:#111a2c;--panel2:#17233a;--gold:#ffd66b;--cyan:#45e8ff;--green:#51f5b7;--red:#ff647c;--purple:#a78bfa;--text:#f5f7ff;--muted:#93a1bd;--line:#283752}
-*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,system-ui,Arial,sans-serif}button,input,select,textarea{font:inherit}button{cursor:pointer}button:disabled{opacity:.45;cursor:not-allowed}input,select,textarea{width:100%;background:#080f1d;border:1px solid #30415e;color:var(--text);border-radius:10px;padding:11px;outline:none}input:focus,select:focus,textarea:focus{border-color:var(--cyan)}input[type=checkbox]{width:18px;height:18px;accent-color:var(--gold)}input[type=color]{height:42px;padding:4px}textarea{min-height:75px;resize:vertical}label{font-size:11px;color:var(--muted);display:block;margin:0 0 7px}.hidden{display:none!important}
-.app{display:flex;min-height:100vh}.sidebar{width:245px;position:fixed;inset:0 auto 0 0;overflow:auto;background:var(--side);border-right:1px solid var(--line);padding:17px 12px;z-index:20}.brand{display:flex;align-items:center;gap:10px;padding:5px 7px 20px}.brand-icon{width:42px;height:42px;border-radius:13px;background:linear-gradient(135deg,#ffe9a0,#ef9d28);display:grid;place-items:center;color:#432900;font-size:22px;font-weight:1000;overflow:hidden}.brand-icon img{width:100%;height:100%;object-fit:cover}.brand b{font-size:14px}.brand small{display:block;color:var(--muted);font-size:9px;margin-top:4px}.nav-label{font-size:9px;color:#66738e;letter-spacing:1.5px;font-weight:900;padding:14px 9px 6px}.nav button{width:100%;display:flex;gap:10px;text-align:left;padding:11px;border:1px solid transparent;background:none;color:#9ba8c2;border-radius:10px;margin:3px 0;font-size:12px;font-weight:750}.nav button.active{color:var(--gold);background:#ffd66b12;border-color:#ffd66b24}.nav button:hover{background:#ffffff09}
-.main{margin-left:245px;width:calc(100% - 245px);padding:23px;min-width:0}.topbar{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:22px}.topbar h1{font-size:22px;margin:0}.topbar p{font-size:11px;color:var(--muted);margin:5px 0 0}.top-actions{display:flex;gap:8px}.btn{padding:9px 12px;border:1px solid #354766;background:#1b2941;color:var(--text);border-radius:10px;font-size:11px;font-weight:850}.btn.primary{background:linear-gradient(100deg,#ffe9a0,#f2a32c);border:0;color:#3e290b}.btn.danger{background:#3a1723;color:#ff8a9d;border-color:#692738}.btn.small{padding:6px 8px;font-size:10px}.page{display:none}.page.active{display:block;animation:fade .2s}.grid{display:grid;gap:13px}.two{grid-template-columns:repeat(2,minmax(0,1fr))}.three{grid-template-columns:repeat(3,minmax(0,1fr))}.stats{grid-template-columns:repeat(4,minmax(0,1fr));margin-bottom:15px}.panel,.stat{background:linear-gradient(135deg,#131d31,#101727);border:1px solid var(--line);border-radius:16px;padding:16px;margin-bottom:14px;min-width:0}.panel h3{font-size:14px;margin:0 0 6px}.desc{font-size:10px;color:var(--muted);line-height:1.6;margin:0 0 14px}.stat small{font-size:10px;color:var(--muted)}.stat strong{display:block;font-size:22px;margin:10px 0}.form-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.full{grid-column:1/-1}.fg{min-width:0}.actions{display:flex;justify-content:flex-end;gap:8px;flex-wrap:wrap;margin-top:14px}.switch-row{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:11px 0;border-bottom:1px solid #273650}.switch-row b{font-size:12px}.switch-row small{display:block;color:var(--muted);font-size:10px;margin-top:4px}.switch{width:42px;height:23px;position:relative;flex-shrink:0}.switch input{display:none}.switch span{position:absolute;inset:0;background:#35425a;border-radius:20px}.switch span:before{content:"";position:absolute;left:3px;top:3px;width:17px;height:17px;background:#fff;border-radius:50%;transition:.2s}.switch input:checked+span{background:#28b98a}.switch input:checked+span:before{transform:translateX(19px)}.list-item{display:flex;align-items:center;gap:10px;padding:11px;border:1px solid var(--line);background:#111a2b;border-radius:12px;margin:8px 0}.item-logo{width:42px;height:42px;border-radius:12px;background:#08111f;border:1px solid #33425c;display:grid;place-items:center;overflow:hidden;flex-shrink:0;font-weight:900}.item-logo img{width:100%;height:100%;object-fit:contain;padding:5px}.item-info{flex:1;min-width:0}.item-info b{display:block;font-size:12px;overflow-wrap:anywhere}.item-info small{display:block;color:var(--muted);font-size:10px;margin-top:4px;overflow-wrap:anywhere}.item-actions{display:flex;gap:5px;flex-wrap:wrap}.badge{display:inline-block;padding:4px 7px;border-radius:7px;font-size:9px;background:#28354b}.on{background:#12382d;color:var(--green)}.off{background:#39232a;color:#ff9aaa}.table-wrap{overflow:auto;border:1px solid var(--line);border-radius:12px}table{width:100%;border-collapse:collapse;min-width:580px}th,td{text-align:left;padding:11px;border-bottom:1px solid #273650;font-size:10px;white-space:nowrap}th{color:var(--muted);background:#0d1525;font-size:9px}tr:last-child td{border:0}.empty{text-align:center;padding:22px;color:var(--muted)}.tabs{display:flex;gap:7px;flex-wrap:wrap;margin:12px 0}.tabs button{background:#101a2b;border:1px solid var(--line);color:var(--muted);border-radius:9px;padding:9px 12px;font-size:11px;font-weight:800}.tabs button.active{border-color:#a98b44;color:var(--gold);background:#332d20}.help{background:#0b1b24;border:1px solid #214b57;color:#a4ecf5;border-radius:11px;padding:11px;font-size:10px;line-height:1.7;margin:12px 0}.preview{min-height:105px;border:1px dashed #405270;border-radius:12px;background:#0a1120;padding:14px;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:7px;text-align:center}.preview img{width:55px;height:55px;object-fit:contain}.preview b{font-size:13px}.preview small{font-size:10px;color:var(--muted)}.login-screen{position:fixed;inset:0;z-index:100;background:radial-gradient(circle at 50% 10%,#233658,#080b15 55%);display:grid;place-items:center;padding:18px}.login-box{width:min(390px,100%);background:#111a2c;border:1px solid #33425d;border-radius:22px;padding:25px}.login-box h1{font-size:22px;margin:0 0 8px}.login-box p{font-size:11px;color:var(--muted);line-height:1.6}.login-logo{width:60px;height:60px;background:linear-gradient(135deg,#ffe9a0,#ed9d29);color:#422806;border-radius:17px;display:grid;place-items:center;font-size:30px;font-weight:1000;overflow:hidden;margin-bottom:16px}.login-logo img{width:100%;height:100%;object-fit:cover}.toast{position:fixed;z-index:300;top:14px;left:50%;transform:translate(-50%,-150%);background:#18243a;border:1px solid #425575;border-radius:11px;padding:11px 16px;font-size:12px;transition:.25s;max-width:90%;text-align:center}.toast.show{transform:translate(-50%,0)}.modal-bg{position:fixed;z-index:200;inset:0;background:#000b;display:none;align-items:center;justify-content:center;padding:15px}.modal-bg.show{display:flex}.modal{width:min(560px,100%);max-height:90vh;overflow:auto;background:#111a2c;border:1px solid #354661;border-radius:18px;padding:18px}.modal-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:13px}.modal-head h3{margin:0}.mobile-menu{display:none}@keyframes fade{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}@media(max-width:1000px){.stats{grid-template-columns:repeat(2,1fr)}.three{grid-template-columns:repeat(2,1fr)}}@media(max-width:760px){.sidebar{width:260px;transform:translateX(-110%);transition:.25s;box-shadow:15px 0 45px #0008}.sidebar.open{transform:translateX(0)}.main{margin:0;width:100%;padding:15px 12px 30px}.mobile-menu{display:inline-block}.topbar h1{font-size:18px}.two,.three{grid-template-columns:1fr}.form-grid{grid-template-columns:1fr}.full{grid-column:auto}.panel{padding:13px}}@media(max-width:380px){.stats{grid-template-columns:1fr 1fr}.item-actions{max-width:100px}}
+:root{
+ --bg:#080b15;--sidebar:#0d1322;--panel:#111a2c;--panel2:#17233a;
+ --gold:#ffd66b;--gold2:#f4a52e;--cyan:#45e8ff;--green:#51f5b7;
+ --red:#ff647c;--purple:#a78bfa;--text:#f5f7ff;--muted:#93a1bd;
+ --line:#283752;--radius:17px;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,system-ui,-apple-system,"Segoe UI",sans-serif}
+button,input,select,textarea{font:inherit}
+button{cursor:pointer}
+button:disabled{opacity:.45;cursor:not-allowed}
+button:active{transform:scale(.98)}
+input,select,textarea{width:100%;background:#080f1d;border:1px solid #30415e;color:var(--text);border-radius:11px;padding:12px;outline:none}
+input:focus,select:focus,textarea:focus{border-color:var(--cyan);box-shadow:0 0 0 2px #45e8ff12}
+input[type=checkbox]{width:18px;height:18px;accent-color:var(--gold)}
+input[type=color]{height:42px;padding:4px}
+textarea{min-height:85px;resize:vertical}
+label{font-size:11px;color:var(--muted);display:block;margin:0 0 7px}
+.hidden{display:none!important}
+.app{display:flex;min-height:100vh}
+.sidebar{width:245px;flex-shrink:0;background:var(--sidebar);border-right:1px solid var(--line);padding:20px 13px;position:fixed;inset:0 auto 0 0;overflow-y:auto;z-index:100}
+.brand{display:flex;align-items:center;gap:11px;padding:3px 7px 23px}
+.brand-icon{width:43px;height:43px;border-radius:14px;display:grid;place-items:center;background:linear-gradient(135deg,#ffe9a0,#ef9d28);color:#4b2b08;font-weight:1000;font-size:24px;overflow:hidden;flex-shrink:0}
+.brand-icon img{width:100%;height:100%;object-fit:cover}
+.brand b{font-size:15px;display:block;letter-spacing:.5px}
+.brand small{font-size:9px;color:var(--muted);display:block;margin-top:4px}
+.nav-label{font-size:9px;color:#66738e;letter-spacing:1.8px;font-weight:900;padding:15px 10px 8px}
+.nav button{width:100%;display:flex;align-items:center;gap:11px;text-align:left;padding:12px 11px;border:1px solid transparent;background:transparent;color:#9ba8c2;border-radius:12px;margin:3px 0;font-size:12px;font-weight:750;transition:.2s}
+.nav button .ico{width:22px;text-align:center;font-size:17px}
+.nav button.active{color:var(--gold);background:#ffd66b12;border-color:#ffd66b24}
+.nav button:hover{background:#ffffff08}
+.side-bottom{border-top:1px solid var(--line);margin-top:20px;padding-top:15px}
+.main{margin-left:245px;width:calc(100% - 245px);padding:24px;min-width:0}
+.topbar{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:24px}
+.topbar h1{font-size:23px;margin:0;font-weight:950}
+.topbar p{font-size:11px;color:var(--muted);margin:6px 0 0}
+.top-actions{display:flex;gap:8px;align-items:center}
+.status-pill{border:1px solid #24664f;background:#102c26;color:var(--green);padding:8px 10px;border-radius:999px;font-size:10px;white-space:nowrap}
+.btn{padding:10px 13px;border:1px solid #354766;background:#1b2941;color:var(--text);border-radius:11px;font-size:11px;font-weight:850}
+.btn.primary{background:linear-gradient(100deg,#ffe9a0,#f2a32c);border:0;color:#3e290b}
+.btn.danger{background:#3a1723;color:#ff8a9d;border-color:#692738}
+.btn.success{background:#10352c;color:var(--green);border-color:#23614f}
+.btn.small{padding:7px 9px;font-size:10px}
+.page{display:none;animation:fade .2s ease}
+.page.active{display:block}
+.grid{display:grid;gap:14px}
+.grid.stats{grid-template-columns:repeat(4,minmax(0,1fr));margin-bottom:18px}
+.grid.two{grid-template-columns:repeat(2,minmax(0,1fr))}
+.grid.three{grid-template-columns:repeat(3,minmax(0,1fr))}
+.panel{background:linear-gradient(135deg,#131d31,#101727);border:1px solid var(--line);border-radius:var(--radius);padding:17px;min-width:0;margin-bottom:15px}
+.panel h3{font-size:14px;margin:0 0 5px}
+.panel-desc{font-size:10px;color:var(--muted);line-height:1.6;margin:0 0 15px}
+.stat-card{background:linear-gradient(140deg,#17233a,#111a2c);border:1px solid var(--line);border-radius:16px;padding:17px;min-width:0}
+.stat-top{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.stat-icon{width:38px;height:38px;border-radius:12px;display:grid;place-items:center;background:#ffd66b13;color:var(--gold);font-size:19px}
+.stat-card small{color:var(--muted);font-size:10px}
+.stat-card strong{display:block;font-size:23px;margin:12px 0 5px;overflow-wrap:anywhere}
+.stat-card .trend{font-size:10px;color:var(--green)}
+.section-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:23px 0 12px}
+.section-head h2{font-size:16px;margin:0}
+.section-head small{font-size:10px;color:var(--muted)}
+.form-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:13px}
+.form-group{min-width:0}
+.form-group.full{grid-column:1/-1}
+.form-actions{display:flex;justify-content:flex-end;gap:9px;margin-top:16px;flex-wrap:wrap}
+.switch-row{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:12px 0;border-bottom:1px solid #273650}
+.switch-row:last-child{border-bottom:0}
+.switch-row b{font-size:12px;display:block}
+.switch-row small{font-size:10px;color:var(--muted);display:block;margin-top:4px;line-height:1.5}
+.switch{position:relative;width:42px;height:23px;flex-shrink:0}
+.switch input{display:none}
+.switch span{position:absolute;inset:0;border-radius:20px;background:#35425a;transition:.2s}
+.switch span:before{content:"";position:absolute;width:17px;height:17px;left:3px;top:3px;border-radius:50%;background:white;transition:.2s}
+.switch input:checked+span{background:#28b98a}
+.switch input:checked+span:before{transform:translateX(19px)}
+.preview{min-height:120px;border:1px dashed #405270;border-radius:14px;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:9px;background:#0a1120;padding:15px;text-align:center}
+.preview img{width:58px;height:58px;object-fit:contain;border-radius:14px}
+.preview b{font-size:13px;overflow-wrap:anywhere}
+.preview small{font-size:10px;color:var(--muted)}
+.list-item{display:flex;align-items:center;gap:12px;padding:13px;border:1px solid var(--line);background:#111a2b;border-radius:14px;margin:9px 0;min-width:0}
+.item-logo{width:43px;height:43px;border-radius:13px;background:#08111f;border:1px solid #33425c;display:grid;place-items:center;overflow:hidden;flex-shrink:0;font-size:20px;font-weight:900;color:var(--gold)}
+.item-logo img{width:100%;height:100%;object-fit:contain;padding:5px}
+.item-info{flex:1;min-width:0}
+.item-info b{display:block;font-size:12px;overflow-wrap:anywhere}
+.item-info small{display:block;font-size:10px;color:var(--muted);margin-top:5px;overflow-wrap:anywhere}
+.item-actions{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
+.badge{display:inline-flex;padding:5px 8px;border-radius:8px;font-size:9px;font-weight:900;background:#28354b;color:#d5dff2}
+.badge.on{background:#12382d;color:var(--green)}
+.badge.off{background:#39232a;color:#ff9aaa}
+.badge.pending{background:#3b3019;color:var(--gold)}
+.table-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:13px}
+table{width:100%;border-collapse:collapse;min-width:600px}
+th,td{text-align:left;padding:12px;border-bottom:1px solid #273650;font-size:11px;white-space:nowrap}
+th{color:#91a0bc;background:#0d1525;font-size:9px;letter-spacing:.7px;text-transform:uppercase}
+td{color:#e5eaf5}
+tr:last-child td{border-bottom:0}
+.empty{text-align:center;padding:25px;color:var(--muted);font-size:11px}
+.tabs{display:flex;gap:7px;flex-wrap:wrap;margin:14px 0}
+.tabs button{background:#101a2b;border:1px solid var(--line);color:var(--muted);border-radius:10px;padding:10px 13px;font-size:11px;font-weight:850}
+.tabs button.active{background:#332d20;border-color:#a98b44;color:var(--gold)}
+.rate-row{display:grid;grid-template-columns:45px 1fr 110px;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--line)}
+.rate-row:last-child{border:0}
+.rate-badge{width:37px;height:37px;display:grid;place-items:center;background:#252b42;color:var(--gold);border-radius:12px;font-size:12px;font-weight:900}
+.rate-row b{font-size:12px}
+.rate-row small{display:block;color:var(--muted);font-size:10px;margin-top:4px}
+.rate-input{position:relative}
+.rate-input input{padding-right:28px}
+.rate-input span{position:absolute;right:11px;top:13px;font-size:11px;color:var(--muted)}
+.login-screen{position:fixed;inset:0;z-index:500;background:radial-gradient(circle at 50% 10%,#233658,#080b15 55%);display:grid;place-items:center;padding:18px}
+.login-box{width:min(400px,100%);background:#111a2c;border:1px solid #33425d;border-radius:24px;padding:28px;box-shadow:0 25px 80px #0008}
+.login-logo{width:65px;height:65px;display:grid;place-items:center;background:linear-gradient(135deg,#ffe9a0,#ed9d29);color:#422806;font-size:34px;font-weight:1000;border-radius:19px;margin-bottom:20px;overflow:hidden}
+.login-logo img{width:100%;height:100%;object-fit:cover}
+.login-box h1{font-size:23px;margin:0 0 8px}
+.login-box p{font-size:11px;color:var(--muted);line-height:1.6;margin:0 0 20px}
+.login-box .primary{width:100%;padding:13px;margin-top:9px}
+.toast{position:fixed;z-index:900;top:15px;left:50%;transform:translate(-50%,-150%);background:#18243a;border:1px solid #425575;border-radius:12px;padding:12px 17px;font-size:12px;box-shadow:0 12px 35px #0008;transition:.25s;max-width:90%;text-align:center}
+.toast.show{transform:translate(-50%,0)}
+.modal-bg{position:fixed;z-index:600;inset:0;background:#000b;display:none;align-items:center;justify-content:center;padding:16px}
+.modal-bg.show{display:flex}
+.modal{width:min(540px,100%);max-height:90vh;overflow:auto;background:#111a2c;border:1px solid #354661;border-radius:20px;padding:21px}
+.modal-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
+.modal-head h3{font-size:16px;margin:0}
+.mobile-menu{display:none}
+.help{background:#0b1b24;border:1px solid #214b57;color:#a4ecf5;border-radius:12px;padding:12px;font-size:10px;line-height:1.7;margin:12px 0}
+@keyframes fade{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
+@keyframes pulse{50%{box-shadow:0 0 22px #ffd66b35}}
+@keyframes bounce{50%{transform:translateY(-4px)}}
+@keyframes glow{50%{filter:brightness(1.3)}}
+@keyframes shake{25%{transform:translateX(-2px)}75%{transform:translateX(2px)}}
+.anim-pulse{animation:pulse 2s infinite}.anim-bounce{animation:bounce 1.5s infinite}.anim-glow{animation:glow 2s infinite}.anim-shake{animation:shake .4s infinite}
+@media(max-width:1050px){
+ .grid.stats{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .grid.three{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media(max-width:760px){
+ .sidebar{width:265px;transform:translateX(-110%);transition:transform .25s;box-shadow:15px 0 45px #0008}
+ .sidebar.open{transform:translateX(0)}
+ .main{margin:0;width:100%;padding:17px 13px 35px}
+ .mobile-menu{display:inline-flex}
+ .topbar h1{font-size:19px}
+ .topbar{align-items:flex-start}
+ .status-pill{display:none}
+ .grid.two,.grid.three{grid-template-columns:1fr}
+ .form-grid{grid-template-columns:1fr}
+ .form-group.full{grid-column:auto}
+ .rate-row{grid-template-columns:38px 1fr 85px;gap:8px}
+ .panel{padding:14px}
+ .stat-card{padding:13px}
+ .stat-card strong{font-size:20px}
+}
+@media(max-width:380px){
+ .grid.stats{grid-template-columns:1fr 1fr}
+ .top-actions .btn{padding:8px;font-size:10px}
+ .rate-row{grid-template-columns:32px 1fr 75px}
+}
 </style>
 </head>
 <body>
+
 <div id="toast" class="toast"></div>
 
 <div id="loginScreen" class="login-screen">
  <div class="login-box">
   <div class="login-logo" id="loginLogo">C</div>
   <h1>CoinNova Admin</h1>
-  <p>Secure administration panel</p>
+  <p>Sign in to manage your mining application, wallets, referrals, commissions and withdrawal requests.</p>
   <form id="loginForm">
    <label>Admin Password</label>
    <input id="adminPassword" type="password" required autocomplete="current-password" placeholder="Enter admin password">
-   <button class="btn primary" style="width:100%;margin-top:12px;padding:13px">SECURE LOGIN →</button>
+   <button class="btn primary" type="submit">SECURE LOGIN →</button>
   </form>
-  <p id="loginError" style="color:var(--red)"></p>
+  <p id="loginError" style="color:var(--red);margin-top:12px"></p>
  </div>
 </div>
 
 <div class="app" id="adminApp" style="display:none">
-<aside class="sidebar" id="sidebar">
- <div class="brand"><div class="brand-icon" id="sideLogo">C</div><div><b id="sideAppName">CoinNova</b><small>ADMIN CONTROL CENTER</small></div></div>
- <nav class="nav">
-  <div class="nav-label">OVERVIEW</div><button class="active" data-page="dashboard">▦ Dashboard</button>
-  <div class="nav-label">APP CONTROL</div>
-  <button data-page="branding">◈ App Branding</button><button data-page="buttons">▣ Custom Buttons</button>
-  <button data-page="categories">◇ Withdrawal Categories</button><button data-page="wallets">💳 Wallet Methods</button>
-  <button data-page="texts">文 User Panel Texts</button><button data-page="withdrawSettings">⇧ Withdrawal Settings</button>
-  <button data-page="spin">✦ Lucky Spin</button><button data-page="commission">♧ Referral Commission</button>
-  <div class="nav-label">MANAGEMENT</div>
-  <button data-page="tasks">◎ Tasks</button><button data-page="withdrawals">⇄ Withdrawal Requests</button>
-  <button data-page="users">♙ Users</button><button data-page="system">⚙ System Settings</button>
-  <div style="border-top:1px solid var(--line);margin-top:15px;padding-top:12px">
-   <button id="refreshBtn">↻ Refresh Data</button><button id="logoutBtn">⇥ Logout</button>
+ <aside class="sidebar" id="sidebar">
+  <div class="brand">
+   <div class="brand-icon" id="sideLogo">C</div>
+   <div><b id="sideAppName">CoinNova</b><small>ADMIN CONTROL CENTER</small></div>
   </div>
- </nav>
-</aside>
 
-<main class="main">
-<header class="topbar">
- <div style="display:flex;align-items:center;gap:9px"><button class="btn mobile-menu" id="menuBtn">☰</button><div><h1 id="pageTitle">Dashboard</h1><p id="pageSubtitle">Application control center</p></div></div>
- <div class="top-actions"><button class="btn" id="topRefresh">↻ Refresh</button></div>
-</header>
+  <nav class="nav">
+   <div class="nav-label">OVERVIEW</div>
+   <button class="active" data-page="dashboard"><span class="ico">▦</span>Dashboard</button>
 
-<section id="page-dashboard" class="page active">
- <div class="grid stats">
-  <div class="stat"><small>Total Users</small><strong id="statUsers">0</strong></div>
-  <div class="stat"><small>Total Withdrawals</small><strong id="statWithdrawals">0</strong></div>
-  <div class="stat"><small>Pending Requests</small><strong id="statPending">0</strong></div>
-  <div class="stat"><small>Total Tasks</small><strong id="statTasks">0</strong></div>
- </div>
- <div class="grid two">
-  <div class="panel"><h3>Feature Status</h3><p class="desc">Enable or disable application features.</p>
-   <div class="switch-row"><div><b>Mining</b><small>Allow tapping rewards</small></div><label class="switch"><input id="dashMining" type="checkbox"><span></span></label></div>
-   <div class="switch-row"><div><b>Registration</b><small>Allow new Telegram accounts</small></div><label class="switch"><input id="dashRegistration" type="checkbox"><span></span></label></div>
-   <div class="switch-row"><div><b>Withdrawal</b><small>Accept withdrawal requests</small></div><label class="switch"><input id="dashWithdrawal" type="checkbox"><span></span></label></div>
-   <div class="switch-row"><div><b>Lucky Spin</b><small>Allow spin usage</small></div><label class="switch"><input id="dashSpin" type="checkbox"><span></span></label></div>
-   <button class="btn primary" id="saveDashboard" style="margin-top:13px">SAVE STATUS</button>
-  </div>
-  <div class="panel"><h3>Quick Actions</h3><p class="desc">Open settings quickly.</p>
-   <button class="btn" style="width:100%;margin:4px 0;text-align:left" onclick="go('branding')">App Logo & Loading Screen</button>
-   <button class="btn" style="width:100%;margin:4px 0;text-align:left" onclick="go('categories')">Binance / Network / E-Wallet</button>
-   <button class="btn" style="width:100%;margin:4px 0;text-align:left" onclick="go('texts')">Edit User Panel Text</button>
-   <button class="btn" style="width:100%;margin:4px 0;text-align:left" onclick="go('withdrawals')">Review Withdrawal Requests</button>
-  </div>
- </div>
- <div class="panel"><h3>Latest Withdrawal Requests</h3><div class="table-wrap"><table><thead><tr><th>ID</th><th>User</th><th>Method</th><th>Amount</th><th>Status</th><th>Action</th></tr></thead><tbody id="dashWithdrawalRows"></tbody></table></div></div>
-</section>
+   <div class="nav-label">APP CONTROL</div>
+   <button data-page="branding"><span class="ico">◈</span>App Branding</button>
+   <button data-page="texts"><span class="ico">✎</span>User Panel Texts</button>
+   <button data-page="buttons"><span class="ico">▣</span>Custom Buttons</button>
+   <button data-page="wallets"><span class="ico">◇</span>E-Wallet & Network</button>
+   <button data-page="withdrawSettings"><span class="ico">⇧</span>Withdrawal Settings</button>
+   <button data-page="spin"><span class="ico">✦</span>Lucky Spin</button>
+   <button data-page="commission"><span class="ico">♧</span>Referral Commission</button>
 
-<section id="page-branding" class="page">
- <div class="grid two">
-  <div class="panel"><h3>App Identity & Loading Screen</h3><p class="desc">Loading image is used as the full-screen background of the loading page only.</p>
-   <form id="brandingForm">
-    <label>App Name</label><input id="appName" required>
-    <label style="margin-top:11px">Tagline</label><input id="tagline">
-    <label style="margin-top:11px">App Logo URL</label><input id="appLogo" type="url" placeholder="https://...">
-    <label style="margin-top:11px">Loading Background Image URL</label><input id="loadingImage" type="url" placeholder="https://...">
-    <label style="margin-top:11px">Loading Title</label><input id="loadingTitle">
-    <label style="margin-top:11px">Loading Status Text</label><input id="loadingText">
-    <div class="actions"><button class="btn primary">SAVE BRANDING ✓</button></div>
-   </form>
-   <div class="help">Loading image URL-টি User Panel-এর loading screen-এ full background হিসেবে ব্যবহার করতে হবে। এই Admin Panel সেটিংস Server-এ সংরক্ষণ করে।</div>
-  </div>
-  <div class="panel"><h3>Live Preview</h3>
-   <div class="preview"><img id="brandPreviewImg" alt=""><b id="brandPreviewName">CoinNova</b><small id="brandPreviewTag">Tap • Mine • Earn</small></div>
-   <div class="preview" id="loadingPreview" style="margin-top:12px;min-height:190px;background-size:cover;background-position:center"><b id="loadingPreviewTitle">COINNOVA</b><small id="loadingPreviewText">Please wait...</small></div>
-  </div>
- </div>
-</section>
+   <div class="nav-label">MANAGEMENT</div>
+   <button data-page="tasks"><span class="ico">◎</span>Tasks</button>
+   <button data-page="withdrawals"><span class="ico">⇄</span>Withdrawal Requests</button>
+   <button data-page="users"><span class="ico">♙</span>Users</button>
+   <button data-page="system"><span class="ico">⚙</span>System Settings</button>
 
-<section id="page-buttons" class="page">
- <div class="panel"><h3>Custom Button Manager</h3><p class="desc">Create buttons with name, logo, URL, color and animation.</p><div id="buttonList"></div><button class="btn primary" id="addButton">＋ Add Button</button> <button class="btn" id="saveButtons">SAVE ALL BUTTONS</button></div>
- <div class="panel"><h3>Button Editor</h3><form id="buttonForm"><input type="hidden" id="buttonId">
-  <div class="form-grid">
-   <div class="fg"><label>Button Name</label><input id="buttonName" required></div>
-   <div class="fg"><label>Logo URL</label><input id="buttonLogo" type="url"></div>
-   <div class="fg full"><label>Target URL</label><input id="buttonUrl" type="url"></div>
-   <div class="fg"><label>Color</label><input id="buttonColor" type="color" value="#ffd66b"></div>
-   <div class="fg"><label>Animation</label><select id="buttonAnimation"><option>none</option><option>pulse</option><option>bounce</option><option>glow</option><option>shake</option></select></div>
-   <div class="fg"><label>Status</label><select id="buttonEnabled"><option value="true">Enabled</option><option value="false">Disabled</option></select></div>
-  </div><div class="actions"><button type="button" class="btn" id="clearButton">Clear</button><button class="btn primary">SAVE BUTTON</button></div>
- </form></div>
-</section>
+   <div class="side-bottom">
+    <button id="refreshBtn"><span class="ico">↻</span>Refresh Data</button>
+    <button id="logoutBtn"><span class="ico">⇥</span>Logout</button>
+   </div>
+  </nav>
+ </aside>
 
-<section id="page-categories" class="page">
- <div class="panel"><h3>Withdrawal Category Control</h3><p class="desc">Edit the three main buttons displayed on the User Panel. Binance is the first category. Selecting Binance should open the network selection popup in the User Panel.</p>
-  <div id="categoryEditors"></div>
-  <div class="actions"><button class="btn primary" id="saveCategories">SAVE CATEGORY SETTINGS ✓</button></div>
- </div>
- <div class="help">Category IDs are fixed: <b>binance</b>, <b>network</b>, <b>ewallet</b>. You can change their visible name, logo, color, animation and enabled status. The User Panel must read these settings and implement Binance → Select Network → Wallet selection.</div>
-</section>
+ <main class="main">
+  <header class="topbar">
+   <div style="display:flex;align-items:center;gap:10px">
+    <button class="btn mobile-menu" id="menuBtn">☰</button>
+    <div><h1 id="pageTitle">Dashboard</h1><p id="pageSubtitle">Your app performance at a glance.</p></div>
+   </div>
+   <div class="top-actions"><span class="status-pill">● ADMIN SESSION ACTIVE</span><button class="btn" id="topRefresh">↻ Refresh</button></div>
+  </header>
 
-<section id="page-wallets" class="page">
- <div class="panel"><h3>Wallet / Network Method Manager</h3><p class="desc">Add payment methods. Binance network methods can be assigned to the Binance category. E-Wallet methods appear in the E-Wallet section.</p>
-  <div class="tabs"><button class="active" data-wallet-tab="ewallet">E-Wallet</button><button data-wallet-tab="network">Select Network</button></div>
-  <div id="walletList"></div><button class="btn primary" id="addWallet">＋ Add Wallet / Network</button> <button class="btn" id="saveWallets">SAVE ALL METHODS</button>
- </div>
- <div class="panel"><h3 id="walletEditorTitle">Wallet Editor</h3><form id="walletForm"><input type="hidden" id="walletId">
-  <div class="form-grid">
-   <div class="fg"><label>Method Name</label><input id="walletName" required placeholder="bKash / USDT TRC20"></div>
-   <div class="fg"><label>Category</label><select id="walletCategory"><option value="ewallet">E-Wallet</option><option value="network">Network</option></select></div>
-   <div class="fg"><label>Parent Category</label><select id="walletParent"><option value="">No parent</option><option value="binance">Binance</option></select></div>
-   <div class="fg"><label>Logo URL</label><input id="walletLogo" type="url"></div>
-   <div class="fg"><label>Color</label><input id="walletColor" type="color" value="#45e8ff"></div>
-   <div class="fg"><label>Animation</label><select id="walletAnimation"><option>none</option><option>pulse</option><option>bounce</option><option>glow</option><option>shake</option></select></div>
-   <div class="fg"><label>Minimum Withdrawal</label><input id="walletMin" type="number" min="0" step="1"></div>
-   <div class="fg"><label>Method Fee (%)</label><input id="walletFee" type="number" min="0" max="100" step=".01"></div>
-   <div class="fg full"><label>Instructions / Hint</label><textarea id="walletHint"></textarea></div>
-   <div class="fg"><label>Method Status</label><select id="walletEnabled"><option value="true">Enabled</option><option value="false">Disabled</option></select></div>
-  </div><div class="actions"><button type="button" class="btn" id="clearWallet">Clear</button><button class="btn primary">SAVE METHOD</button></div>
- </form></div>
-</section>
+  <!-- DASHBOARD -->
+  <section id="page-dashboard" class="page active">
+   <div class="grid stats">
+    <div class="stat-card"><div class="stat-top"><small>Total Users</small><span class="stat-icon">♙</span></div><strong id="statUsers">0</strong><span class="trend">Registered accounts</span></div>
+    <div class="stat-card"><div class="stat-top"><small>Withdrawals</small><span class="stat-icon">⇧</span></div><strong id="statWithdrawals">0</strong><span class="trend">Total requests</span></div>
+    <div class="stat-card"><div class="stat-top"><small>Pending Requests</small><span class="stat-icon">◷</span></div><strong id="statPending">0</strong><span class="trend">Need review</span></div>
+    <div class="stat-card"><div class="stat-top"><small>Total Tasks</small><span class="stat-icon">◎</span></div><strong id="statTasks">0</strong><span class="trend">Configured tasks</span></div>
+   </div>
 
-<section id="page-texts" class="page">
- <div class="panel"><h3>User Panel Text Message Manager</h3><p class="desc">এখানে User Panel-এর বিভিন্ন লেখা, button label, popup message এবং withdrawal instruction পরিবর্তন করতে পারবে। Key অপরিবর্তিত রাখবে, শুধু Value পরিবর্তন করবে।</p>
-  <div id="textEditor"></div><div class="actions"><button class="btn" id="resetTexts">RESET DEFAULT TEXTS</button><button class="btn primary" id="saveTexts">SAVE ALL TEXTS ✓</button></div>
- </div>
- <div class="help">User Panel-এর JavaScript-এ লেখা দেখানোর সময় <b>settings.uiText</b> থেকে সংশ্লিষ্ট key পড়তে হবে। এই প্যানেল UI Text Server-এর settings-এ সংরক্ষণ করে।</div>
-</section>
+   <div class="grid two">
+    <div class="panel">
+     <h3>Application Status</h3><p class="panel-desc">Main feature availability.</p>
+     <div class="switch-row"><div><b>Mining System</b><small>Allow users to earn by tapping.</small></div><label class="switch"><input id="dashMining" type="checkbox"><span></span></label></div>
+     <div class="switch-row"><div><b>Registration</b><small>Allow verified Telegram accounts.</small></div><label class="switch"><input id="dashRegistration" type="checkbox"><span></span></label></div>
+     <div class="switch-row"><div><b>Withdrawal System</b><small>Accept new withdrawal requests.</small></div><label class="switch"><input id="dashWithdrawal" type="checkbox"><span></span></label></div>
+     <div class="switch-row"><div><b>Lucky Spin</b><small>Allow users to use available spins.</small></div><label class="switch"><input id="dashSpin" type="checkbox"><span></span></label></div>
+     <button class="btn primary" id="saveDashboard" style="margin-top:15px">SAVE STATUS</button>
+    </div>
+    <div class="panel">
+     <h3>Quick Actions</h3><p class="panel-desc">Open commonly used controls.</p>
+     <button class="btn" style="width:100%;margin:4px 0;text-align:left" onclick="go('branding')">◈ &nbsp; Change App Logo / Loading Image</button>
+     <button class="btn" style="width:100%;margin:4px 0;text-align:left" onclick="go('texts')">✎ &nbsp; Edit User Panel Texts & Notices</button>
+     <button class="btn" style="width:100%;margin:4px 0;text-align:left" onclick="go('wallets')">◇ &nbsp; Manage E-Wallet & Network Category</button>
+     <button class="btn" style="width:100%;margin:4px 0;text-align:left" onclick="go('withdrawals')">⇧ &nbsp; Review Withdrawals</button>
+    </div>
+   </div>
 
-<section id="page-withdrawSettings" class="page">
- <div class="grid two">
-  <div class="panel"><h3>Global Withdrawal Rules</h3><form id="withdrawSettingsForm">
-   <label>Minimum Withdrawal (CNV)</label><input id="minimumWithdrawal" type="number" min="1" required>
-   <label style="margin-top:11px">Default Withdrawal Fee (%)</label><input id="withdrawalFeePercent" type="number" min="0" max="100" step=".01">
-   <label style="margin-top:11px">Required Qualified Referrals</label><input id="referralRequirement" type="number" min="0">
-   <label style="margin-top:11px">Withdrawal Notice</label><textarea id="withdrawalNotice"></textarea>
-   <div class="actions"><button class="btn primary">SAVE WITHDRAWAL RULES</button></div>
-  </form></div>
-  <div class="panel"><h3>Withdrawal Status</h3>
-   <div class="switch-row"><div><b>Withdrawal Enabled</b><small>Allow users to submit new requests</small></div><label class="switch"><input id="withdrawEnabled" type="checkbox"><span></span></label></div>
-   <button class="btn primary" id="saveWithdrawToggle" style="margin-top:13px">SAVE STATUS</button>
-   <div class="help">Server-side fee is calculated using the global Withdrawal Fee. Method-level fee is stored as method metadata; the current server.js does not apply individual method fees.</div>
-  </div>
- </div>
-</section>
+   <div class="section-head"><h2>Latest Withdrawal Requests</h2><button class="btn small" onclick="go('withdrawals')">View all →</button></div>
+   <div class="panel"><div class="table-wrap"><table><thead><tr><th>ID</th><th>User</th><th>Method</th><th>Amount</th><th>Status</th><th>Action</th></tr></thead><tbody id="dashWithdrawalRows"></tbody></table></div></div>
+  </section>
 
-<section id="page-spin" class="page">
- <div class="panel"><h3>Lucky Spin Settings</h3><form id="spinForm">
-  <div class="switch-row"><div><b>Enable Lucky Spin</b><small>Allow users to spin</small></div><label class="switch"><input id="spinEnabled" type="checkbox"><span></span></label></div>
-  <label style="margin-top:12px">Qualified Referrals Required Per Spin</label><input id="referralsPerSpin" type="number" min="1">
-  <label style="margin-top:12px">Prize Values (CNV, comma separated)</label><input id="spinRewards" placeholder="10,20,30,50,100,200">
-  <label style="margin-top:12px">Referral Reward (CNV)</label><input id="referralReward" type="number" min="0">
-  <div class="actions"><button class="btn primary">SAVE SPIN SETTINGS</button></div>
- </form><div id="spinPreview" class="grid three"></div></div>
-</section>
+  <!-- BRANDING -->
+  <section id="page-branding" class="page">
+   <div class="grid two">
+    <div class="panel">
+     <h3>App Identity</h3><p class="panel-desc">Configure the name, logos and startup loading screen shown to users.</p>
+     <form id="brandingForm">
+      <div class="form-group"><label>App Name</label><input id="appName" placeholder="CoinNova" required></div>
+      <div class="form-group" style="margin-top:12px"><label>Tagline</label><input id="tagline" placeholder="TAP • MINE • EARN"></div>
+      <div class="form-group" style="margin-top:12px"><label>App Logo URL</label><input id="appLogo" type="url" placeholder="https://example.com/logo.png"></div>
+      <div class="form-group" style="margin-top:12px"><label>Loading Screen Image URL (Full Background)</label><input id="loadingImage" type="url" placeholder="https://example.com/loading-bg.png"></div>
+      <div class="form-group" style="margin-top:12px"><label>Loading Screen Title</label><input id="loadingTitle" placeholder="COINNOVA"></div>
+      <div class="form-group" style="margin-top:12px"><label>Loading Status Text</label><input id="loadingText" placeholder="VERIFYING TELEGRAM ACCOUNT"></div>
+      <div class="form-actions"><button class="btn primary" type="submit">SAVE BRANDING ✓</button></div>
+     </form>
+    </div>
+    <div class="panel">
+     <h3>Live Preview</h3><p class="panel-desc">Preview of the app identity and loading image.</p>
+     <div class="preview"><img id="brandPreviewImg" alt="App logo preview" src="" onerror="this.style.display='none'"><b id="brandPreviewName">CoinNova</b><small id="brandPreviewTag">TAP • MINE • EARN</small></div>
+     <div style="margin-top:15px" class="preview"><img id="loadingPreviewImg" alt="Loading preview" src="" onerror="this.style.display='none'"><b id="loadingPreviewTitle">COINNOVA</b><small id="loadingPreviewText">VERIFYING TELEGRAM ACCOUNT</small></div>
+     <div class="help">Use a public HTTPS image URL. The loading image will cover the entire screen background during startup.</div>
+    </div>
+   </div>
+  </section>
 
-<section id="page-commission" class="page">
- <div class="panel"><h3>6-Level Referral Commission</h3><p class="desc">Set each level percentage. The current server stores these rates for the commission system.</p>
-  <form id="commissionForm"><div id="commissionRates"></div><div class="actions"><button class="btn primary">SAVE COMMISSION RATES</button></div></form>
-  <div class="help">এই Server.js-এ ৬টি commission rate সংরক্ষণ হয়। 01:00 AM auto payout scheduler আলাদা backend scheduler ছাড়া চালু হবে না; তাই এখানে কার্যকর নয় এমন ভুয়া scheduler toggle রাখা হয়নি।</div>
- </div>
-</section>
+  <!-- USER PANEL TEXTS -->
+  <section id="page-texts" class="page">
+   <div class="panel">
+    <h3>User Panel Custom Text Messages & Notices</h3>
+    <p class="panel-desc">Customize all text messages, notices, and labels displayed across the user app interface.</p>
+    <form id="textsForm">
+     <div class="form-grid">
+      <div class="form-group full"><label>Home Screen Security Notice</label><textarea id="txtHomeNotice">Keep your Telegram account secure. Never share your wallet seed phrase or password.</textarea></div>
+      <div class="form-group full"><label>Referral Rule Notice</label><textarea id="txtReferralRule">Your friend qualifies after completing 10 taps. Withdrawals require referral requirement.</textarea></div>
+      <div class="form-group"><label>Withdraw Category Subtitle</label><input id="txtWithdrawSub" placeholder="Select a withdrawal category first..."></div>
+      <div class="form-group"><label>Wallet Form Notice / Instructions</label><input id="txtWalletFormNotice" placeholder="Enter valid destination details..."></div>
+      <div class="form-group"><label>Task Page Header Subtitle</label><input id="txtTaskSub" placeholder="Earn CNV"></div>
+      <div class="form-group"><label>Spin Page Rules Text</label><input id="txtSpinRules" placeholder="Invite qualified friends to unlock spins."></div>
+     </div>
+     <div class="form-actions"><button class="btn primary" type="submit">SAVE TEXT MESSAGES ✓</button></div>
+    </form>
+   </div>
+  </section>
 
-<section id="page-tasks" class="page">
- <div class="panel"><h3>Task Manager</h3><button class="btn primary" id="addTask">＋ Add Task</button><div class="table-wrap" style="margin-top:12px"><table><thead><tr><th>ID</th><th>Task</th><th>Platform</th><th>Reward</th><th>Status</th><th>Actions</th></tr></thead><tbody id="taskRows"></tbody></table></div></div>
- <div class="panel"><h3 id="taskEditorTitle">Add Task</h3><form id="taskForm"><input type="hidden" id="taskId"><div class="form-grid">
-  <div class="fg"><label>Task Name</label><input id="taskTitle" required></div>
-  <div class="fg"><label>Platform</label><select id="taskPlatform"><option>Telegram</option><option>YouTube</option><option>Facebook</option><option>Instagram</option><option>TikTok</option><option>X</option><option>Daily</option><option>Other</option></select></div>
-  <div class="fg full"><label>Task URL (required by server)</label><input id="taskUrl" type="url" required placeholder="https://..."></div>
-  <div class="fg"><label>Reward</label><input id="taskReward" type="number" min="0" required></div>
-  <div class="fg"><label>Status</label><select id="taskEnabled"><option value="true">Enabled</option><option value="false">Disabled</option></select></div>
- </div><div class="actions"><button type="button" class="btn" id="clearTask">Clear</button><button class="btn primary">SAVE TASK</button></div></form></div>
-</section>
+  <!-- CUSTOM BUTTONS -->
+  <section id="page-buttons" class="page">
+   <div class="panel">
+    <div class="section-head" style="margin-top:0"><h2>Custom Button Manager</h2><span class="badge">ADD / EDIT / DELETE</span></div>
+    <p class="panel-desc">Every button can have its own name, logo, URL, color and animation.</p>
+    <div id="buttonList"></div>
+    <button class="btn primary" id="addButton">＋ Add Button</button>
+    <button class="btn" id="saveButtons">SAVE ALL BUTTONS ✓</button>
+   </div>
+   <div class="panel">
+    <h3>Button Editor</h3>
+    <form id="buttonForm">
+     <input type="hidden" id="buttonId">
+     <div class="form-grid">
+      <div class="form-group"><label>Button Name</label><input id="buttonName" required placeholder="VIP GROUP JOIN"></div>
+      <div class="form-group"><label>Button Logo URL</label><input id="buttonLogo" type="url" placeholder="https://example.com/icon.png"></div>
+      <div class="form-group full"><label>Target URL</label><input id="buttonUrl" type="url" placeholder="https://t.me/yourchannel"></div>
+      <div class="form-group"><label>Button Color</label><input id="buttonColor" type="color" value="#ffd66b"></div>
+      <div class="form-group"><label>Animation</label><select id="buttonAnimation"><option value="none">None</option><option value="pulse">Pulse</option><option value="bounce">Bounce</option><option value="glow">Glow</option><option value="shake">Shake</option></select></div>
+      <div class="form-group"><label>Button Status</label><select id="buttonEnabled"><option value="true">Enabled</option><option value="false">Disabled</option></select></div>
+     </div>
+     <div class="form-actions"><button type="button" class="btn" id="clearButtonForm">Clear Form</button><button class="btn primary" type="submit">SAVE BUTTON ✓</button></div>
+    </form>
+    <div class="section-head"><h2>Button Preview</h2></div>
+    <div id="buttonPreview" class="preview"><b>Example Button</b><small>Button appearance preview</small></div>
+   </div>
+  </section>
 
-<section id="page-withdrawals" class="page">
- <div class="panel"><h3>Withdrawal Requests</h3><div class="tabs" id="withdrawalTabs"><button class="active" data-status="all">All</button><button data-status="pending">Pending</button><button data-status="approved">Approved</button><button data-status="paid">Paid</button><button data-status="rejected">Rejected</button></div>
-  <div class="table-wrap"><table><thead><tr><th>ID</th><th>User</th><th>Method</th><th>Destination</th><th>Amount</th><th>Fee</th><th>Net</th><th>Status</th><th>Action</th></tr></thead><tbody id="withdrawalRows"></tbody></table></div>
- </div>
-</section>
+  <!-- WALLET MANAGEMENT -->
+  <section id="page-wallets" class="page">
+   <div class="panel">
+    <div class="section-head" style="margin-top:0"><h2>Withdrawal Method & Category Settings</h2><span class="badge">CUSTOMIZE NAMES & LOGOS</span></div>
+    <p class="panel-desc">Configure the titles, logos, and features for E-Wallet and Select Network categories, plus individual payment options.</p>
+    
+    <div class="form-grid" style="background:#0d1525;padding:15px;border-radius:14px;border:1px solid var(--line);margin-bottom:20px;">
+     <div class="form-group"><label>E-Wallet Category Title</label><input id="catEwalletName" value="E-Wallet"></div>
+     <div class="form-group"><label>E-Wallet Category Logo URL</label><input id="catEwalletLogo" placeholder="https://..."></div>
+     <div class="form-group"><label>Select Network Category Title</label><input id="catNetworkName" value="Select Network"></div>
+     <div class="form-group"><label>Select Network Category Logo URL</label><input id="catNetworkLogo" placeholder="https://..."></div>
+     <div class="form-actions full"><button class="btn primary" id="saveCategoriesBtn" type="button">SAVE CATEGORY NAMES & LOGOS ✓</button></div>
+    </div>
 
-<section id="page-users" class="page">
- <div class="panel"><h3>User Management</h3><label style="margin-top:12px">Search User / Telegram ID</label><input id="userSearch" placeholder="Search..."><div class="table-wrap" style="margin-top:12px"><table><thead><tr><th>ID</th><th>Name</th><th>Telegram ID</th><th>Balance</th><th>Status</th><th>Action</th></tr></thead><tbody id="userRows"></tbody></table></div></div>
- <div class="panel"><h3>Edit User</h3><form id="userForm"><input type="hidden" id="editUserId"><div class="form-grid"><div class="fg"><label>Balance (CNV)</label><input id="editUserBalance" type="number" min="0" required></div><div class="fg"><label>Account Status</label><select id="editUserBlocked"><option value="false">Active</option><option value="true">Blocked</option></select></div></div><div class="actions"><button class="btn primary">SAVE USER</button></div></form></div>
-</section>
+    <div class="tabs">
+     <button class="active" data-wallet-tab="ewallet">৳ E-Wallet</button>
+     <button data-wallet-tab="network">🌐 Select Network</button>
+    </div>
+    <div id="walletList"></div>
+    <button class="btn primary" id="addWallet">＋ Add Method</button>
+    <button class="btn" id="saveWallets">SAVE ALL METHODS ✓</button>
+   </div>
 
-<section id="page-system" class="page">
- <div class="grid two">
-  <div class="panel"><h3>Core Settings</h3><form id="systemForm">
-   <label>Tap Reward (CNV)</label><input id="tapReward" type="number" min="0">
-   <label style="margin-top:11px">Maximum Energy</label><input id="maxEnergy" type="number" min="1">
-   <label style="margin-top:11px">Energy Restored Per Second</label><input id="energyPerSecond" type="number" min="0" step=".1">
-   <label style="margin-top:11px">Daily Bonus (CNV)</label><input id="dailyBonus" type="number" min="0">
-   <div class="actions"><button class="btn primary">SAVE CORE SETTINGS</button></div>
-  </form></div>
-  <div class="panel"><h3>System Controls</h3>
-   <div class="switch-row"><div><b>Registration</b><small>Allow new accounts</small></div><label class="switch"><input id="systemRegistration" type="checkbox"><span></span></label></div>
-   <div class="switch-row"><div><b>Mining</b><small>Allow tapping</small></div><label class="switch"><input id="systemMining" type="checkbox"><span></span></label></div>
-   <div class="switch-row"><div><b>Maintenance</b><small>Temporarily pause the app</small></div><label class="switch"><input id="systemMaintenance" type="checkbox"><span></span></label></div>
-   <div class="switch-row"><div><b>Sound Effects</b><small>Enable app sounds</small></div><label class="switch"><input id="systemSound" type="checkbox"><span></span></label></div>
-   <button class="btn primary" id="saveSystemToggles" style="margin-top:13px">SAVE SYSTEM STATUS</button>
-  </div>
- </div>
- <div class="panel"><h3>Admin Security</h3><button class="btn" id="changePasswordBtn">Change Admin Password</button><div class="help">New password must contain at least 12 characters. Do not store secrets in this HTML.</div></div>
-</section>
-</main>
+   <div class="panel">
+    <h3 id="walletEditorTitle">Add Method</h3>
+    <form id="walletForm">
+     <input type="hidden" id="walletId">
+     <div class="form-grid">
+      <div class="form-group"><label>Method Name</label><input id="walletName" required placeholder="bKash / USDT TRC20"></div>
+      <div class="form-group"><label>Category</label><select id="walletCategory"><option value="ewallet">E-Wallet</option><option value="network">Select Network</option></select></div>
+      <div class="form-group full"><label>Logo Image URL</label><input id="walletLogo" type="url" placeholder="https://example.com/wallet-logo.png"></div>
+      <div class="form-group"><label>Button Color</label><input id="walletColor" type="color" value="#45e8ff"></div>
+      <div class="form-group"><label>Animation</label><select id="walletAnimation"><option value="none">None</option><option value="pulse">Pulse</option><option value="bounce">Bounce</option><option value="glow">Glow</option><option value="shake">Shake</option></select></div>
+      <div class="form-group"><label>Withdrawal Fee (%)</label><input id="walletFee" type="number" min="0" max="100" step=".01" value="0"></div>
+      <div class="form-group"><label>Minimum Withdrawal (CNV)</label><input id="walletMin" type="number" min="1" step="1" value="1000"></div>
+      <div class="form-group full"><label>Instructions / Details</label><textarea id="walletHint" placeholder="Enter payout instructions or details"></textarea></div>
+      <div class="form-group full"><label>Status</label><select id="walletEnabled"><option value="true">Enabled</option><option value="false">Disabled</option></select></div>
+     </div>
+     <div class="form-actions"><button class="btn" type="button" id="clearWalletForm">Clear Form</button><button class="btn primary" type="submit">SAVE METHOD ✓</button></div>
+    </form>
+   </div>
+  </section>
+
+  <!-- WITHDRAW SETTINGS -->
+  <section id="page-withdrawSettings" class="page">
+   <div class="grid two">
+    <div class="panel">
+     <h3>Global Withdrawal Rules</h3>
+     <form id="withdrawSettingsForm">
+      <div class="form-group"><label>Minimum Withdrawal (CNV)</label><input id="minimumWithdrawal" type="number" min="1" required></div>
+      <div class="form-group" style="margin-top:12px"><label>Default Withdrawal Fee (%)</label><input id="withdrawalFeePercent" type="number" min="0" max="100" step=".01" required></div>
+      <div class="form-group" style="margin-top:12px"><label>Required Qualified Referrals</label><input id="referralRequirement" type="number" min="0" step="1" required></div>
+      <div class="form-group" style="margin-top:12px"><label>Withdrawal Notice</label><textarea id="withdrawalNotice" placeholder="Withdrawal processing notice"></textarea></div>
+      <div class="form-actions"><button class="btn primary" type="submit">SAVE WITHDRAWAL RULES ✓</button></div>
+     </form>
+    </div>
+    <div class="panel">
+     <h3>Status Toggle</h3>
+     <div class="switch-row"><div><b>Withdrawal System</b><small>Enable or disable new requests.</small></div><label class="switch"><input id="withdrawEnabled" type="checkbox"><span></span></label></div>
+     <button class="btn primary" id="saveWithdrawToggle" style="margin-top:12px">SAVE STATUS</button>
+    </div>
+   </div>
+  </section>
+
+  <!-- SPIN -->
+  <section id="page-spin" class="page">
+   <div class="grid two">
+    <div class="panel">
+     <h3>Lucky Spin Settings</h3>
+     <form id="spinForm">
+      <div class="switch-row"><div><b>Enable Lucky Spin</b></div><label class="switch"><input id="spinEnabled" type="checkbox"><span></span></label></div>
+      <div class="form-group" style="margin-top:14px"><label>Qualified Referrals Required Per Spin</label><input id="referralsPerSpin" type="number" min="1" required></div>
+      <div class="form-group" style="margin-top:12px"><label>Spin Prize Values (CNV)</label><input id="spinRewards" placeholder="10,25,50,100,250,500" required></div>
+      <div class="form-group" style="margin-top:12px"><label>Referral Reward (CNV)</label><input id="referralReward" type="number" min="0" required></div>
+      <div class="form-actions"><button class="btn primary" type="submit">SAVE SPIN SETTINGS ✓</button></div>
+     </form>
+    </div>
+    <div class="panel">
+     <h3>Prize Preview</h3>
+     <div id="spinPrizePreview" class="grid two"></div>
+    </div>
+   </div>
+  </section>
+
+  <!-- COMMISSION -->
+  <section id="page-commission" class="page">
+   <div class="grid two">
+    <div class="panel">
+     <h3>6-Level Referral Commission</h3>
+     <form id="commissionForm">
+      <div id="commissionRates"></div>
+      <div class="form-actions"><button class="btn primary" type="submit">SAVE COMMISSION RATES ✓</button></div>
+     </form>
+    </div>
+    <div class="panel">
+     <h3>Auto Payout</h3>
+     <div class="switch-row"><div><b>Daily Auto Payout</b></div><label class="switch"><input id="commissionAutoPayout" type="checkbox"><span></span></label></div>
+     <button class="btn primary" id="saveCommissionSchedule" style="margin-top:12px">SAVE SETTING</button>
+    </div>
+   </div>
+  </section>
+
+  <!-- TASKS -->
+  <section id="page-tasks" class="page">
+   <div class="panel">
+    <div class="section-head" style="margin-top:0"><h2>Task Manager</h2><button class="btn primary" id="addTask">＋ Add Task</button></div>
+    <div class="table-wrap"><table><thead><tr><th>ID</th><th>Task</th><th>Platform</th><th>Reward</th><th>Status</th><th>Actions</th></tr></thead><tbody id="taskRows"></tbody></table></div>
+   </div>
+   <div class="panel">
+    <h3 id="taskEditorTitle">Add Task</h3>
+    <form id="taskForm">
+     <input type="hidden" id="taskId">
+     <div class="form-grid">
+      <div class="form-group"><label>Task Name</label><input id="taskTitle" required placeholder="Join Telegram"></div>
+      <div class="form-group"><label>Platform</label><select id="taskPlatform"><option>Telegram</option><option>YouTube</option><option>Facebook</option><option>Instagram</option><option>TikTok</option><option>X</option><option>Daily</option><option>Other</option></select></div>
+      <div class="form-group full"><label>Task URL</label><input id="taskUrl" type="url" placeholder="https://t.me/..."></div>
+      <div class="form-group"><label>Reward (CNV)</label><input id="taskReward" type="number" min="0" required></div>
+      <div class="form-group"><label>Status</label><select id="taskEnabled"><option value="true">Enabled</option><option value="false">Disabled</option></select></div>
+     </div>
+     <div class="form-actions"><button class="btn" type="button" id="clearTask">Clear</button><button class="btn primary" type="submit">SAVE TASK ✓</button></div>
+    </form>
+   </div>
+  </section>
+
+  <!-- WITHDRAWALS -->
+  <section id="page-withdrawals" class="page">
+   <div class="panel">
+    <div class="section-head" style="margin-top:0"><h2>Withdrawal Requests</h2><button class="btn" id="refreshWithdrawals">↻ Refresh</button></div>
+    <div class="tabs" id="withdrawalTabs">
+     <button class="active" data-status="all">All</button>
+     <button data-status="pending">Pending</button>
+     <button data-status="approved">Approved</button>
+     <button data-status="paid">Paid</button>
+     <button data-status="rejected">Rejected</button>
+    </div>
+    <div class="table-wrap"><table><thead><tr><th>ID</th><th>User</th><th>Method</th><th>Destination</th><th>Requested</th><th>Fee</th><th>Net</th><th>Status</th><th>Action</th></tr></thead><tbody id="withdrawalRows"></tbody></table></div>
+   </div>
+  </section>
+
+  <!-- USERS -->
+  <section id="page-users" class="page">
+   <div class="panel">
+    <div class="section-head" style="margin-top:0"><h2>User Management</h2><button class="btn" id="refreshUsers">↻ Refresh</button></div>
+    <div class="form-group" style="max-width:350px;margin-bottom:13px"><label>Search user</label><input id="userSearch" placeholder="Search name or Telegram ID"></div>
+    <div class="table-wrap"><table><thead><tr><th>ID</th><th>Name</th><th>Telegram ID</th><th>Balance</th><th>Referrals</th><th>Status</th><th>Actions</th></tr></thead><tbody id="userRows"></tbody></table></div>
+   </div>
+   <div class="panel">
+    <h3>Edit User</h3>
+    <form id="userForm">
+     <input type="hidden" id="editUserId">
+     <div class="form-grid">
+      <div class="form-group"><label>Balance (CNV)</label><input id="editUserBalance" type="number" min="0" step="1" required></div>
+      <div class="form-group"><label>Account Status</label><select id="editUserBlocked"><option value="false">Active</option><option value="true">Blocked</option></select></div>
+     </div>
+     <div class="form-actions"><button class="btn primary" type="submit">SAVE USER ✓</button></div>
+    </form>
+   </div>
+  </section>
+
+  <!-- SYSTEM -->
+  <section id="page-system" class="page">
+   <div class="grid two">
+    <div class="panel">
+     <h3>Core Settings</h3>
+     <form id="systemForm">
+      <div class="form-group"><label>Tap Reward (CNV)</label><input id="miningReward" type="number" min="0" step="1"></div>
+      <div class="form-group" style="margin-top:12px"><label>Maximum Energy</label><input id="maxEnergy" type="number" min="1" step="1"></div>
+      <div class="form-group" style="margin-top:12px"><label>Energy Restored Per Second</label><input id="energyPerSecond" type="number" min="0" step=".1"></div>
+      <div class="form-group" style="margin-top:12px"><label>Daily Bonus (CNV)</label><input id="dailyReward" type="number" min="0" step="1"></div>
+      <div class="form-actions"><button class="btn primary" type="submit">SAVE CORE SETTINGS ✓</button></div>
+     </form>
+    </div>
+    <div class="panel">
+     <h3>System Controls</h3>
+     <div class="switch-row"><div><b>Registration</b></div><label class="switch"><input id="systemRegistration" type="checkbox"><span></span></label></div>
+     <div class="switch-row"><div><b>Mining</b></div><label class="switch"><input id="systemMining" type="checkbox"><span></span></label></div>
+     <div class="switch-row"><div><b>Withdrawal</b></div><label class="switch"><input id="systemWithdrawal" type="checkbox"><span></span></label></div>
+     <div class="switch-row"><div><b>Sound Effects</b></div><label class="switch"><input id="systemSound" type="checkbox"><span></span></label></div>
+     <div class="form-actions"><button class="btn primary" id="saveSystemToggles">SAVE SYSTEM STATUS ✓</button></div>
+    </div>
+   </div>
+   <div class="panel">
+    <h3>Admin Security</h3>
+    <button class="btn" id="changePasswordBtn">Change Admin Password</button>
+   </div>
+  </section>
+ </main>
 </div>
 
-<div id="modalBg" class="modal-bg"><div class="modal"><div class="modal-head"><h3 id="modalTitle">Manage</h3><button class="btn" id="modalClose">✕</button></div><div id="modalBody"></div></div></div>
+<div id="modalBg" class="modal-bg">
+ <div class="modal">
+  <div class="modal-head"><h3 id="modalTitle">Confirm action</h3><button class="btn" id="modalClose">✕</button></div>
+  <div id="modalBody"></div>
+ </div>
+</div>
 
 <script>
 "use strict";
 const $=id=>document.getElementById(id);
 const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const safeUrl=s=>{try{let u=new URL(s);return ["https:","http:"].includes(u.protocol)?u.href:""}catch{return""}};
 const uid=()=> "item_"+Date.now().toString(36)+"_"+Math.random().toString(36).slice(2,7);
-const safeUrl=s=>{try{const u=new URL(s);return ["https:","http:"].includes(u.protocol)?u.href:""}catch{return""}};
-const fmt=n=>Number(n||0).toLocaleString("en-US");
-const S={settings:{},users:[],tasks:[],withdrawals:[],buttons:[],paymentMethods:[],walletTab:"ewallet",filter:"all"};
-const defaultsText={
- withdrawTitle:"Withdraw",binance:"Binance",selectNetwork:"🌐 Select Network",ewallet:"E-Wallet",
- selectWallet:"Select Wallet",enterAmount:"Enter Amount",walletAddress:"Wallet Address",
- submitWithdrawal:"Submit Withdrawal",confirmWithdrawal:"Confirm Withdrawal",
- withdrawalPending:"Your request is pending admin review.",withdrawalSuccess:"Withdrawal request submitted successfully.",
- withdrawalFailed:"Unable to submit withdrawal.",minimumWithdrawal:"Minimum withdrawal amount",
- insufficientBalance:"Insufficient balance.",loading:"Loading..."
+
+const S={
+ settings:{},
+ users:[],
+ tasks:[],
+ withdrawals:[],
+ buttons:[],
+ paymentMethods:[],
+ walletTab:"ewallet",
+ withdrawalFilter:"all",
+ editingButton:null,
+ editingWallet:null,
+ editingTask:null,
+ currentPage:"dashboard"
 };
-const textLabels={
- withdrawTitle:"Withdrawal Page Title",binance:"Binance Category Name",selectNetwork:"Select Network Category Name",
- ewallet:"E-Wallet Category Name",selectWallet:"Select Wallet Message",enterAmount:"Amount Field Placeholder",
- walletAddress:"Wallet Address Field Placeholder",submitWithdrawal:"Submit Button Text",
- confirmWithdrawal:"Confirm Button Text",withdrawalPending:"Pending Message",withdrawalSuccess:"Success Message",
- withdrawalFailed:"Failure Message",minimumWithdrawal:"Minimum Withdrawal Message",
- insufficientBalance:"Insufficient Balance Message",loading:"Loading Message"
+
+function toast(s){
+ const t=$("toast");t.textContent=s;t.classList.add("show");
+ clearTimeout(t._timer);t._timer=setTimeout(()=>t.classList.remove("show"),2800);
+}
+function api(path,opts={}){
+ return fetch(path,{credentials:"same-origin",...opts,headers:{"Content-Type":"application/json",...(opts.headers||{})}})
+ .then(async r=>{const d=await r.json().catch(()=>({}));if(!r.ok)throw Error(d.error||`Request failed (${r.status})`);return d});
+}
+function checked(id){return $(id).checked}
+function number(id,def=0){const n=Number($(id).value);return Number.isFinite(n)?n:def}
+function setVal(id,v){if($(id))$(id).value=v??""}
+function setCheck(id,v){if($(id))$(id).checked=!!v}
+function urlImage(el,url,fallback="C"){
+ const clean=safeUrl(url);
+ el.innerHTML=clean?`<img src="${esc(clean)}" alt="" onerror="this.parentElement.textContent='${esc(fallback)}'">`:esc(fallback);
+}
+function animClass(a){return ({pulse:"anim-pulse",bounce:"anim-bounce",glow:"anim-glow",shake:"anim-shake"})[a]||""}
+
+const pageInfo={
+ dashboard:["Dashboard","Your app performance at a glance."],
+ branding:["App Branding","Control app name, logo and loading screen."],
+ texts:["User Panel Texts","Customize all notices, rules and subtext messages."],
+ buttons:["Custom Buttons","Build custom links and buttons for the user app."],
+ wallets:["E-Wallet & Network","Manage category titles, logos and payment methods."],
+ withdrawSettings:["Withdrawal Settings","Configure withdrawal minimums and fees."],
+ spin:["Lucky Spin","Configure spin rewards and referral requirements."],
+ commission:["Referral Commission","Manage all six commission levels."],
+ tasks:["Task Manager","Create and manage user tasks."],
+ withdrawals:["Withdrawal Requests","Review and process payout requests."],
+ users:["User Management","Manage accounts and balances."],
+ system:["System Settings","Configure core rewards and system controls."]
 };
-const pageInfo={dashboard:["Dashboard","Application control center"],branding:["App Branding","App identity and loading screen"],buttons:["Custom Buttons","User panel buttons"],categories:["Withdrawal Categories","Binance, Network and E-Wallet categories"],wallets:["Wallet Methods","Payment methods and networks"],texts:["User Panel Texts","Edit messages and labels"],withdrawSettings:["Withdrawal Settings","Withdrawal rules"],spin:["Lucky Spin","Spin rewards"],commission:["Referral Commission","Six-level commission"],tasks:["Tasks","Manage tasks"],withdrawals:["Withdrawal Requests","Review requests"],users:["Users","Manage accounts"],system:["System Settings","Core app settings"]};
-function toast(m){const t=$("toast");t.textContent=m;t.classList.add("show");clearTimeout(t._timer);t._timer=setTimeout(()=>t.classList.remove("show"),2800)}
-async function api(path,opts={}){const r=await fetch(path,{credentials:"same-origin",...opts,headers:{"Content-Type":"application/json",...(opts.headers||{})}});const d=await r.json().catch(()=>({}));if(!r.ok)throw Error(d.error||"Request failed ("+r.status+")");return d}
-const val=id=>$(id).value;
-const num=(id,def=0)=>{const n=Number(val(id));return Number.isFinite(n)?n:def};
-const ck=id=>$(id).checked;
-function set(id,v){if($(id))$(id).value=v??""}
-function check(id,v){if($(id))$(id).checked=!!v}
-function go(name){if(!pageInfo[name])return;document.querySelectorAll(".page").forEach(p=>p.classList.toggle("active",p.id==="page-"+name));document.querySelectorAll(".nav [data-page]").forEach(b=>b.classList.toggle("active",b.dataset.page===name));$("pageTitle").textContent=pageInfo[name][0];$("pageSubtitle").textContent=pageInfo[name][1];$("sidebar").classList.remove("open");window.scrollTo(0,0)}
-document.querySelectorAll(".nav [data-page]").forEach(b=>b.onclick=()=>go(b.dataset.page));
+function go(name){
+ if(!pageInfo[name])return;
+ S.currentPage=name;
+ document.querySelectorAll(".page").forEach(p=>p.classList.toggle("active",p.id==="page-"+name));
+ document.querySelectorAll(".nav button[data-page]").forEach(b=>b.classList.toggle("active",b.dataset.page===name));
+ $("pageTitle").textContent=pageInfo[name][0];$("pageSubtitle").textContent=pageInfo[name][1];
+ $("sidebar").classList.remove("open");window.scrollTo({top:0,behavior:"smooth"});
+}
+document.querySelectorAll(".nav button[data-page]").forEach(b=>b.addEventListener("click",()=>go(b.dataset.page)));
 $("menuBtn").onclick=()=>$("sidebar").classList.toggle("open");
-function modal(title,html){$("modalTitle").textContent=title;$("modalBody").innerHTML=html;$("modalBg").classList.add("show")}
+
+function openModal(title,html){
+ $("modalTitle").textContent=title;$("modalBody").innerHTML=html;$("modalBg").classList.add("show");
+}
 function closeModal(){$("modalBg").classList.remove("show")}
-$("modalClose").onclick=closeModal;$("modalBg").onclick=e=>{if(e.target===$("modalBg"))closeModal()};
-function normalize(){const s=S.settings;S.buttons=Array.isArray(s.buttons)?s.buttons:[];S.paymentMethods=Array.isArray(s.paymentMethods)?s.paymentMethods:[]}
-function setImageBox(el,url,fallback="C"){const u=safeUrl(url);el.innerHTML=u?`<img src="${esc(u)}" onerror="this.parentElement.textContent='${fallback}'">`:fallback}
+$("modalClose").onclick=closeModal;
+$("modalBg").addEventListener("click",e=>{if(e.target===$("modalBg"))closeModal()});
+
+function normalizeSettings(){
+ const s=S.settings||{};
+ S.buttons=Array.isArray(s.buttons)?s.buttons:[];
+ S.paymentMethods=Array.isArray(s.paymentMethods)?s.paymentMethods:[];
+}
 function fillSettings(){
- const s=S.settings;
- set("appName",s.appName||"CoinNova");set("tagline",s.tagline||"Tap • Mine • Earn");set("appLogo",s.appLogo||"");set("loadingImage",s.loadingImage||"");set("loadingTitle",s.loadingTitle||"");set("loadingText",s.loadingText||"");
- set("minimumWithdrawal",s.minWithdraw??1000);set("withdrawalFeePercent",s.withdrawalFeePercent??0);set("referralRequirement",s.referralRequired??1);set("withdrawalNotice",s.withdrawalNotice||"");check("withdrawEnabled",s.withdrawalEnabled!==false);
- check("spinEnabled",s.spinEnabled!==false);set("referralsPerSpin",s.referralsPerSpin??1);set("spinRewards",(s.spinRewards||[10,20,30,50,100,200]).join(","));set("referralReward",s.referralBonus??100);
- set("tapReward",s.tapReward??1);set("maxEnergy",s.maxEnergy??1000);set("energyPerSecond",s.energyPerSecond??3);set("dailyBonus",s.dailyBonus??50);
- check("systemRegistration",s.registrationEnabled!==false);check("systemMining",s.miningEnabled!==false);check("systemMaintenance",!!s.maintenance);check("systemSound",s.sound!==false);
- check("dashMining",s.miningEnabled!==false);check("dashRegistration",s.registrationEnabled!==false);check("dashWithdrawal",s.withdrawalEnabled!==false);check("dashSpin",s.spinEnabled!==false);
- const rates=s.commissionRates||[10,5,3,2,1,1];
- $("commissionRates").innerHTML=Array.from({length:6},(_,i)=>`<div class="switch-row"><b>Level ${i+1} Commission (%)</b><input style="max-width:120px" id="rate${i+1}" type="number" min="0" max="100" step=".01" value="${esc(rates[i]??0)}"></div>`).join("");
- $("sideAppName").textContent=s.appName||"CoinNova";setImageBox($("sideLogo"),s.appLogo);setImageBox($("loginLogo"),s.appLogo);
- renderBrandPreview();renderButtons();renderCategories();renderWallets();renderTexts();renderTasks();renderSpinPreview();
+ const s=S.settings||{};
+ setVal("appName",s.appName||"CoinNova");
+ setVal("tagline",s.tagline||"TAP • MINE • EARN");
+ setVal("appLogo",s.appLogo||"");
+ setVal("loadingImage",s.loadingImage||"");
+ setVal("loadingTitle",s.loadingTitle||s.appName||"COINNOVA");
+ setVal("loadingText",s.loadingText||"VERIFYING TELEGRAM ACCOUNT");
+
+ // Texts
+ setVal("txtHomeNotice",s.txtHomeNotice||"Keep your Telegram account secure. Never share your wallet seed phrase or password.");
+ setVal("txtReferralRule",s.txtReferralRule||"Your friend qualifies after completing 10 taps. Withdrawals require referral requirement.");
+ setVal("txtWithdrawSub",s.txtWithdrawSub||"Select a withdrawal category first. Verify destination carefully.");
+ setVal("txtWalletFormNotice",s.txtWalletFormNotice||"Enter valid destination details.");
+ setVal("txtTaskSub",s.txtTaskSub||"Earn CNV");
+ setVal("txtSpinRules",s.txtSpinRules||"Invite qualified friends to unlock spins.");
+
+ // Category Titles & Logos
+ setVal("catEwalletName",s.catEwalletName||"E-Wallet");
+ setVal("catEwalletLogo",s.catEwalletLogo||"");
+ setVal("catNetworkName",s.catNetworkName||"Select Network");
+ setVal("catNetworkLogo",s.catNetworkLogo||"");
+
+ setVal("minimumWithdrawal",s.minimumWithdrawal??1000);
+ setVal("withdrawalFeePercent",s.withdrawalFeePercent??0);
+ setVal("referralRequirement",s.referralRequirement??1);
+ setVal("withdrawalNotice",s.withdrawalNotice||"");
+
+ setCheck("withdrawEnabled",s.withdrawalEnabled!==false);
+ setCheck("spinEnabled",s.spinEnabled!==false);
+ setVal("referralsPerSpin",s.referralsPerSpin??1);
+ setVal("spinRewards",Array.isArray(s.spinRewards)?s.spinRewards.join(","):"10,25,50,100,250,500");
+ setVal("referralReward",s.referralReward??250);
+
+ let rates=Array.isArray(s.commissionRates)?s.commissionRates:[10,5,3,2,1,.5];
+ $("commissionRates").innerHTML=Array.from({length:6},(_,i)=>`
+ <div class="rate-row"><div class="rate-badge">L${i+1}</div><div><b>Level ${i+1}</b><small>Commission from level ${i+1}</small></div><div class="rate-input"><input aria-label="Level ${i+1} commission rate" id="rate${i+1}" type="number" min="0" max="100" step=".01" value="${esc(rates[i]??0)}"><span>%</span></div></div>`).join("");
+ setCheck("commissionAutoPayout",s.commissionAutoPayout!==false);
+
+ setVal("miningReward",s.miningReward??1);
+ setVal("maxEnergy",s.maxEnergy??1000);
+ setVal("energyPerSecond",s.energyPerSecond??1);
+ setVal("dailyReward",s.dailyReward??100);
+ setCheck("systemRegistration",s.registrationEnabled!==false);
+ setCheck("systemMining",s.miningEnabled!==false);
+ setCheck("systemWithdrawal",s.withdrawalEnabled!==false);
+ setCheck("systemSound",s.sound!==false);
+ setCheck("dashMining",s.miningEnabled!==false);
+ setCheck("dashRegistration",s.registrationEnabled!==false);
+ setCheck("dashWithdrawal",s.withdrawalEnabled!==false);
+ setCheck("dashSpin",s.spinEnabled!==false);
+
+ $("sideAppName").textContent=s.appName||"CoinNova";
+ urlImage($("sideLogo"),s.appLogo,"C");urlImage($("loginLogo"),s.appLogo,"C");
+ previewBranding();renderSpinPrizes();renderButtons();renderWallets();renderTasks();
 }
-function renderBrandPreview(){
- $("brandPreviewName").textContent=val("appName")||"CoinNova";$("brandPreviewTag").textContent=val("tagline");
- const logo=safeUrl(val("appLogo"));$("brandPreviewImg").style.display=logo?"block":"none";if(logo)$("brandPreviewImg").src=logo;
- $("loadingPreviewTitle").textContent=val("loadingTitle")||val("appName");$("loadingPreviewText").textContent=val("loadingText");
- const bg=safeUrl(val("loadingImage"));$("loadingPreview").style.backgroundImage=bg?`linear-gradient(#0005,#0008),url("${bg}")`:"none";
+
+function previewBranding(){
+ setVal("brandPreviewName", $("appName").value||"CoinNova");
+ $("brandPreviewName").textContent=$("appName").value||"CoinNova";
+ $("brandPreviewTag").textContent=$("tagline").value||"";
+ $("loadingPreviewTitle").textContent=$("loadingTitle").value||$("appName").value||"COINNOVA";
+ $("loadingPreviewText").textContent=$("loadingText").value||"";
+ const a=safeUrl($("appLogo").value),b=safeUrl($("loadingImage").value);
+ $("brandPreviewImg").style.display=a?"block":"none";if(a)$("brandPreviewImg").src=a;
+ $("loadingPreviewImg").style.display=b?"block":"none";if(b)$("loadingPreviewImg").src=b;
 }
-["appName","tagline","appLogo","loadingImage","loadingTitle","loadingText"].forEach(id=>$(id).addEventListener("input",renderBrandPreview));
+["appName","tagline","appLogo","loadingImage","loadingTitle","loadingText"].forEach(id=>$(id).addEventListener("input",previewBranding));
+
 async function loadAll(){
  try{
   const d=await api("/api/admin/overview");
-  S.settings=d.settings||{};S.users=(d.users||[]).map(u=>({...u,telegramId:u.tg_id,blocked:!!u.is_banned,referrals:u.referrals||0}));
-  S.tasks=(d.tasks||[]).map(t=>({...t,enabled:Number(t.enabled)!==0}));
-  S.withdrawals=d.withdrawals||[];normalize();fillSettings();renderDashboard();renderWithdrawals();renderUsers();
-  $("loginScreen").style.display="none";$("adminApp").style.display="flex";toast("Admin data loaded");
- }catch(e){$("loginScreen").style.display="grid";$("loginError").textContent=e.message}
+  S.settings=d.settings||{};
+  S.users=d.users||[];
+  S.tasks=d.tasks||[];
+  S.withdrawals=d.withdrawals||[];
+  normalizeSettings();
+  fillSettings();
+  renderDashboard();renderWithdrawalRows();renderUsers();
+  $("loginScreen").style.display="none";$("adminApp").style.display="flex";
+  toast("Admin data loaded");
+ }catch(e){
+  if($("adminApp").style.display!=="flex"){
+   $("loginScreen").style.display="grid";
+   $("loginError").textContent=e.message;
+  }else toast(e.message);
+ }
 }
-$("loginForm").onsubmit=async e=>{e.preventDefault();$("loginError").textContent="";try{await api("/api/auth/admin",{method:"POST",body:JSON.stringify({password:val("adminPassword")})});set("adminPassword","");await loadAll()}catch(err){$("loginError").textContent=err.message}};
-$("logoutBtn").onclick=async()=>{try{await api("/api/logout",{method:"POST",body:"{}"})}catch{}$("adminApp").style.display="none";$("loginScreen").style.display="grid";toast("Logged out")};
-["refreshBtn","topRefresh"].forEach(id=>$(id).onclick=loadAll);
-function badge(s){s=String(s||"pending").toLowerCase();return `<span class="badge ${["paid","approved","completed","enabled"].includes(s)?"on":["rejected","blocked","disabled"].includes(s)?"off":""}">${esc(s.toUpperCase())}</span>`}
-function methodName(id){return S.paymentMethods.find(m=>String(m.id)===String(id))?.name||String(id||"Unknown")}
-function renderDashboard(){
- $("statUsers").textContent=S.users.length;$("statWithdrawals").textContent=S.withdrawals.length;$("statPending").textContent=S.withdrawals.filter(w=>w.status==="pending").length;$("statTasks").textContent=S.tasks.length;
- $("dashWithdrawalRows").innerHTML=S.withdrawals.slice(0,8).map(w=>`<tr><td>#${esc(w.id)}</td><td>${esc(w.userName||w.name||w.user_id)}</td><td>${esc(methodName(w.method))}</td><td>${fmt(w.amount)}</td><td>${badge(w.status)}</td><td><button class="btn small" onclick="reviewWithdrawal('${esc(w.id)}')">Review</button></td></tr>`).join("")||'<tr><td colspan="6" class="empty">No requests</td></tr>';
-}
-function renderWithdrawals(){
- const rows=S.withdrawals.filter(w=>S.filter==="all"||String(w.status).toLowerCase()===S.filter);
- $("withdrawalRows").innerHTML=rows.map(w=>`<tr><td>#${esc(w.id)}</td><td>${esc(w.userName||w.user_id)}</td><td>${esc(methodName(w.method))}</td><td>${esc(w.address||"—")}</td><td>${fmt(w.amount)}</td><td>${fmt(w.fee_amount)} </td><td>${fmt(w.net_amount)}</td><td>${badge(w.status)}</td><td><button class="btn small" onclick="reviewWithdrawal('${esc(w.id)}')">Manage</button></td></tr>`).join("")||'<tr><td colspan="9" class="empty">No requests</td></tr>';
-}
-document.querySelectorAll("#withdrawalTabs button").forEach(b=>b.onclick=()=>{S.filter=b.dataset.status;document.querySelectorAll("#withdrawalTabs button").forEach(x=>x.classList.toggle("active",x===b));renderWithdrawals()});
-window.reviewWithdrawal=id=>{
- const w=S.withdrawals.find(x=>String(x.id)===String(id));if(!w)return;
- modal("Manage Withdrawal",`<div class="help">Request #${esc(w.id)} · ${esc(w.userName||w.user_id)} · ${fmt(w.amount)} CNV</div><label>Status</label><select id="modalStatus"><option>pending</option><option>approved</option><option>paid</option><option>rejected</option></select><label style="margin-top:10px">Transaction ID</label><input id="modalTxid" value="${esc(w.txid||"")}"><label style="margin-top:10px">Admin Note</label><textarea id="modalNote">${esc(w.note||"")}</textarea><div class="actions"><button class="btn primary" id="saveWithdrawal">SAVE STATUS</button></div>`);
- set("modalStatus",w.status||"pending");
- $("saveWithdrawal").onclick=async()=>{try{await api(`/api/admin/withdrawals/${encodeURIComponent(id)}`,{method:"PATCH",body:JSON.stringify({status:val("modalStatus"),txid:val("modalTxid"),note:val("modalNote")})});closeModal();await loadAll();toast("Withdrawal updated")}catch(e){toast(e.message)}};
+
+$("loginForm").onsubmit=async e=>{
+ e.preventDefault();$("loginError").textContent="";
+ try{
+  await api("/api/auth/admin",{method:"POST",body:JSON.stringify({password:$("adminPassword").value})});
+  $("adminPassword").value="";await loadAll();
+ }catch(err){$("loginError").textContent=err.message}
 };
+$("logoutBtn").onclick=async()=>{
+ try{await api("/api/logout",{method:"POST",body:"{}"})}catch{}
+ $("adminApp").style.display="none";$("loginScreen").style.display="grid";toast("Logged out");
+};
+$("refreshBtn").onclick=loadAll;$("topRefresh").onclick=loadAll;
+$("refreshWithdrawals").onclick=loadAll;$("refreshUsers").onclick=loadAll;
+
+function renderDashboard(){
+ $("statUsers").textContent=S.users.length;
+ $("statWithdrawals").textContent=S.withdrawals.length;
+ $("statPending").textContent=S.withdrawals.filter(w=>String(w.status).toLowerCase()==="pending").length;
+ $("statTasks").textContent=S.tasks.length;
+ const recent=[...S.withdrawals].slice(-8).reverse();
+ $("dashWithdrawalRows").innerHTML=recent.map(w=>`
+ <tr><td>#${esc(w.id)}</td><td>${esc(w.userName||w.name||w.userId||"User")}</td><td>${esc(methodName(w.method))}</td><td>${fmt(w.amount)} CNV</td><td>${statusBadge(w.status)}</td><td><button class="btn small" onclick="editWithdrawal('${esc(w.id)}')">Review</button></td></tr>`).join("")||'<tr><td colspan="6" class="empty">No withdrawal requests found.</td></tr>';
+}
+function fmt(n){return Number(n||0).toLocaleString("en-US")}
+function statusBadge(status){
+ const s=String(status||"pending").toLowerCase();
+ const cls=["paid","approved","completed"].includes(s)?"on":["rejected","blocked"].includes(s)?"off":"pending";
+ return `<span class="badge ${cls}">${esc(s.toUpperCase())}</span>`;
+}
+function methodName(id){return S.paymentMethods.find(m=>String(m.id)===String(id))?.name||String(id||"Unknown")}
+function renderWithdrawalRows(){
+ const list=S.withdrawals.filter(w=>S.withdrawalFilter==="all"||String(w.status).toLowerCase()===S.withdrawalFilter);
+ $("withdrawalRows").innerHTML=list.map(w=>`
+ <tr><td>#${esc(w.id)}</td><td>${esc(w.userName||w.name||w.userId||"User")}</td><td>${esc(methodName(w.method))}</td><td>${esc(w.address||"—")}</td><td>${fmt(w.amount)} CNV</td><td>${fmt(w.feeAmount)} CNV</td><td>${fmt(w.netAmount??(Number(w.amount||0)-Number(w.feeAmount||0)))} CNV</td><td>${statusBadge(w.status)}</td><td><button class="btn small" onclick="editWithdrawal('${esc(w.id)}')">Manage</button></td></tr>`).join("")||'<tr><td colspan="9" class="empty">No matching withdrawal requests.</td></tr>';
+}
+document.querySelectorAll("#withdrawalTabs button").forEach(b=>b.onclick=()=>{
+ S.withdrawalFilter=b.dataset.status;
+ document.querySelectorAll("#withdrawalTabs button").forEach(x=>x.classList.toggle("active",x===b));
+ renderWithdrawalRows();
+});
+window.editWithdrawal=id=>{
+ const w=S.withdrawals.find(x=>String(x.id)===String(id));if(!w)return;
+ openModal("Manage Withdrawal",`
+ <div class="help">Request #${esc(w.id)} · ${esc(w.userName||w.userId||"User")} · ${fmt(w.amount)} CNV</div>
+ <label>Request Status</label><select id="modalWithdrawalStatus">
+ <option value="pending">Pending</option><option value="approved">Approved</option><option value="paid">Paid</option><option value="rejected">Rejected</option></select>
+ <label style="margin-top:12px">Admin Note</label><textarea id="modalWithdrawalNote" placeholder="Optional processing note"></textarea>
+ <div class="form-actions"><button class="btn" onclick="closeModal()">Cancel</button><button class="btn primary" id="confirmWithdrawal">SAVE STATUS</button></div>`);
+ $("modalWithdrawalStatus").value=String(w.status||"pending").toLowerCase();
+ $("confirmWithdrawal").onclick=async()=>{
+  try{
+   await api(`/api/admin/withdrawals/${encodeURIComponent(id)}`,{method:"PATCH",body:JSON.stringify({status:$("modalWithdrawalStatus").value,note:$("modalWithdrawalNote").value})});
+   closeModal();await loadAll();toast("Withdrawal status updated");
+  }catch(e){toast(e.message)}
+ };
+};
+
 function renderUsers(filter=""){
- const q=filter.toLowerCase();const arr=S.users.filter(u=>`${u.name} ${u.telegramId} ${u.id}`.toLowerCase().includes(q));
- $("userRows").innerHTML=arr.map(u=>`<tr><td>${esc(u.id)}</td><td>${esc(u.name)}</td><td>${esc(u.telegramId)}</td><td>${fmt(u.balance)}</td><td>${u.blocked?badge("blocked"):badge("active")}</td><td><button class="btn small" onclick="editUser('${esc(u.id)}')">Edit</button></td></tr>`).join("")||'<tr><td colspan="6" class="empty">No users</td></tr>';
+ const q=filter.trim().toLowerCase();
+ const users=S.users.filter(u=>`${u.name||""} ${u.telegramId||u.telegram_id||""} ${u.id||""}`.toLowerCase().includes(q));
+ $("userRows").innerHTML=users.map(u=>`
+ <tr><td>${esc(u.id)}</td><td>${esc(u.name||"Miner")}</td><td>${esc(u.telegramId||u.telegram_id||"—")}</td><td>${fmt(u.balance)} CNV</td><td>${fmt(u.referrals||u.referralCount||0)}</td><td>${u.blocked?'<span class="badge off">BLOCKED</span>':'<span class="badge on">ACTIVE</span>'}</td>
+ <td><button class="btn small" onclick="editUser('${esc(u.id)}')">Edit</button></td></tr>`).join("")||'<tr><td colspan="7" class="empty">No users found.</td></tr>';
 }
 $("userSearch").oninput=e=>renderUsers(e.target.value);
-window.editUser=id=>{const u=S.users.find(x=>String(x.id)===String(id));if(!u)return;set("editUserId",u.id);set("editUserBalance",u.balance);set("editUserBlocked",String(u.blocked));$("editUserId").scrollIntoView({behavior:"smooth",block:"center"})};
-$("userForm").onsubmit=async e=>{e.preventDefault();const id=val("editUserId");if(!id)return toast("Select a user first");try{await api(`/api/admin/users/${encodeURIComponent(id)}`,{method:"PATCH",body:JSON.stringify({balance:num("editUserBalance"),banned:val("editUserBlocked")==="true"})});await loadAll();toast("User updated")}catch(err){toast(err.message)}};
+window.editUser=id=>{
+ const u=S.users.find(x=>String(x.id)===String(id));if(!u)return;
+ setVal("editUserId",u.id);setVal("editUserBalance",u.balance||0);setVal("editUserBlocked",String(!!u.blocked));
+ $("editUserId").scrollIntoView({behavior:"smooth",block:"center"});
+};
+$("userForm").onsubmit=async e=>{
+ e.preventDefault();const id=$("editUserId").value;if(!id)return toast("Select a user first.");
+ try{
+  await api(`/api/admin/users/${encodeURIComponent(id)}`,{method:"PATCH",body:JSON.stringify({balance:number("editUserBalance"),blocked:$("editUserBlocked").value==="true"})});
+  await loadAll();toast("User updated");
+ }catch(err){toast(err.message)}
+};
 
-async function saveSettings(patch,msg="Settings saved"){
+async function saveSettings(patch,success="Settings saved"){
  const merged={...S.settings,...patch};
- try{const d=await api("/api/admin/settings",{method:"PUT",body:JSON.stringify(merged)});S.settings=d.settings||merged;normalize();fillSettings();toast(msg);return true}catch(e){toast(e.message);return false}
+ try{
+  const d=await api("/api/admin/settings",{method:"PUT",body:JSON.stringify(merged)});
+  S.settings=d.settings||merged;normalizeSettings();fillSettings();toast(success);return true;
+ }catch(e){toast(e.message);return false}
 }
-$("brandingForm").onsubmit=e=>{e.preventDefault();saveSettings({appName:val("appName").trim(),tagline:val("tagline").trim(),appLogo:val("appLogo").trim(),loadingImage:val("loadingImage").trim(),loadingTitle:val("loadingTitle").trim(),loadingText:val("loadingText").trim()},"Branding saved")};
 
-// Custom buttons
-function clearButton(){set("buttonId","");$("buttonForm").reset();set("buttonColor","#ffd66b")}
-$("clearButton").onclick=clearButton;$("addButton").onclick=()=>{clearButton();$("buttonForm").scrollIntoView({behavior:"smooth"})};
-$("buttonForm").onsubmit=e=>{e.preventDefault();const id=val("buttonId")||uid();const item={id,name:val("buttonName").trim(),logo:val("buttonLogo").trim(),url:val("buttonUrl").trim(),color:val("buttonColor"),animation:val("buttonAnimation"),enabled:val("buttonEnabled")==="true"};const i=S.buttons.findIndex(x=>x.id===id);if(i<0)S.buttons.push(item);else S.buttons[i]=item;renderButtons();clearButton();toast("Draft updated. Save all buttons.")};
-function renderButtons(){$("buttonList").innerHTML=S.buttons.map(b=>`<div class="list-item"><div class="item-logo">${safeUrl(b.logo)?`<img src="${esc(safeUrl(b.logo))}">`:esc((b.name||"B")[0])}</div><div class="item-info"><b>${esc(b.name)}</b><small>${esc(b.url)}</small>${badge(b.enabled?"enabled":"disabled")}</div><div class="item-actions"><button class="btn small" onclick="editButton('${esc(b.id)}')">Edit</button><button class="btn small danger" onclick="deleteButton('${esc(b.id)}')">Delete</button></div></div>`).join("")||'<div class="empty">No custom buttons</div>'}
-window.editButton=id=>{const b=S.buttons.find(x=>x.id===id);if(!b)return;set("buttonId",b.id);set("buttonName",b.name);set("buttonLogo",b.logo);set("buttonUrl",b.url);set("buttonColor",b.color||"#ffd66b");set("buttonAnimation",b.animation||"none");set("buttonEnabled",String(b.enabled!==false));$("buttonForm").scrollIntoView({behavior:"smooth"})};
-window.deleteButton=id=>{S.buttons=S.buttons.filter(x=>x.id!==id);renderButtons();toast("Removed from draft. Save all buttons.")};
-$("saveButtons").onclick=()=>saveSettings({buttons:S.buttons},"Buttons saved");
+$("brandingForm").onsubmit=async e=>{
+ e.preventDefault();
+ await saveSettings({
+  appName:$("appName").value.trim(),
+  tagline:$("tagline").value.trim(),
+  appLogo:$("appLogo").value.trim(),
+  loadingImage:$("loadingImage").value.trim(),
+  loadingTitle:$("loadingTitle").value.trim(),
+  loadingText:$("loadingText").value.trim()
+ },"Branding saved");
+};
 
-// Category controls
-const categoryDefaults={binance:{id:"binance",name:"Binance",logo:"https://cdn.simpleicons.org/binance/F0B90B",color:"#F0B90B",animation:"pulse",enabled:true},network:{id:"network",name:"🌐 Select Network",logo:"",color:"#45e8ff",animation:"pulse",enabled:true},ewallet:{id:"ewallet",name:"E-Wallet",logo:"",color:"#45e8ff",animation:"pulse",enabled:true}};
-function categories(){return {...categoryDefaults,...(S.settings.withdrawalCategories||{})}}
-function renderCategories(){
- const c=categories();$("categoryEditors").innerHTML=["binance","network","ewallet"].map(k=>{const x=c[k]||categoryDefaults[k];return `<div class="panel" style="background:#0d1728"><h3>${k==="binance"?"① Binance":k==="network"?"② Select Network":"③ E-Wallet"}</h3><div class="form-grid"><div class="fg"><label>Display Name</label><input id="cat_${k}_name" value="${esc(x.name)}"></div><div class="fg"><label>Logo URL</label><input id="cat_${k}_logo" value="${esc(x.logo||"")}"></div><div class="fg"><label>Color</label><input id="cat_${k}_color" type="color" value="${esc(x.color||"#45e8ff")}"></div><div class="fg"><label>Animation</label><select id="cat_${k}_animation">${["none","pulse","bounce","glow","shake"].map(a=>`<option ${x.animation===a?"selected":""}>${a}</option>`).join("")}</select></div><div class="fg"><label>Status</label><select id="cat_${k}_enabled"><option value="true" ${x.enabled!==false?"selected":""}>Enabled</option><option value="false" ${x.enabled===false?"selected":""}>Disabled</option></select></div></div></div>`}).join("");
+$("textsForm").onsubmit=async e=>{
+ e.preventDefault();
+ await saveSettings({
+  txtHomeNotice:$("txtHomeNotice").value.trim(),
+  txtReferralRule:$("txtReferralRule").value.trim(),
+  txtWithdrawSub:$("txtWithdrawSub").value.trim(),
+  txtWalletFormNotice:$("txtWalletFormNotice").value.trim(),
+  txtTaskSub:$("txtTaskSub").value.trim(),
+  txtSpinRules:$("txtSpinRules").value.trim()
+ },"User panel texts saved");
+};
+
+$("saveCategoriesBtn").onclick=async()=>{
+ await saveSettings({
+  catEwalletName:$("catEwalletName").value.trim(),
+  catEwalletLogo:$("catEwalletLogo").value.trim(),
+  catNetworkName:$("catNetworkName").value.trim(),
+  catNetworkLogo:$("catNetworkLogo").value.trim()
+ },"Category names & logos saved");
+};
+
+function clearButtonForm(){
+ S.editingButton=null;
+ $("buttonForm").reset();setVal("buttonId","");
+ setVal("buttonColor","#ffd66b");setVal("buttonAnimation","none");setVal("buttonEnabled","true");
+ updateButtonPreview();
 }
-$("saveCategories").onclick=()=>{const c={};["binance","network","ewallet"].forEach(k=>c[k]={id:k,name:val(`cat_${k}_name`).trim(),logo:val(`cat_${k}_logo`).trim(),color:val(`cat_${k}_color`),animation:val(`cat_${k}_animation`),enabled:val(`cat_${k}_enabled`)==="true"});saveSettings({withdrawalCategories:c},"Withdrawal categories saved")};
+function updateButtonPreview(){
+ const name=$("buttonName").value||"Example Button";
+ const logo=safeUrl($("buttonLogo").value);
+ const color=$("buttonColor").value||"#ffd66b";
+ const anim=animClass($("buttonAnimation").value);
+ $("buttonPreview").className="preview "+anim;
+ $("buttonPreview").style.borderColor=color;
+ $("buttonPreview").innerHTML=`${logo?`<img src="${esc(logo)}" alt="" onerror="this.style.display='none'">`:`<div class="item-logo" style="color:${color}">${esc(name.slice(0,1).toUpperCase())}</div>`}<b style="color:${esc(color)}">${esc(name)}</b><small>${esc($("buttonUrl").value||"Button URL not set")}</small>`;
+}
+["buttonName","buttonLogo","buttonUrl","buttonColor","buttonAnimation"].forEach(id=>$(id).addEventListener("input",updateButtonPreview));
+$("buttonAnimation").onchange=updateButtonPreview;
+$("clearButtonForm").onclick=clearButtonForm;
+$("addButton").onclick=()=>{clearButtonForm();$("buttonName").focus();$("buttonForm").scrollIntoView({behavior:"smooth",block:"start"})};
 
-// Wallet methods
-document.querySelectorAll("[data-wallet-tab]").forEach(b=>b.onclick=()=>{S.walletTab=b.dataset.walletTab;document.querySelectorAll("[data-wallet-tab]").forEach(x=>x.classList.toggle("active",x===b));set("walletCategory",S.walletTab);renderWallets()});
-function clearWallet(){set("walletId","");$("walletForm").reset();set("walletCategory",S.walletTab);set("walletColor",S.walletTab==="ewallet"?"#45e8ff":"#a78bfa");set("walletMin",S.settings.minWithdraw??1000);set("walletFee",0);set("walletParent","")}
-$("clearWallet").onclick=clearWallet;$("addWallet").onclick=()=>{clearWallet();$("walletForm").scrollIntoView({behavior:"smooth"})};
-$("walletForm").onsubmit=e=>{e.preventDefault();const id=val("walletId")||uid(),cat=val("walletCategory");const item={id,name:val("walletName").trim(),category:cat,type:cat==="network"?"crypto":"mobile",parentId:val("walletParent"),logo:val("walletLogo").trim(),color:val("walletColor"),animation:val("walletAnimation"),minWithdrawal:num("walletMin"),feePercent:num("walletFee"),hint:val("walletHint").trim(),enabled:val("walletEnabled")==="true",url:""};const i=S.paymentMethods.findIndex(x=>x.id===id);if(i<0)S.paymentMethods.push(item);else S.paymentMethods[i]=item;S.walletTab=cat;renderWallets();clearWallet();toast("Method draft updated. Save all methods.")};
+$("buttonForm").onsubmit=e=>{
+ e.preventDefault();
+ const id=$("buttonId").value||uid();
+ const item={
+  id,name:$("buttonName").value.trim(),logo:$("buttonLogo").value.trim(),
+  url:$("buttonUrl").value.trim(),color:$("buttonColor").value,
+  animation:$("buttonAnimation").value,enabled:$("buttonEnabled").value==="true"
+ };
+ const idx=S.buttons.findIndex(b=>String(b.id)===String(id));
+ if(idx>=0)S.buttons[idx]=item;else S.buttons.push(item);
+ renderButtons();toast("Button added to draft. Click SAVE ALL BUTTONS to publish.");
+ clearButtonForm();
+};
+function renderButtons(){
+ $("buttonList").innerHTML=S.buttons.map(b=>`
+ <div class="list-item">
+  <div class="item-logo" style="color:${esc(b.color||"#ffd66b")}">${safeUrl(b.logo)?`<img src="${esc(safeUrl(b.logo))}" alt="" onerror="this.remove()">`:esc((b.name||"B").slice(0,1).toUpperCase())}</div>
+  <div class="item-info"><b>${esc(b.name||"Unnamed Button")}</b><small>${esc(b.url||"No URL")} · ${esc(b.animation||"none")}</small><span class="badge ${b.enabled?"on":"off"}">${b.enabled?"ENABLED":"DISABLED"}</span></div>
+  <div class="item-actions"><button class="btn small" onclick="editButton('${esc(b.id)}')">Edit</button><button class="btn small danger" onclick="deleteButton('${esc(b.id)}')">Delete</button></div>
+ </div>`).join("")||'<div class="empty">No custom buttons yet. Click + Add Button.</div>';
+}
+window.editButton=id=>{
+ const b=S.buttons.find(x=>String(x.id)===String(id));if(!b)return;
+ setVal("buttonId",b.id);setVal("buttonName",b.name);setVal("buttonLogo",b.logo);
+ setVal("buttonUrl",b.url);setVal("buttonColor",b.color||"#ffd66b");
+ setVal("buttonAnimation",b.animation||"none");setVal("buttonEnabled",String(b.enabled!==false));
+ updateButtonPreview();$("buttonForm").scrollIntoView({behavior:"smooth",block:"start"});
+};
+window.deleteButton=id=>{
+ S.buttons=S.buttons.filter(b=>String(b.id)!==String(id));renderButtons();toast("Button removed from draft. Save all buttons to publish.");
+};
+$("saveButtons").onclick=async()=>{if(await saveSettings({buttons:S.buttons},"Custom buttons saved"))renderButtons()};
+
+document.querySelectorAll("[data-wallet-tab]").forEach(b=>b.onclick=()=>{
+ S.walletTab=b.dataset.walletTab;
+ document.querySelectorAll("[data-wallet-tab]").forEach(x=>x.classList.toggle("active",x===b));
+ setVal("walletCategory",S.walletTab);renderWallets();
+});
+function clearWalletForm(){
+ S.editingWallet=null;$("walletForm").reset();setVal("walletId","");
+ setVal("walletCategory",S.walletTab);setVal("walletColor",S.walletTab==="ewallet"?"#45e8ff":"#a78bfa");
+ setVal("walletFee",S.settings.withdrawalFeePercent??0);setVal("walletMin",S.settings.minimumWithdrawal??1000);
+ $("walletEditorTitle").textContent=S.walletTab==="ewallet"?"Add E-Wallet Method":"Add Network Method";
+}
+$("addWallet").onclick=()=>{clearWalletForm();$("walletForm").scrollIntoView({behavior:"smooth",block:"start"});$("walletName").focus()};
+$("clearWalletForm").onclick=clearWalletForm;
+
+$("walletForm").onsubmit=e=>{
+ e.preventDefault();
+ const id=$("walletId").value||uid();
+ const category=$("walletCategory").value;
+ const item={
+  id,name:$("walletName").value.trim(),category,
+  type:category==="network"?"crypto":"ewallet",
+  logo:$("walletLogo").value.trim(),color:$("walletColor").value,
+  animation:$("walletAnimation").value,feePercent:number("walletFee"),
+  minWithdrawal:number("walletMin",1),hint:$("walletHint").value.trim(),
+  enabled:$("walletEnabled").value==="true"
+ };
+ const idx=S.paymentMethods.findIndex(m=>String(m.id)===String(id));
+ if(idx>=0)S.paymentMethods[idx]=item;else S.paymentMethods.push(item);
+ S.walletTab=category;
+ document.querySelectorAll("[data-wallet-tab]").forEach(b=>b.classList.toggle("active",b.dataset.walletTab===category));
+ renderWallets();clearWalletForm();toast("Method added to draft. Click SAVE ALL METHODS to publish.");
+};
 function renderWallets(){
- const arr=S.paymentMethods.filter(m=>(m.category||(m.type==="crypto"?"network":"ewallet"))===S.walletTab);
- $("walletList").innerHTML=arr.map(m=>`<div class="list-item"><div class="item-logo">${safeUrl(m.logo)?`<img src="${esc(safeUrl(m.logo))}">`:esc((m.name||"W")[0])}</div><div class="item-info"><b>${esc(m.name)}</b><small>${esc(m.parentId==="binance"?"Binance Network":m.category)} · Min ${fmt(m.minWithdrawal)} · Fee ${Number(m.feePercent||0)}%</small>${badge(m.enabled!==false?"enabled":"disabled")}</div><div class="item-actions"><button class="btn small" onclick="editWallet('${esc(m.id)}')">Edit</button><button class="btn small danger" onclick="deleteWallet('${esc(m.id)}')">Delete</button></div></div>`).join("")||'<div class="empty">No methods in this category</div>';
+ const list=S.paymentMethods.filter(m=>(m.category|| (m.type==="crypto"?"network":"ewallet"))===S.walletTab);
+ $("walletList").innerHTML=list.map(m=>`
+ <div class="list-item">
+  <div class="item-logo" style="color:${esc(m.color||"#45e8ff")}">${safeUrl(m.logo)?`<img src="${esc(safeUrl(m.logo))}" alt="" onerror="this.remove()">`:esc((m.name||"W").slice(0,1).toUpperCase())}</div>
+  <div class="item-info"><b>${esc(m.name)}</b><small>Fee: ${Number(m.feePercent??0)}% · Minimum: ${fmt(m.minWithdrawal??S.settings.minimumWithdrawal)} CNV</small><span class="badge ${m.enabled!==false?"on":"off"}">${m.enabled!==false?"ENABLED":"DISABLED"}</span></div>
+  <div class="item-actions"><button class="btn small" onclick="editWallet('${esc(m.id)}')">Edit</button><button class="btn small danger" onclick="deleteWallet('${esc(m.id)}')">Delete</button></div>
+ </div>`).join("")||'<div class="empty">No methods in this category. Click + Add Method.</div>';
 }
-window.editWallet=id=>{const m=S.paymentMethods.find(x=>x.id===id);if(!m)return;S.walletTab=m.category||"ewallet";document.querySelectorAll("[data-wallet-tab]").forEach(b=>b.classList.toggle("active",b.dataset.walletTab===S.walletTab));["walletId","walletName","walletCategory","walletParent","walletLogo","walletColor","walletAnimation","walletMin","walletFee","walletHint"].forEach((k,i)=>{});set("walletId",m.id);set("walletName",m.name);set("walletCategory",S.walletTab);set("walletParent",m.parentId||"");set("walletLogo",m.logo);set("walletColor",m.color||"#45e8ff");set("walletAnimation",m.animation||"none");set("walletMin",m.minWithdrawal??S.settings.minWithdraw??1000);set("walletFee",m.feePercent??0);set("walletHint",m.hint||"");set("walletEnabled",String(m.enabled!==false));$("walletForm").scrollIntoView({behavior:"smooth"})};
-window.deleteWallet=id=>{S.paymentMethods=S.paymentMethods.filter(x=>x.id!==id);renderWallets();toast("Removed from draft. Save all methods.")};
-$("saveWallets").onclick=()=>saveSettings({paymentMethods:S.paymentMethods},"Wallet methods saved");
+window.editWallet=id=>{
+ const m=S.paymentMethods.find(x=>String(x.id)===String(id));if(!m)return;
+ S.walletTab=m.category||(m.type==="crypto"?"network":"ewallet");
+ document.querySelectorAll("[data-wallet-tab]").forEach(b=>b.classList.toggle("active",b.dataset.walletTab===S.walletTab));
+ setVal("walletId",m.id);setVal("walletName",m.name);setVal("walletCategory",S.walletTab);
+ setVal("walletLogo",m.logo);setVal("walletColor",m.color||"#45e8ff");
+ setVal("walletAnimation",m.animation||"none");setVal("walletFee",m.feePercent??0);
+ setVal("walletMin",m.minWithdrawal??S.settings.minimumWithdrawal??1000);
+ setVal("walletHint",m.hint||"");setVal("walletEnabled",String(m.enabled!==false));
+ $("walletEditorTitle").textContent="Edit "+m.name;
+ $("walletForm").scrollIntoView({behavior:"smooth",block:"start"});
+};
+window.deleteWallet=id=>{
+ S.paymentMethods=S.paymentMethods.filter(m=>String(m.id)!==String(id));renderWallets();toast("Method removed from draft. Save all methods to publish.");
+};
+$("saveWallets").onclick=async()=>{
+ const valid=S.paymentMethods.map(m=>({...m,category:m.category||(m.type==="crypto"?"network":"ewallet")}));
+ if(await saveSettings({paymentMethods:valid},"Wallet and network methods saved"))renderWallets();
+};
 
-// UI text editor
-function renderTexts(){const t={...defaultsText,...(S.settings.uiText||{})};$("textEditor").innerHTML=Object.keys(defaultsText).map(k=>`<div style="margin:12px 0"><label>${esc(textLabels[k]||k)} <small>(${esc(k)})</small></label><textarea data-text-key="${esc(k)}">${esc(t[k])}</textarea></div>`).join("")}
-$("saveTexts").onclick=()=>{const uiText={...(S.settings.uiText||{})};document.querySelectorAll("[data-text-key]").forEach(el=>uiText[el.dataset.textKey]=el.value.trim());saveSettings({uiText},"User Panel texts saved")};
-$("resetTexts").onclick=()=>{document.querySelectorAll("[data-text-key]").forEach(el=>el.value=defaultsText[el.dataset.textKey]||"");toast("Default values loaded. Click Save All Texts to apply")};
+$("withdrawSettingsForm").onsubmit=async e=>{
+ e.preventDefault();
+ await saveSettings({
+  minimumWithdrawal:number("minimumWithdrawal",1),
+  withdrawalFeePercent:number("withdrawalFeePercent"),
+  referralRequirement:number("referralRequirement"),
+  withdrawalNotice:$("withdrawalNotice").value.trim(),
+  withdrawalEnabled:checked("withdrawEnabled")
+ },"Withdrawal settings saved");
+};
+$("saveWithdrawToggle").onclick=()=>saveSettings({withdrawalEnabled:checked("withdrawEnabled")},"Withdrawal status saved");
 
-// Withdrawal rules use server's actual setting keys.
-$("withdrawSettingsForm").onsubmit=e=>{e.preventDefault();saveSettings({minWithdraw:num("minimumWithdrawal",1),withdrawalFeePercent:num("withdrawalFeePercent"),referralRequired:num("referralRequirement"),withdrawalNotice:val("withdrawalNotice").trim(),withdrawalEnabled:ck("withdrawEnabled")},"Withdrawal rules saved")};
-$("saveWithdrawToggle").onclick=()=>saveSettings({withdrawalEnabled:ck("withdrawEnabled")},"Withdrawal status saved");
+function renderSpinPrizes(){
+ const vals=String($("spinRewards")?.value||"10,25,50,100,250,500").split(",").map(x=>Number(x.trim())).filter(x=>Number.isFinite(x)&&x>=0);
+ $("spinPrizePreview").innerHTML=vals.map((v,i)=>`<div class="stat-card"><small>Prize ${i+1}</small><strong style="font-size:18px;color:var(--gold)">+${fmt(v)}</strong><small>CNV</small></div>`).join("")||'<div class="empty">Enter valid prize values.</div>';
+}
+$("spinRewards").addEventListener("input",renderSpinPrizes);
+$("spinForm").onsubmit=async e=>{
+ e.preventDefault();
+ const rewards=$("spinRewards").value.split(",").map(x=>Number(x.trim()));
+ if(!rewards.length||rewards.some(x=>!Number.isFinite(x)||x<0))return toast("Enter valid comma-separated prize values.");
+ await saveSettings({
+  spinEnabled:checked("spinEnabled"),
+  referralsPerSpin:number("referralsPerSpin",1),
+  spinRewards:rewards,
+  referralReward:number("referralReward")
+ },"Lucky Spin settings saved");
+};
+$("saveCommissionSchedule").onclick=()=>saveSettings({commissionAutoPayout:checked("commissionAutoPayout")},"Commission payout settings saved");
+$("commissionForm").onsubmit=async e=>{
+ e.preventDefault();
+ const rates=Array.from({length:6},(_,i)=>Number($("rate"+(i+1)).value));
+ if(rates.some(x=>!Number.isFinite(x)||x<0||x>100))return toast("Commission rates must be between 0 and 100%.");
+ await saveSettings({commissionRates:rates},"Six commission rates saved");
+};
 
-// Spin and rewards: server's actual field is dailyBonus/referralBonus/tapReward.
-function renderSpinPreview(){const a=String(val("spinRewards")||"").split(",").map(x=>Number(x.trim())).filter(x=>Number.isFinite(x)&&x>=0);$("spinPreview").innerHTML=a.map((v,i)=>`<div class="stat"><small>Prize ${i+1}</small><strong>+${fmt(v)} CNV</strong></div>`).join("")}
-$("spinRewards").oninput=renderSpinPreview;
-$("spinForm").onsubmit=e=>{e.preventDefault();const rewards=val("spinRewards").split(",").map(x=>Number(x.trim()));if(!rewards.length||rewards.some(x=>!Number.isSafeInteger(x)||x<0))return toast("Invalid prize list");saveSettings({spinEnabled:ck("spinEnabled"),referralsPerSpin:num("referralsPerSpin",1),spinRewards:rewards,referralBonus:num("referralReward")},"Spin settings saved")};
-$("commissionForm").onsubmit=e=>{e.preventDefault();const rates=Array.from({length:6},(_,i)=>Number(val("rate"+(i+1))));if(rates.some(x=>!Number.isFinite(x)||x<0||x>100))return toast("Rates must be between 0 and 100");saveSettings({commissionRates:rates,commissionEnabled:true},"Commission rates saved")};
+function renderTasks(){
+ $("taskRows").innerHTML=S.tasks.map(t=>`
+ <tr><td>${esc(t.id)}</td><td>${esc(t.title)}</td><td>${esc(t.platform||"Other")}</td><td>${fmt(t.reward)} CNV</td><td>${statusBadge(t.enabled===false?"disabled":"enabled")}</td><td><button class="btn small" onclick="editTask('${esc(t.id)}')">Edit</button> <button class="btn small" onclick="toggleTask('${esc(t.id)}')">${t.enabled===false?"Enable":"Disable"}</button> <button class="btn small danger" onclick="deleteTask('${esc(t.id)}')">Delete</button></td></tr>`).join("")||'<tr><td colspan="6" class="empty">No tasks configured.</td></tr>';
+}
+function clearTaskForm(){
+ setVal("taskId","");setVal("taskTitle","");setVal("taskUrl","");setVal("taskReward",0);setVal("taskPlatform","Telegram");setVal("taskEnabled","true");$("taskEditorTitle").textContent="Add Task";
+}
+$("addTask").onclick=()=>{clearTaskForm();$("taskForm").scrollIntoView({behavior:"smooth",block:"start"})};
+$("clearTask").onclick=clearTaskForm;
+window.editTask=id=>{
+ const t=S.tasks.find(x=>String(x.id)===String(id));if(!t)return;
+ setVal("taskId",t.id);setVal("taskTitle",t.title);setVal("taskUrl",t.url);
+ setVal("taskReward",t.reward);setVal("taskPlatform",t.platform||"Other");setVal("taskEnabled",String(t.enabled!==false));
+ $("taskEditorTitle").textContent="Edit Task";$("taskForm").scrollIntoView({behavior:"smooth",block:"start"});
+};
+$("taskForm").onsubmit=async e=>{
+ e.preventDefault();
+ const id=$("taskId").value;
+ const data={title:$("taskTitle").value.trim(),url:$("taskUrl").value.trim(),reward:number("taskReward"),platform:$("taskPlatform").value,enabled:$("taskEnabled").value==="true"};
+ try{
+  if(id){
+   await api(`/api/admin/tasks/${encodeURIComponent(id)}`,{method:"PATCH",body:JSON.stringify(data)});
+  }else{
+   await api("/api/admin/tasks",{method:"POST",body:JSON.stringify(data)});
+  }
+  clearTaskForm();await loadAll();toast("Task saved");
+ }catch(err){toast(err.message)}
+};
+window.toggleTask=async id=>{
+ const t=S.tasks.find(x=>String(x.id)===String(id));if(!t)return;
+ try{await api(`/api/admin/tasks/${encodeURIComponent(id)}`,{method:"PATCH",body:JSON.stringify({enabled:t.enabled===false})});await loadAll();toast("Task status updated")}
+ catch(e){toast(e.message)}
+};
+window.deleteTask=async id=>{
+ if(!confirm("Delete this task?"))return;
+ try{await api(`/api/admin/tasks/${encodeURIComponent(id)}`,{method:"DELETE"});await loadAll();toast("Task deleted")}
+ catch(e){toast(e.message)}
+};
 
-// Task CRUD
-function clearTask(){set("taskId","");set("taskTitle","");set("taskUrl","");set("taskReward",0);set("taskPlatform","Telegram");set("taskEnabled","true");$("taskEditorTitle").textContent="Add Task"}
-$("clearTask").onclick=clearTask;$("addTask").onclick=()=>{clearTask();$("taskForm").scrollIntoView({behavior:"smooth"})};
-function renderTasks(){$("taskRows").innerHTML=S.tasks.map(t=>`<tr><td>${esc(t.id)}</td><td>${esc(t.title)}</td><td>${esc(t.platform)}</td><td>${fmt(t.reward)}</td><td>${badge(t.enabled===false?"disabled":"enabled")}</td><td><button class="btn small" onclick="editTask('${esc(t.id)}')">Edit</button> <button class="btn small" onclick="toggleTask('${esc(t.id)}')">${t.enabled===false?"Enable":"Disable"}</button> <button class="btn small danger" onclick="deleteTask('${esc(t.id)}')">Delete</button></td></tr>`).join("")||'<tr><td colspan="6" class="empty">No tasks</td></tr>'}
-window.editTask=id=>{const t=S.tasks.find(x=>String(x.id)===String(id));if(!t)return;set("taskId",t.id);set("taskTitle",t.title);set("taskUrl",t.url);set("taskReward",t.reward);set("taskPlatform",t.platform);set("taskEnabled",String(t.enabled!==false));$("taskEditorTitle").textContent="Edit Task";$("taskForm").scrollIntoView({behavior:"smooth"})};
-$("taskForm").onsubmit=async e=>{e.preventDefault();const id=val("taskId"),data={title:val("taskTitle").trim(),url:val("taskUrl").trim(),reward:num("taskReward"),platform:val("taskPlatform"),enabled:val("taskEnabled")==="true"};try{if(id)await api(`/api/admin/tasks/${encodeURIComponent(id)}`,{method:"PATCH",body:JSON.stringify(data)});else await api("/api/admin/tasks",{method:"POST",body:JSON.stringify(data)});clearTask();await loadAll();toast("Task saved")}catch(err){toast(err.message)}};
-window.toggleTask=async id=>{const t=S.tasks.find(x=>String(x.id)===String(id));if(!t)return;try{await api(`/api/admin/tasks/${encodeURIComponent(id)}`,{method:"PATCH",body:JSON.stringify({enabled:t.enabled===false})});await loadAll();toast("Task status updated")}catch(e){toast(e.message)}};
-window.deleteTask=async id=>{if(!confirm("Delete this task?"))return;try{await api(`/api/admin/tasks/${encodeURIComponent(id)}`,{method:"DELETE"});await loadAll();toast("Task deleted")}catch(e){toast(e.message)}};
+$("saveDashboard").onclick=()=>saveSettings({
+ miningEnabled:checked("dashMining"),
+ registrationEnabled:checked("dashRegistration"),
+ withdrawalEnabled:checked("dashWithdrawal"),
+ spinEnabled:checked("dashSpin")
+},"Dashboard feature statuses saved");
 
-// Feature toggles and core system settings.
-$("saveDashboard").onclick=()=>saveSettings({miningEnabled:ck("dashMining"),registrationEnabled:ck("dashRegistration"),withdrawalEnabled:ck("dashWithdrawal"),spinEnabled:ck("dashSpin")},"Dashboard settings saved");
-$("saveSystemToggles").onclick=()=>saveSettings({registrationEnabled:ck("systemRegistration"),miningEnabled:ck("systemMining"),maintenance:ck("systemMaintenance"),sound:ck("systemSound")},"System controls saved");
-$("systemForm").onsubmit=e=>{e.preventDefault();saveSettings({tapReward:num("tapReward"),maxEnergy:num("maxEnergy",1000),energyPerSecond:num("energyPerSecond"),dailyBonus:num("dailyBonus")},"Core settings saved")};
+$("saveSystemToggles").onclick=()=>saveSettings({
+ registrationEnabled:checked("systemRegistration"),
+ miningEnabled:checked("systemMining"),
+ withdrawalEnabled:checked("systemWithdrawal"),
+ sound:checked("systemSound")
+},"System settings saved");
 
-// Change password endpoint is supported by this server.
-$("changePasswordBtn").onclick=()=>modal("Change Admin Password",`<form id="passwordForm"><label>Current Password</label><input id="oldPassword" type="password" required><label style="margin-top:10px">New Password (minimum 12 characters)</label><input id="newPassword" type="password" minlength="12" required><label style="margin-top:10px">Confirm New Password</label><input id="confirmPassword" type="password" minlength="12" required><div class="actions"><button class="btn primary">CHANGE PASSWORD</button></div></form>`);
-document.addEventListener("submit",async e=>{if(e.target.id!=="passwordForm")return;e.preventDefault();if(val("newPassword")!==val("confirmPassword"))return toast("Passwords do not match");try{await api("/api/admin/change-password",{method:"POST",body:JSON.stringify({currentPassword:val("oldPassword"),newPassword:val("newPassword")})});closeModal();toast("Password changed")}catch(err){toast(err.message)}});
+$("systemForm").onsubmit=async e=>{
+ e.preventDefault();
+ await saveSettings({
+  miningReward:number("miningReward"),
+  maxEnergy:number("maxEnergy",1000),
+  energyPerSecond:number("energyPerSecond"),
+  dailyReward:number("dailyReward")
+ },"Core settings saved");
+};
 
-$("adminApp").style.display="none";$("loginScreen").style.display="grid";
+$("changePasswordBtn").onclick=()=>openModal("Change Admin Password",`
+ <form id="passwordChangeForm">
+  <label>Current Password</label><input id="oldPassword" type="password" required autocomplete="current-password">
+  <label style="margin-top:12px">New Password</label><input id="newPassword" type="password" required minlength="6" autocomplete="new-password">
+  <label style="margin-top:12px">Confirm New Password</label><input id="confirmPassword" type="password" required minlength="6" autocomplete="new-password">
+  <div class="form-actions"><button class="btn primary" type="submit">CHANGE PASSWORD</button></div>
+ </form>`);
+
+document.addEventListener("submit",async e=>{
+ if(e.target.id!=="passwordChangeForm")return;
+ e.preventDefault();
+ const oldPassword=$("oldPassword").value,newPassword=$("newPassword").value,confirmPassword=$("confirmPassword").value;
+ if(newPassword!==confirmPassword)return toast("New passwords do not match.");
+ try{
+  await api("/api/admin/change-password",{method:"POST",body:JSON.stringify({currentPassword:oldPassword,newPassword})});
+  closeModal();toast("Password changed");
+ }catch(err){toast(err.message)}
+});
+
+$("adminApp").style.display="none";
+$("loginScreen").style.display="grid";
 </script>
 </body>
 </html>
