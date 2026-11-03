@@ -12,194 +12,243 @@ const Database = require("better-sqlite3");
 const app = express();
 const PORT = Number(process.env.PORT || 3000);
 const PROD = process.env.NODE_ENV === "production";
+
 const BOT_TOKEN = process.env.BOT_TOKEN || "";
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "";
 const SESSION_SECRET = process.env.SESSION_SECRET || "";
 const BOT_USERNAME = (process.env.BOT_USERNAME || "").replace(/^@/, "");
-const ALLOW_DEMO_LOGIN = process.env.ALLOW_DEMO_LOGIN === "true" && !PROD;
 
-const dbPath = process.env.DB_PATH || path.join(__dirname, "data", "coinnova.sqlite");
+const ALLOW_DEMO_LOGIN =
+  process.env.ALLOW_DEMO_LOGIN === "true" && !PROD;
+
+const dbPath =
+  process.env.DB_PATH ||
+  path.join(__dirname, "data", "coinnova.sqlite");
+
 fs.mkdirSync(path.dirname(dbPath), { recursive: true });
 
 const db = new Database(dbPath);
+
 db.pragma("journal_mode = WAL");
 db.pragma("foreign_keys = ON");
 
-if (PROD && (!BOT_TOKEN || !ADMIN_PASSWORD || SESSION_SECRET.length < 32)) {
-  console.warn("WARNING: Set BOT_TOKEN, ADMIN_PASSWORD, and SESSION_SECRET (32+ chars) in production environment variables.");
+if (
+  PROD &&
+  (!BOT_TOKEN || !ADMIN_PASSWORD || SESSION_SECRET.length < 32)
+) {
+  console.warn(
+    "WARNING: Set BOT_TOKEN, ADMIN_PASSWORD, and SESSION_SECRET (32+ characters) in production environment variables."
+  );
 }
 
 app.set("trust proxy", 1);
+
 app.use(helmet({ contentSecurityPolicy: false }));
 app.use(cookieParser());
 app.use(express.json({ limit: "100kb" }));
 app.use(express.urlencoded({ extended: false, limit: "20kb" }));
-app.use(rateLimit({
-  windowMs: 60_000,
-  limit: 180,
-  standardHeaders: true,
-  legacyHeaders: false
-}));
-app.use(express.static(path.join(__dirname, "public"), { extensions: ["html"] }));
 
-/* =========================
-   DATABASE
-========================= */
+app.use(
+  rateLimit({
+    windowMs: 60_000,
+    limit: 180,
+    standardHeaders: true,
+    legacyHeaders: false
+  })
+);
+
+app.use(express.static(path.join(__dirname, "public"), {
+  extensions: ["html"]
+}));
+
+// ======================================================
+// DATABASE
+// ======================================================
 
 db.exec(`
 CREATE TABLE IF NOT EXISTS users (
- id INTEGER PRIMARY KEY AUTOINCREMENT,
- tg_id TEXT UNIQUE NOT NULL,
- name TEXT NOT NULL,
- username TEXT DEFAULT '',
- photo_url TEXT DEFAULT '',
- balance INTEGER NOT NULL DEFAULT 0,
- energy INTEGER NOT NULL DEFAULT 1000,
- last_energy_at INTEGER NOT NULL DEFAULT 0,
- invited_by TEXT DEFAULT '',
- created_at INTEGER NOT NULL,
- is_banned INTEGER NOT NULL DEFAULT 0,
- total_taps INTEGER NOT NULL DEFAULT 0,
- spins_available INTEGER NOT NULL DEFAULT 0
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  tg_id TEXT UNIQUE NOT NULL,
+  name TEXT NOT NULL,
+  username TEXT DEFAULT '',
+  photo_url TEXT DEFAULT '',
+  balance INTEGER NOT NULL DEFAULT 0,
+  energy INTEGER NOT NULL DEFAULT 1000,
+  last_energy_at INTEGER NOT NULL DEFAULT 0,
+  invited_by TEXT DEFAULT '',
+  created_at INTEGER NOT NULL,
+  is_banned INTEGER NOT NULL DEFAULT 0,
+  total_taps INTEGER NOT NULL DEFAULT 0,
+  spins_available INTEGER NOT NULL DEFAULT 0
 );
 
 CREATE TABLE IF NOT EXISTS settings (
- key TEXT PRIMARY KEY,
- value TEXT NOT NULL
+  key TEXT PRIMARY KEY,
+  value TEXT NOT NULL
 );
 
 CREATE TABLE IF NOT EXISTS tasks (
- id INTEGER PRIMARY KEY AUTOINCREMENT,
- title TEXT NOT NULL,
- platform TEXT NOT NULL,
- url TEXT NOT NULL,
- reward INTEGER NOT NULL DEFAULT 0,
- enabled INTEGER NOT NULL DEFAULT 1,
- created_at INTEGER NOT NULL
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  title TEXT NOT NULL,
+  platform TEXT NOT NULL,
+  url TEXT NOT NULL,
+  reward INTEGER NOT NULL DEFAULT 0,
+  enabled INTEGER NOT NULL DEFAULT 1,
+  created_at INTEGER NOT NULL
 );
 
 CREATE TABLE IF NOT EXISTS task_claims (
- user_id INTEGER NOT NULL,
- task_id INTEGER NOT NULL,
- claimed_at INTEGER NOT NULL,
- PRIMARY KEY(user_id, task_id),
- FOREIGN KEY(user_id) REFERENCES users(id),
- FOREIGN KEY(task_id) REFERENCES tasks(id)
+  user_id INTEGER NOT NULL,
+  task_id INTEGER NOT NULL,
+  claimed_at INTEGER NOT NULL,
+  PRIMARY KEY(user_id, task_id),
+  FOREIGN KEY(user_id) REFERENCES users(id),
+  FOREIGN KEY(task_id) REFERENCES tasks(id)
 );
 
 CREATE TABLE IF NOT EXISTS withdrawals (
- id INTEGER PRIMARY KEY AUTOINCREMENT,
- user_id INTEGER NOT NULL,
- method TEXT NOT NULL,
- address TEXT NOT NULL,
- amount INTEGER NOT NULL,
- status TEXT NOT NULL DEFAULT 'pending',
- txid TEXT DEFAULT '',
- note TEXT DEFAULT '',
- fee_percent REAL NOT NULL DEFAULT 0,
- fee_amount INTEGER NOT NULL DEFAULT 0,
- net_amount INTEGER NOT NULL DEFAULT 0,
- refunded INTEGER NOT NULL DEFAULT 0,
- created_at INTEGER NOT NULL,
- updated_at INTEGER NOT NULL,
- FOREIGN KEY(user_id) REFERENCES users(id)
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL,
+  method TEXT NOT NULL,
+  address TEXT NOT NULL,
+  amount INTEGER NOT NULL,
+  status TEXT NOT NULL DEFAULT 'pending',
+  txid TEXT DEFAULT '',
+  note TEXT DEFAULT '',
+  fee_percent REAL NOT NULL DEFAULT 0,
+  fee_amount INTEGER NOT NULL DEFAULT 0,
+  net_amount INTEGER NOT NULL DEFAULT 0,
+  created_at INTEGER NOT NULL,
+  updated_at INTEGER NOT NULL,
+  FOREIGN KEY(user_id) REFERENCES users(id)
 );
 
 CREATE TABLE IF NOT EXISTS referrals (
- id INTEGER PRIMARY KEY AUTOINCREMENT,
- inviter_id INTEGER NOT NULL,
- invited_user_id INTEGER NOT NULL UNIQUE,
- qualified INTEGER NOT NULL DEFAULT 0,
- created_at INTEGER NOT NULL,
- FOREIGN KEY(inviter_id) REFERENCES users(id),
- FOREIGN KEY(invited_user_id) REFERENCES users(id)
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  inviter_id INTEGER NOT NULL,
+  invited_user_id INTEGER NOT NULL UNIQUE,
+  qualified INTEGER NOT NULL DEFAULT 0,
+  created_at INTEGER NOT NULL,
+  FOREIGN KEY(inviter_id) REFERENCES users(id),
+  FOREIGN KEY(invited_user_id) REFERENCES users(id)
 );
 
 CREATE TABLE IF NOT EXISTS earnings (
- id INTEGER PRIMARY KEY AUTOINCREMENT,
- user_id INTEGER NOT NULL,
- amount INTEGER NOT NULL,
- kind TEXT NOT NULL,
- created_at INTEGER NOT NULL,
- FOREIGN KEY(user_id) REFERENCES users(id)
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL,
+  amount INTEGER NOT NULL,
+  kind TEXT NOT NULL,
+  created_at INTEGER NOT NULL,
+  FOREIGN KEY(user_id) REFERENCES users(id)
 );
 
 CREATE INDEX IF NOT EXISTS idx_earnings_user_time
-ON earnings(user_id,created_at);
+ON earnings(user_id, created_at);
 
 CREATE TABLE IF NOT EXISTS spin_history (
- id INTEGER PRIMARY KEY AUTOINCREMENT,
- user_id INTEGER NOT NULL,
- reward INTEGER NOT NULL,
- created_at INTEGER NOT NULL,
- FOREIGN KEY(user_id) REFERENCES users(id)
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  user_id INTEGER NOT NULL,
+  reward INTEGER NOT NULL,
+  created_at INTEGER NOT NULL,
+  FOREIGN KEY(user_id) REFERENCES users(id)
 );
 
 CREATE TABLE IF NOT EXISTS spin_grants (
- inviter_id INTEGER PRIMARY KEY,
- total_granted INTEGER NOT NULL DEFAULT 0,
- FOREIGN KEY(inviter_id) REFERENCES users(id)
+  inviter_id INTEGER PRIMARY KEY,
+  total_granted INTEGER NOT NULL DEFAULT 0,
+  FOREIGN KEY(inviter_id) REFERENCES users(id)
 );
 
 CREATE TABLE IF NOT EXISTS commission_payouts (
- id INTEGER PRIMARY KEY AUTOINCREMENT,
- beneficiary_id INTEGER NOT NULL,
- source_user_id INTEGER NOT NULL,
- day TEXT NOT NULL,
- level INTEGER NOT NULL,
- base_amount INTEGER NOT NULL,
- rate REAL NOT NULL,
- amount INTEGER NOT NULL,
- created_at INTEGER NOT NULL,
- UNIQUE(beneficiary_id,source_user_id,day,level),
- FOREIGN KEY(beneficiary_id) REFERENCES users(id),
- FOREIGN KEY(source_user_id) REFERENCES users(id)
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  beneficiary_id INTEGER NOT NULL,
+  source_user_id INTEGER NOT NULL,
+  day TEXT NOT NULL,
+  level INTEGER NOT NULL,
+  base_amount INTEGER NOT NULL,
+  rate REAL NOT NULL,
+  amount INTEGER NOT NULL,
+  created_at INTEGER NOT NULL,
+  UNIQUE(beneficiary_id, source_user_id, day, level),
+  FOREIGN KEY(beneficiary_id) REFERENCES users(id),
+  FOREIGN KEY(source_user_id) REFERENCES users(id)
 );
 `);
 
-/* =========================
-   DATABASE MIGRATIONS
-========================= */
+// ======================================================
+// DATABASE MIGRATION
+// ======================================================
 
-const userCols = db.prepare("PRAGMA table_info(users)").all().map(c => c.name);
+function getColumns(table) {
+  return db.prepare(`PRAGMA table_info(${table})`).all().map(c => c.name);
+}
+
+let userCols = getColumns("users");
 
 if (!userCols.includes("photo_url")) {
   db.exec("ALTER TABLE users ADD COLUMN photo_url TEXT DEFAULT ''");
 }
 
 if (!userCols.includes("spins_available")) {
-  db.exec("ALTER TABLE users ADD COLUMN spins_available INTEGER NOT NULL DEFAULT 0");
+  db.exec(
+    "ALTER TABLE users ADD COLUMN spins_available INTEGER NOT NULL DEFAULT 0"
+  );
 }
 
-const withdrawalCols = db.prepare("PRAGMA table_info(withdrawals)").all().map(c => c.name);
+let withdrawalCols = getColumns("withdrawals");
 
 if (!withdrawalCols.includes("fee_percent")) {
-  db.exec("ALTER TABLE withdrawals ADD COLUMN fee_percent REAL NOT NULL DEFAULT 0");
+  db.exec(
+    "ALTER TABLE withdrawals ADD COLUMN fee_percent REAL NOT NULL DEFAULT 0"
+  );
 }
 
 if (!withdrawalCols.includes("fee_amount")) {
-  db.exec("ALTER TABLE withdrawals ADD COLUMN fee_amount INTEGER NOT NULL DEFAULT 0");
+  db.exec(
+    "ALTER TABLE withdrawals ADD COLUMN fee_amount INTEGER NOT NULL DEFAULT 0"
+  );
 }
 
 if (!withdrawalCols.includes("net_amount")) {
-  db.exec("ALTER TABLE withdrawals ADD COLUMN net_amount INTEGER NOT NULL DEFAULT 0");
+  db.exec(
+    "ALTER TABLE withdrawals ADD COLUMN net_amount INTEGER NOT NULL DEFAULT 0"
+  );
 }
 
-if (!withdrawalCols.includes("refunded")) {
-  db.exec("ALTER TABLE withdrawals ADD COLUMN refunded INTEGER NOT NULL DEFAULT 0");
-}
+db.exec(`
+UPDATE withdrawals
+SET net_amount = amount
+WHERE net_amount = 0 AND amount > 0
+`);
 
-db.exec("UPDATE withdrawals SET net_amount=amount WHERE net_amount=0 AND amount>0");
-
-/* =========================
-   DEFAULT SETTINGS
-========================= */
+// ======================================================
+// DEFAULT SETTINGS
+// ======================================================
 
 const now = () => Date.now();
 
 const defaultSettings = {
   appName: "CoinNova",
   tagline: "Tap • Mine • Earn",
+
+  appLogo: "",
+  loadingImage: "",
+  loadingTitle: "Preparing your CoinNova account…",
+  loadingText: "VERIFYING TELEGRAM ACCOUNT",
+
+  // Custom text messages
+  txtHomeNotice: "Keep your Telegram account secure. Never share your wallet seed phrase or password.",
+  txtReferralRule: "Your friend qualifies after completing 10 taps. Withdrawals require referral requirement.",
+  txtWithdrawSub: "Select a withdrawal category first. E-Wallet and Crypto Network use separate selection screens.",
+  txtWalletFormNotice: "Enter valid destination details.",
+  txtTaskSub: "Earn CNV",
+  txtSpinRules: "Invite qualified friends to unlock spins.",
+
+  // Category Titles & Logos
+  catEwalletName: "E-Wallet",
+  catEwalletLogo: "",
+  catNetworkName: "Select Network",
+  catNetworkLogo: "",
 
   tapReward: 1,
   maxEnergy: 1000,
@@ -213,70 +262,15 @@ const defaultSettings = {
 
   maintenance: false,
   sound: true,
-  referralsPerSpin: 1,
+
   spinEnabled: true,
-  withdrawalEnabled: true,
-
-  appLogo: "",
-  loadingImage: "",
-  loadingTitle: "Preparing your CoinNova account…",
-  loadingText: "Please wait while we prepare your account.",
-
-  withdrawalNotice: "Withdrawals are reviewed by the admin.",
-
-  withdrawalCategories: {
-    binance: {
-      id: "binance",
-      name: "Binance",
-      logo: "https://cdn.simpleicons.org/binance/F0B90B",
-      color: "#F0B90B",
-      animation: "pulse",
-      enabled: true
-    },
-
-    network: {
-      id: "network",
-      name: "🌐 Select Network",
-      logo: "",
-      color: "#45e8ff",
-      animation: "pulse",
-      enabled: true
-    },
-
-    ewallet: {
-      id: "ewallet",
-      name: "E-Wallet",
-      logo: "",
-      color: "#45e8ff",
-      animation: "pulse",
-      enabled: true
-    }
-  },
-
-  uiText: {
-    withdrawTitle: "Withdraw",
-    binance: "Binance",
-    selectNetwork: "🌐 Select Network",
-    ewallet: "E-Wallet",
-    selectWallet: "Select Wallet",
-    enterAmount: "Enter Amount",
-    walletAddress: "Wallet Address",
-    submitWithdrawal: "Submit Withdrawal",
-    confirmWithdrawal: "Confirm Withdrawal",
-    withdrawalPending: "Your request is pending admin review.",
-    withdrawalSuccess: "Withdrawal request submitted successfully.",
-    withdrawalFailed: "Unable to submit withdrawal.",
-    minimumWithdrawal: "Minimum withdrawal amount",
-    insufficientBalance: "Insufficient balance.",
-    loading: "Loading..."
-  },
-
-  buttons: [],
-
+  referralsPerSpin: 1,
   spinRewards: [10, 20, 30, 50, 100, 200],
 
   commissionEnabled: true,
   commissionRates: [10, 5, 3, 2, 1, 1],
+
+  buttons: [],
 
   paymentMethods: [
     {
@@ -288,7 +282,9 @@ const defaultSettings = {
       animation: "pulse",
       url: "",
       enabled: true,
-      logo: "https://cdn.simpleicons.org/bkash/E2136E"
+      logo: "https://cdn.simpleicons.org/bkash/E2136E",
+      minWithdrawal: 1000,
+      feePercent: 0
     },
     {
       id: "nagad",
@@ -299,7 +295,9 @@ const defaultSettings = {
       animation: "pulse",
       url: "",
       enabled: true,
-      logo: "https://cdn.simpleicons.org/nagad/F6921E"
+      logo: "https://cdn.simpleicons.org/nagad/F6921E",
+      minWithdrawal: 1000,
+      feePercent: 0
     },
     {
       id: "rocket",
@@ -310,29 +308,9 @@ const defaultSettings = {
       animation: "pulse",
       url: "",
       enabled: true,
-      logo: "https://cdn.simpleicons.org/dutchbanglabank/8B1E8B"
-    },
-    {
-      id: "usdt_trc20",
-      name: "USDT · TRC20",
-      type: "crypto",
-      category: "network",
-      color: "#26A17B",
-      animation: "pulse",
-      url: "",
-      enabled: true,
-      logo: "https://cdn.simpleicons.org/tether/26A17B"
-    },
-    {
-      id: "usdt_bep20",
-      name: "USDT · BEP20",
-      type: "crypto",
-      category: "network",
-      color: "#26A17B",
-      animation: "pulse",
-      url: "",
-      enabled: true,
-      logo: "https://cdn.simpleicons.org/tether/26A17B"
+      logo: "https://cdn.simpleicons.org/dutchbanglabank/8B1E8B",
+      minWithdrawal: 1000,
+      feePercent: 0
     },
     {
       id: "binance",
@@ -343,46 +321,37 @@ const defaultSettings = {
       animation: "pulse",
       url: "",
       enabled: true,
-      logo: "https://cdn.simpleicons.org/binance/F0B90B"
+      logo: "https://cdn.simpleicons.org/binance/F0B90B",
+      minWithdrawal: 1000,
+      feePercent: 0
     },
     {
-      id: "trustwallet",
-      name: "Trust Wallet",
+      id: "usdt_trc20",
+      name: "USDT · TRC20",
       type: "crypto",
       category: "network",
-      color: "#3375BB",
+      color: "#26A17B",
       animation: "pulse",
       url: "",
       enabled: true,
-      logo: "https://cdn.simpleicons.org/trustwallet/3375BB"
-    },
-    {
-      id: "bitget",
-      name: "Bitget Wallet",
-      type: "crypto",
-      category: "network",
-      color: "#00F0FF",
-      animation: "pulse",
-      url: "",
-      enabled: true,
-      logo: "https://cdn.simpleicons.org/bitget/00F0FF"
+      logo: "https://cdn.simpleicons.org/tether/26A17B",
+      minWithdrawal: 1000,
+      feePercent: 0
     }
   ],
 
   updatedAt: now()
 };
 
-/* =========================
-   SETTINGS STORAGE
-========================= */
-
-const getSetting = db.prepare("SELECT value FROM settings WHERE key=?");
+const getSetting = db.prepare(
+  "SELECT value FROM settings WHERE key = ?"
+);
 
 const setSetting = db.prepare(`
-INSERT INTO settings(key,value)
-VALUES(?,?)
+INSERT INTO settings(key, value)
+VALUES(?, ?)
 ON CONFLICT(key)
-DO UPDATE SET value=excluded.value
+DO UPDATE SET value = excluded.value
 `);
 
 function getSettings() {
@@ -413,16 +382,18 @@ if (!getSetting.get("main")) {
   saveSettings(defaultSettings);
 }
 
-/* =========================
-   DEFAULT TASKS
-========================= */
+// ======================================================
+// DEFAULT TASKS
+// ======================================================
 
-const taskCount = db.prepare("SELECT COUNT(*) n FROM tasks").get().n;
+const taskCount = db.prepare(
+  "SELECT COUNT(*) AS n FROM tasks"
+).get().n;
 
 if (!taskCount) {
-  const ins = db.prepare(`
-    INSERT INTO tasks(title,platform,url,reward,enabled,created_at)
-    VALUES(?,?,?,?,1,?)
+  const insertTask = db.prepare(`
+    INSERT INTO tasks(title, platform, url, reward, enabled, created_at)
+    VALUES(?, ?, ?, ?, 1, ?)
   `);
 
   [
@@ -432,12 +403,12 @@ if (!taskCount) {
     ["Follow on Facebook", "Facebook", "https://facebook.com", 100],
     ["Follow on Instagram", "Instagram", "https://instagram.com", 100],
     ["Follow on X", "X", "https://x.com", 100]
-  ].forEach(t => ins.run(...t, now()));
+  ].forEach(task => insertTask.run(...task, now()));
 }
 
-/* =========================
-   SECURITY / AUTH HELPERS
-========================= */
+// ======================================================
+// AUTHENTICATION HELPERS
+// ======================================================
 
 function b64url(value) {
   return Buffer.from(value).toString("base64url");
@@ -446,26 +417,26 @@ function b64url(value) {
 function sign(payload) {
   const body = b64url(JSON.stringify(payload));
 
-  const sig = crypto
+  const signature = crypto
     .createHmac("sha256", SESSION_SECRET || "dev-secret-change-me")
     .update(body)
     .digest("base64url");
 
-  return body + "." + sig;
+  return body + "." + signature;
 }
 
 function verify(token) {
   try {
-    const [body, sig] = String(token || "").split(".");
+    const [body, signature] = String(token || "").split(".");
 
-    if (!body || !sig) return null;
+    if (!body || !signature) return null;
 
     const expected = crypto
       .createHmac("sha256", SESSION_SECRET || "dev-secret-change-me")
       .update(body)
       .digest();
 
-    const actual = Buffer.from(sig, "base64url");
+    const actual = Buffer.from(signature, "base64url");
 
     if (
       actual.length !== expected.length ||
@@ -478,7 +449,9 @@ function verify(token) {
       Buffer.from(body, "base64url").toString()
     );
 
-    if (payload.exp < Date.now()) return null;
+    if (!payload.exp || payload.exp < Date.now()) {
+      return null;
+    }
 
     return payload;
   } catch {
@@ -507,27 +480,25 @@ function clearAuthCookie(res) {
   res.clearCookie("cn_auth", { path: "/" });
 }
 
-function parseCookie(value) {
+function parseCookie(cookieString) {
   return Object.fromEntries(
-    value
+    cookieString
       .split(";")
-      .map(x => x.trim().split(/=(.*)/s).slice(0, 2))
-      .filter(x => x.length === 2)
-      .map(([key, val]) => {
+      .map(item => item.trim().split(/=(.*)/s).slice(0, 2))
+      .filter(item => item.length === 2)
+      .map(([key, value]) => {
         try {
-          return [key, decodeURIComponent(val)];
+          return [key, decodeURIComponent(value)];
         } catch {
-          return [key, val];
+          return [key, value];
         }
       })
   );
 }
 
 function auth(req, res, next) {
-  const payload = verify(
-    req.cookies?.cn_auth ||
-    parseCookie(req.headers.cookie || "").cn_auth
-  );
+  const cookies = parseCookie(req.headers.cookie || "");
+  const payload = verify(cookies.cn_auth);
 
   if (!payload) {
     return res.status(401).json({
@@ -549,47 +520,6 @@ function adminAuth(req, res, next) {
 
     next();
   });
-}
-
-function safeEqual(a, b) {
-  const x = crypto
-    .createHash("sha256")
-    .update(String(a))
-    .digest();
-
-  const y = crypto
-    .createHash("sha256")
-    .update(String(b))
-    .digest();
-
-  return crypto.timingSafeEqual(x, y);
-}
-
-function hashPassword(password) {
-  const salt = crypto.randomBytes(16);
-  const key = crypto.scryptSync(password, salt, 64);
-
-  return salt.toString("hex") + ":" + key.toString("hex");
-}
-
-function verifyPassword(password, stored) {
-  try {
-    const [saltHex, keyHex] = stored.split(":");
-
-    const expected = Buffer.from(keyHex, "hex");
-    const actual = crypto.scryptSync(
-      password,
-      Buffer.from(saltHex, "hex"),
-      64
-    );
-
-    return (
-      expected.length === actual.length &&
-      crypto.timingSafeEqual(actual, expected)
-    );
-  } catch {
-    return false;
-  }
 }
 
 function verifyTelegramInitData(initData) {
@@ -618,11 +548,12 @@ function verifyTelegramInitData(initData) {
     .digest("hex");
 
   try {
+    const actualBuffer = Buffer.from(hash, "hex");
+    const expectedBuffer = Buffer.from(expected, "hex");
+
     if (
-      !crypto.timingSafeEqual(
-        Buffer.from(hash, "hex"),
-        Buffer.from(expected, "hex")
-      )
+      actualBuffer.length !== expectedBuffer.length ||
+      !crypto.timingSafeEqual(actualBuffer, expectedBuffer)
     ) {
       return null;
     }
@@ -632,7 +563,11 @@ function verifyTelegramInitData(initData) {
 
   const authDate = Number(params.get("auth_date") || 0);
 
-  if (!authDate || Date.now() / 1000 - authDate > 86400) {
+  if (
+    !authDate ||
+    Date.now() / 1000 - authDate > 86400 ||
+    authDate > Date.now() / 1000 + 60
+  ) {
     return null;
   }
 
@@ -643,9 +578,9 @@ function verifyTelegramInitData(initData) {
   }
 }
 
-/* =========================
-   GENERAL HELPERS
-========================= */
+// ======================================================
+// USER HELPERS
+// ======================================================
 
 function cleanText(value, max = 100) {
   return String(value || "").trim().slice(0, max);
@@ -661,7 +596,9 @@ function validUrl(value) {
 }
 
 function getUserById(id) {
-  return db.prepare("SELECT * FROM users WHERE id=?").get(id);
+  return db.prepare(
+    "SELECT * FROM users WHERE id = ?"
+  ).get(id);
 }
 
 function publicUser(user) {
@@ -696,8 +633,8 @@ function refreshEnergy(user) {
   if (energy !== user.energy) {
     db.prepare(`
       UPDATE users
-      SET energy=?,last_energy_at=?
-      WHERE id=?
+      SET energy = ?, last_energy_at = ?
+      WHERE id = ?
     `).run(energy, now(), user.id);
   }
 
@@ -729,45 +666,32 @@ function requireUser(req, res, next) {
 
 function countQualifiedReferrals(userId) {
   return db.prepare(`
-    SELECT COUNT(*) n
+    SELECT COUNT(*) AS n
     FROM referrals
-    WHERE inviter_id=? AND qualified=1
+    WHERE inviter_id = ? AND qualified = 1
   `).get(userId).n;
 }
 
-function listTasksForUser(userId) {
-  return db.prepare(`
-    SELECT
-      t.*,
-      CASE WHEN c.user_id IS NULL THEN 0 ELSE 1 END claimed
-    FROM tasks t
-    LEFT JOIN task_claims c
-      ON c.task_id=t.id AND c.user_id=?
-    WHERE t.enabled=1
-    ORDER BY t.id
-  `)
-  .all(userId)
-  .map(task => ({
-    id: task.id,
-    title: task.title,
-    platform: task.platform,
-    url: task.url,
-    reward: task.reward,
-    claimed: !!task.claimed
-  }));
+function recordEarning(userId, amount, kind) {
+  if (Number(amount) > 0) {
+    db.prepare(`
+      INSERT INTO earnings(user_id, amount, kind, created_at)
+      VALUES(?, ?, ?, ?)
+    `).run(userId, Math.floor(amount), kind, now());
+  }
 }
 
-/* =========================
-   REFERRAL / COMMISSION
-========================= */
+// ======================================================
+// BANGLADESH DATE AND COMMISSION HELPERS
+// ======================================================
 
-function bdDate(ts = Date.now()) {
+function bdDate(timestamp = Date.now()) {
   return new Intl.DateTimeFormat("en-CA", {
     timeZone: "Asia/Dhaka",
     year: "numeric",
     month: "2-digit",
     day: "2-digit"
-  }).format(new Date(ts));
+  }).format(new Date(timestamp));
 }
 
 function dayStartBd() {
@@ -787,39 +711,6 @@ function dayStartBd() {
   );
 }
 
-function levelAncestors(userId, max = 6) {
-  const output = [];
-  let current = userId;
-
-  for (let level = 1; level <= max; level++) {
-    const row = db.prepare(`
-      SELECT inviter_id
-      FROM referrals
-      WHERE invited_user_id=? AND qualified=1
-    `).get(current);
-
-    if (!row) break;
-
-    output.push({
-      userId: row.inviter_id,
-      level
-    });
-
-    current = row.inviter_id;
-  }
-
-  return output;
-}
-
-function recordEarning(userId, amount, kind) {
-  if (Number(amount) > 0) {
-    db.prepare(`
-      INSERT INTO earnings(user_id,amount,kind,created_at)
-      VALUES(?,?,?,?)
-    `).run(userId, Math.floor(amount), kind, now());
-  }
-}
-
 function teamStats(userId) {
   const levels = [];
   let frontier = [userId];
@@ -833,54 +724,24 @@ function teamStats(userId) {
         todayCoins: 0,
         commissionToday: 0
       });
+
       continue;
     }
 
     const placeholders = frontier.map(() => "?").join(",");
 
     const rows = db.prepare(`
-      SELECT id,created_at
+      SELECT id, created_at
       FROM users
       WHERE id IN (
         SELECT invited_user_id
         FROM referrals
-        WHERE qualified=1
-        AND inviter_id IN (${placeholders})
+        WHERE qualified = 1
+          AND inviter_id IN (${placeholders})
       )
     `).all(...frontier);
 
     const ids = rows.map(row => row.id);
-
-    let todayCoins = 0;
-    let commissionToday = 0;
-
-    if (ids.length) {
-      const q = ids.map(() => "?").join(",");
-
-      todayCoins = db.prepare(`
-        SELECT COALESCE(SUM(amount),0) n
-        FROM earnings
-        WHERE user_id IN (${q})
-        AND created_at>=? AND created_at<?
-      `).get(
-        ...ids,
-        dayStartBd(),
-        dayStartBd() + 86400000
-      ).n;
-
-      commissionToday = db.prepare(`
-        SELECT COALESCE(SUM(amount),0) n
-        FROM commission_payouts
-        WHERE beneficiary_id=?
-        AND level=?
-        AND created_at>=? AND created_at<?
-      `).get(
-        userId,
-        level,
-        dayStartBd(),
-        dayStartBd() + 86400000
-      ).n;
-    }
 
     levels.push({
       level,
@@ -888,8 +749,8 @@ function teamStats(userId) {
       todayMembers: rows.filter(
         row => bdDate(row.created_at) === bdDate()
       ).length,
-      todayCoins,
-      commissionToday
+      todayCoins: 0,
+      commissionToday: 0
     });
 
     frontier = ids;
@@ -898,101 +759,9 @@ function teamStats(userId) {
   return levels;
 }
 
-function payDailyCommissions() {
-  const settings = getSettings();
-
-  if (!settings.commissionEnabled) return;
-
-  const parts = new Intl.DateTimeFormat("en-GB", {
-    timeZone: "Asia/Dhaka",
-    hour: "2-digit",
-    minute: "2-digit",
-    hourCycle: "h23"
-  }).formatToParts(new Date());
-
-  const values = Object.fromEntries(
-    parts.map(part => [part.type, part.value])
-  );
-
-  if (Number(values.hour) < 1) return;
-
-  const day = bdDate(Date.now() - 86400000);
-  const start = dayStartBd() - 86400000;
-  const end = start + 86400000;
-
-  const earners = db.prepare(`
-    SELECT DISTINCT user_id
-    FROM earnings
-    WHERE created_at>=? AND created_at<?
-  `).all(start, end);
-
-  const tx = db.transaction(() => {
-    for (const earner of earners) {
-      const earned = db.prepare(`
-        SELECT COALESCE(SUM(amount),0) n
-        FROM earnings
-        WHERE user_id=?
-        AND created_at>=? AND created_at<?
-      `).get(earner.user_id, start, end).n;
-
-      if (earned <= 0) continue;
-
-      for (const ancestor of levelAncestors(earner.user_id, 6)) {
-        const rate = Number(
-          (settings.commissionRates || [])[ancestor.level - 1] || 0
-        );
-
-        const amount = Math.floor(earned * rate / 100);
-
-        if (rate <= 0 || amount <= 0) continue;
-
-        const result = db.prepare(`
-          INSERT OR IGNORE INTO commission_payouts(
-            beneficiary_id,
-            source_user_id,
-            day,
-            level,
-            base_amount,
-            rate,
-            amount,
-            created_at
-          )
-          VALUES(?,?,?,?,?,?,?,?)
-        `).run(
-          ancestor.userId,
-          earner.user_id,
-          day,
-          ancestor.level,
-          earned,
-          rate,
-          amount,
-          now()
-        );
-
-        if (result.changes) {
-          db.prepare(`
-            UPDATE users
-            SET balance=balance+?
-            WHERE id=?
-          `).run(amount, ancestor.userId);
-        }
-      }
-    }
-  });
-
-  try {
-    tx();
-  } catch (error) {
-    console.error("Daily commission payout failed:", error.message);
-  }
-}
-
-setInterval(payDailyCommissions, 60 * 1000);
-setTimeout(payDailyCommissions, 5000);
-
-/* =========================
-   PAGE ROUTES
-========================= */
+// ======================================================
+// PAGE ROUTES
+// ======================================================
 
 app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "public", "index.html"));
@@ -1010,99 +779,112 @@ app.get("/health", (req, res) => {
   });
 });
 
-/* =========================
-   TELEGRAM AUTH
-========================= */
+// ======================================================
+// TELEGRAM AUTHENTICATION
+// ======================================================
 
 app.post(
   "/api/auth/telegram",
   rateLimit({ windowMs: 60000, limit: 30 }),
   (req, res) => {
-    const tg = verifyTelegramInitData(
+    const telegramUser = verifyTelegramInitData(
       String(req.body?.initData || "")
     );
 
-    if (!tg || !tg.id) {
+    if (!telegramUser || !telegramUser.id) {
       return res.status(401).json({
         error: "Telegram verification failed. Open this app from your Telegram bot."
       });
     }
 
-    const tgId = String(tg.id);
+    const telegramId = String(telegramUser.id);
 
     const name = cleanText(
-      [tg.first_name, tg.last_name].filter(Boolean).join(" ") || "Miner",
+      [
+        telegramUser.first_name,
+        telegramUser.last_name
+      ].filter(Boolean).join(" ") || "Miner",
       80
     );
 
-    const username = cleanText(tg.username || "", 64);
+    const username = cleanText(telegramUser.username || "", 64);
     const startParam = cleanText(req.body?.startParam || "", 80);
 
-    const tx = db.transaction(() => {
+    const transaction = db.transaction(() => {
       let user = db.prepare(`
-        SELECT * FROM users WHERE tg_id=?
-      `).get(tgId);
+        SELECT * FROM users WHERE tg_id = ?
+      `).get(telegramId);
 
       if (!user) {
         const settings = getSettings();
 
         db.prepare(`
-          INSERT INTO users(
-            tg_id,name,username,photo_url,balance,energy,
-            last_energy_at,invited_by,created_at
+          INSERT INTO users
+          (
+            tg_id,
+            name,
+            username,
+            photo_url,
+            balance,
+            energy,
+            last_energy_at,
+            invited_by,
+            created_at
           )
-          VALUES(?,?,?,?,?,?,?,?,?)
+          VALUES(?, ?, ?, ?, 0, ?, ?, ?, ?)
         `).run(
-          tgId,
+          telegramId,
           name,
           username,
-          validUrl(tg.photo_url || "") ? tg.photo_url : "",
-          0,
+          validUrl(telegramUser.photo_url || "")
+            ? telegramUser.photo_url
+            : "",
           settings.maxEnergy,
           now(),
-          startParam.startsWith("ref_") ? startParam.slice(4) : "",
+          startParam.startsWith("ref_")
+            ? startParam.slice(4)
+            : "",
           now()
         );
 
         user = db.prepare(`
-          SELECT * FROM users WHERE tg_id=?
-        `).get(tgId);
+          SELECT * FROM users WHERE tg_id = ?
+        `).get(telegramId);
 
         if (startParam.startsWith("ref_")) {
           const inviter = db.prepare(`
-            SELECT * FROM users WHERE tg_id=?
+            SELECT * FROM users WHERE tg_id = ?
           `).get(startParam.slice(4));
 
           if (inviter && inviter.id !== user.id) {
             db.prepare(`
-              INSERT OR IGNORE INTO referrals(
-                inviter_id,invited_user_id,qualified,created_at
-              )
-              VALUES(?,?,0,?)
+              INSERT OR IGNORE INTO referrals
+              (inviter_id, invited_user_id, qualified, created_at)
+              VALUES(?, ?, 0, ?)
             `).run(inviter.id, user.id, now());
           }
         }
       } else {
         db.prepare(`
           UPDATE users
-          SET name=?,username=?,photo_url=?
-          WHERE id=?
+          SET name = ?, username = ?, photo_url = ?
+          WHERE id = ?
         `).run(
           name,
           username,
-          validUrl(tg.photo_url || "")
-            ? tg.photo_url
+          validUrl(telegramUser.photo_url || "")
+            ? telegramUser.photo_url
             : (user.photo_url || ""),
           user.id
         );
       }
 
       return db.prepare(`
-        SELECT * FROM users WHERE id=?
-      `).get(user.id);
+        SELECT * FROM users WHERE tg_id = ?
+      `).get(telegramId);
     });
 
-    const user = tx();
+    const user = transaction();
 
     if (user.is_banned) {
       return res.status(403).json({
@@ -1119,7 +901,7 @@ app.post(
     res.json({
       user: publicUser(refreshEnergy(user)),
       settings: getSettings(),
-      tasks: listTasksForUser(user.id),
+      tasks: db.prepare("SELECT * FROM tasks WHERE enabled = 1").all(),
       referralUrl: BOT_USERNAME
         ? `https://t.me/${BOT_USERNAME}?startapp=ref_${user.tg_id}`
         : ""
@@ -1127,64 +909,9 @@ app.post(
   }
 );
 
-/* =========================
-   DEMO AUTH
-========================= */
-
-app.post("/api/auth/demo", (req, res) => {
-  if (!ALLOW_DEMO_LOGIN) {
-    return res.status(403).json({
-      error: "Demo login is disabled. Open this app inside Telegram."
-    });
-  }
-
-  const tgId = "demo-" + cleanText(
-    req.body?.name || "Miner",
-    30
-  ).replace(/\W/g, "").toLowerCase();
-
-  let user = db.prepare(`
-    SELECT * FROM users WHERE tg_id=?
-  `).get(tgId);
-
-  if (!user) {
-    db.prepare(`
-      INSERT INTO users(
-        tg_id,name,username,balance,energy,last_energy_at,created_at
-      )
-      VALUES(?,?,?,?,?,?,?)
-    `).run(
-      tgId,
-      "Demo Miner",
-      "",
-      0,
-      getSettings().maxEnergy,
-      now(),
-      now()
-    );
-
-    user = db.prepare(`
-      SELECT * FROM users WHERE tg_id=?
-    `).get(tgId);
-  }
-
-  setAuthCookie(res, {
-    role: "user",
-    uid: user.id,
-    tgId: user.tg_id
-  });
-
-  res.json({
-    user: publicUser(refreshEnergy(user)),
-    settings: getSettings(),
-    tasks: listTasksForUser(user.id),
-    referralUrl: ""
-  });
-});
-
-/* =========================
-   ADMIN AUTH
-========================= */
+// ======================================================
+// ADMIN LOGIN AND LOGOUT
+// ======================================================
 
 app.post(
   "/api/auth/admin",
@@ -1192,18 +919,10 @@ app.post(
   (req, res) => {
     const password = String(req.body?.password || "");
 
-    const savedHash =
-      getSetting.get("admin_password_hash")?.value || "";
-
-    const validSaved = savedHash
-      ? verifyPassword(password, savedHash)
-      : false;
-
-    const validEnv =
-      !!ADMIN_PASSWORD &&
-      safeEqual(password, ADMIN_PASSWORD);
-
-    if (password.length > 300 || !(validSaved || validEnv)) {
+    if (
+      !ADMIN_PASSWORD ||
+      password !== ADMIN_PASSWORD
+    ) {
       return res.status(401).json({
         error: "Incorrect admin password."
       });
@@ -1220,9 +939,9 @@ app.post("/api/logout", (req, res) => {
   res.json({ ok: true });
 });
 
-/* =========================
-   USER PROFILE
-========================= */
+// ======================================================
+// CURRENT USER DATA
+// ======================================================
 
 app.get("/api/me", auth, requireUser, (req, res) => {
   const user = req.user;
@@ -1230,7 +949,16 @@ app.get("/api/me", auth, requireUser, (req, res) => {
   res.json({
     user: publicUser(user),
     settings: getSettings(),
-    tasks: listTasksForUser(user.id),
+    tasks: db.prepare(`
+      SELECT
+        t.*,
+        CASE WHEN c.user_id IS NULL THEN 0 ELSE 1 END AS claimed
+      FROM tasks t
+      LEFT JOIN task_claims c
+        ON c.task_id = t.id AND c.user_id = ?
+      WHERE t.enabled = 1
+      ORDER BY t.id
+    `).all(user.id),
 
     referralUrl: BOT_USERNAME
       ? `https://t.me/${BOT_USERNAME}?startapp=ref_${user.tg_id}`
@@ -1239,40 +967,39 @@ app.get("/api/me", auth, requireUser, (req, res) => {
     referrals: countQualifiedReferrals(user.id),
 
     spinHistory: db.prepare(`
-      SELECT reward,created_at createdAt
+      SELECT reward, created_at AS createdAt
       FROM spin_history
-      WHERE user_id=?
+      WHERE user_id = ?
       ORDER BY id DESC
       LIMIT 10
     `).all(user.id),
 
     commissionLevels: teamStats(user.id),
 
-    commissionToday: db.prepare(`
-      SELECT COALESCE(SUM(amount),0) n
-      FROM commission_payouts
-      WHERE beneficiary_id=? AND day=?
-    `).get(user.id, bdDate()).n,
-
     withdrawals: db.prepare(`
       SELECT
-        id,method,address,amount,
-        fee_percent feePercent,
-        fee_amount feeAmount,
-        net_amount netAmount,
-        status,txid,note,
-        created_at createdAt
+        id,
+        method,
+        address,
+        amount,
+        fee_percent AS feePercent,
+        fee_amount AS feeAmount,
+        net_amount AS netAmount,
+        status,
+        txid,
+        note,
+        created_at AS createdAt
       FROM withdrawals
-      WHERE user_id=?
+      WHERE user_id = ?
       ORDER BY id DESC
       LIMIT 20
     `).all(user.id)
   });
 });
 
-/* =========================
-   MINING TAP
-========================= */
+// ======================================================
+// MINING / TAP
+// ======================================================
 
 app.post("/api/tap", auth, requireUser, (req, res) => {
   const user = refreshEnergy(req.user);
@@ -1300,106 +1027,50 @@ app.post("/api/tap", auth, requireUser, (req, res) => {
   db.prepare(`
     UPDATE users
     SET
-      balance=balance+?,
-      energy=energy-?,
-      total_taps=total_taps+?,
-      last_energy_at=?
-    WHERE id=?
-  `).run(
-    reward,
-    taps,
-    taps,
-    now(),
-    user.id
-  );
+      balance = balance + ?,
+      energy = energy - ?,
+      total_taps = total_taps + ?,
+      last_energy_at = ?
+    WHERE id = ?
+  `).run(reward, taps, taps, now(), user.id);
 
   recordEarning(user.id, reward, "tap");
 
-  // Referral qualifies after the invitee makes 10 taps.
   if (user.total_taps + taps >= 10) {
     const referral = db.prepare(`
-      SELECT *
-      FROM referrals
-      WHERE invited_user_id=? AND qualified=0
+      SELECT * FROM referrals
+      WHERE invited_user_id = ? AND qualified = 0
     `).get(user.id);
 
     if (referral) {
       db.prepare(`
-        UPDATE referrals
-        SET qualified=1
-        WHERE id=?
+        UPDATE referrals SET qualified = 1 WHERE id = ?
       `).run(referral.id);
 
       const bonus = getSettings().referralBonus;
 
       db.prepare(`
-        UPDATE users
-        SET balance=balance+?
-        WHERE id=?
+        UPDATE users SET balance = balance + ? WHERE id = ?
       `).run(bonus, referral.inviter_id);
 
-      recordEarning(
-        referral.inviter_id,
-        bonus,
-        "referral_bonus"
-      );
-
-      const settings = getSettings();
-
-      const per = Math.max(
-        1,
-        Number(settings.referralsPerSpin) || 1
-      );
-
-      const qualified = countQualifiedReferrals(
-        referral.inviter_id
-      );
-
-      const grantRow = db.prepare(`
-        SELECT total_granted
-        FROM spin_grants
-        WHERE inviter_id=?
-      `).get(referral.inviter_id);
-
-      const granted = grantRow?.total_granted || 0;
-      const should = Math.floor(qualified / per);
-
-      if (settings.spinEnabled && should > granted) {
-        db.prepare(`
-          UPDATE users
-          SET spins_available=spins_available+?
-          WHERE id=?
-        `).run(
-          should - granted,
-          referral.inviter_id
-        );
-
-        db.prepare(`
-          INSERT INTO spin_grants(inviter_id,total_granted)
-          VALUES(?,?)
-          ON CONFLICT(inviter_id)
-          DO UPDATE SET total_granted=excluded.total_granted
-        `).run(referral.inviter_id, should);
-      }
+      recordEarning(referral.inviter_id, bonus, "referral_bonus");
     }
   }
 
-  const updated = refreshEnergy(getUserById(user.id));
-
   res.json({
-    user: publicUser(updated),
+    user: publicUser(refreshEnergy(getUserById(user.id))),
     reward
   });
 });
 
-/* =========================
-   DAILY BONUS
-========================= */
+// ======================================================
+// DAILY BONUS
+// ======================================================
 
 app.post("/api/bonus/daily", auth, requireUser, (req, res) => {
   const key = "daily_" + req.user.id;
   const last = getSetting.get(key);
-  const today = new Date().toISOString().slice(0, 10);
+  const today = bdDate();
 
   if (last && last.value === today) {
     return res.status(400).json({
@@ -1407,37 +1078,30 @@ app.post("/api/bonus/daily", auth, requireUser, (req, res) => {
     });
   }
 
-  const settings = getSettings();
+  const reward = getSettings().dailyBonus;
 
   setSetting.run(key, today);
 
   db.prepare(`
-    UPDATE users
-    SET balance=balance+?
-    WHERE id=?
-  `).run(settings.dailyBonus, req.user.id);
+    UPDATE users SET balance = balance + ? WHERE id = ?
+  `).run(reward, req.user.id);
 
-  recordEarning(
-    req.user.id,
-    settings.dailyBonus,
-    "daily_bonus"
-  );
+  recordEarning(req.user.id, reward, "daily_bonus");
 
   res.json({
-    reward: settings.dailyBonus,
+    reward,
     user: publicUser(getUserById(req.user.id))
   });
 });
 
-/* =========================
-   TASK CLAIM
-========================= */
+// ======================================================
+// TASK CLAIM
+// ======================================================
 
 app.post("/api/tasks/:id/claim", auth, requireUser, (req, res) => {
   const task = db.prepare(`
-    SELECT *
-    FROM tasks
-    WHERE id=? AND enabled=1
+    SELECT * FROM tasks
+    WHERE id = ? AND enabled = 1
   `).get(Number(req.params.id));
 
   if (!task) {
@@ -1446,18 +1110,11 @@ app.post("/api/tasks/:id/claim", auth, requireUser, (req, res) => {
     });
   }
 
-  // This prototype records the claim after the client visits the URL.
-  // Production social verification requires platform APIs.
-
   try {
     db.prepare(`
-      INSERT INTO task_claims(user_id,task_id,claimed_at)
-      VALUES(?,?,?)
-    `).run(
-      req.user.id,
-      task.id,
-      now()
-    );
+      INSERT INTO task_claims(user_id, task_id, claimed_at)
+      VALUES(?, ?, ?)
+    `).run(req.user.id, task.id, now());
   } catch {
     return res.status(409).json({
       error: "Task already claimed."
@@ -1465,9 +1122,7 @@ app.post("/api/tasks/:id/claim", auth, requireUser, (req, res) => {
   }
 
   db.prepare(`
-    UPDATE users
-    SET balance=balance+?
-    WHERE id=?
+    UPDATE users SET balance = balance + ? WHERE id = ?
   `).run(task.reward, req.user.id);
 
   recordEarning(req.user.id, task.reward, "task");
@@ -1478,9 +1133,9 @@ app.post("/api/tasks/:id/claim", auth, requireUser, (req, res) => {
   });
 });
 
-/* =========================
-   LUCKY SPIN
-========================= */
+// ======================================================
+// LUCKY SPIN
+// ======================================================
 
 app.post("/api/spin", auth, requireUser, (req, res) => {
   const settings = getSettings();
@@ -1495,145 +1150,36 @@ app.post("/api/spin", auth, requireUser, (req, res) => {
 
   if ((user.spins_available || 0) < 1) {
     return res.status(400).json({
-      error: "No spins available. Invite qualified friends to earn spins."
+      error: "No spins available."
     });
   }
 
-  const rewards = (settings.spinRewards || [])
-    .map(Number)
-    .filter(value =>
-      Number.isSafeInteger(value) && value >= 0
-    );
+  const rewards = (settings.spinRewards || [10, 20]).map(Number);
+  const reward = rewards[crypto.randomInt(rewards.length)];
 
-  if (!rewards.length) {
-    return res.status(503).json({
-      error: "Spin rewards are not configured."
-    });
-  }
+  db.prepare(`
+    UPDATE users
+    SET spins_available = spins_available - 1,
+        balance = balance + ?
+    WHERE id = ?
+  `).run(reward, user.id);
 
-  const reward = rewards[
-    crypto.randomInt(rewards.length)
-  ];
+  db.prepare(`
+    INSERT INTO spin_history(user_id, reward, created_at)
+    VALUES(?, ?, ?)
+  `).run(user.id, reward, now());
 
-  const tx = db.transaction(() => {
-    const changed = db.prepare(`
-      UPDATE users
-      SET
-        spins_available=spins_available-1,
-        balance=balance+?
-      WHERE id=? AND spins_available>0
-    `).run(reward, user.id);
-
-    if (!changed.changes) {
-      throw new Error("No spins available.");
-    }
-
-    db.prepare(`
-      INSERT INTO spin_history(user_id,reward,created_at)
-      VALUES(?,?,?)
-    `).run(user.id, reward, now());
-
-    recordEarning(user.id, reward, "spin");
-  });
-
-  try {
-    tx();
-
-    res.json({
-      reward,
-      user: publicUser(getUserById(user.id))
-    });
-  } catch (error) {
-    res.status(400).json({
-      error: error.message
-    });
-  }
-});
-
-/* =========================
-   COMMISSION API
-========================= */
-
-app.get("/api/commissions", auth, requireUser, (req, res) => {
-  const uid = req.user.id;
-  const today = bdDate();
-
-  const levels = teamStats(uid);
-
-  const total = db.prepare(`
-    SELECT COALESCE(SUM(amount),0) n
-    FROM commission_payouts
-    WHERE beneficiary_id=?
-    AND created_at>=? AND created_at<?
-  `).get(
-    uid,
-    dayStartBd(),
-    dayStartBd() + 86400000
-  ).n;
-
-  const history = db.prepare(`
-    SELECT
-      day,
-      level,
-      amount,
-      base_amount baseAmount,
-      rate,
-      created_at createdAt
-    FROM commission_payouts
-    WHERE beneficiary_id=?
-    ORDER BY id DESC
-    LIMIT 50
-  `).all(uid);
+  recordEarning(user.id, reward, "spin");
 
   res.json({
-    today,
-    total,
-    levels,
-    history,
-    rates: getSettings().commissionRates || [10, 5, 3, 2, 1, 1],
-    enabled: !!getSettings().commissionEnabled
+    reward,
+    user: publicUser(getUserById(user.id))
   });
 });
 
-/* =========================
-   WALLET OPTIONS
-========================= */
-
-app.get("/api/wallet/options", auth, requireUser, (req, res) => {
-  const settings = getSettings();
-
-  const methods = settings.paymentMethods.filter(
-    method => method.enabled
-  );
-
-  res.json({
-    methods,
-
-    ewallets: methods.filter(method =>
-      method.category === "ewallet" ||
-      (!method.category && method.type !== "crypto")
-    ),
-
-    networks: methods.filter(method =>
-      method.category === "network" ||
-      method.type === "crypto"
-    ),
-
-    categories: settings.withdrawalCategories || {},
-
-    uiText: settings.uiText || {},
-
-    minWithdraw: settings.minWithdraw,
-    referralRequired: settings.referralRequired,
-    withdrawalFeePercent: Number(settings.withdrawalFeePercent) || 0,
-    withdrawalEnabled: settings.withdrawalEnabled !== false,
-    withdrawalNotice: settings.withdrawalNotice || ""
-  });
-});
-
-/* =========================
-   WITHDRAWAL REQUEST
-========================= */
+// ======================================================
+// WITHDRAW REQUEST
+// ======================================================
 
 app.post("/api/withdraw", auth, requireUser, (req, res) => {
   const settings = getSettings();
@@ -1642,14 +1188,8 @@ app.post("/api/withdraw", auth, requireUser, (req, res) => {
   const address = cleanText(req.body?.address, 180);
   const amount = Math.floor(Number(req.body?.amount));
 
-  if (settings.withdrawalEnabled === false) {
-    return res.status(403).json({
-      error: "Withdrawals are currently disabled."
-    });
-  }
-
-  const method = settings.paymentMethods.find(
-    item => item.id === methodId && item.enabled
+  const method = settings.paymentMethods.find(item =>
+    item.id === methodId && item.enabled
   );
 
   if (!method) {
@@ -1658,14 +1198,11 @@ app.post("/api/withdraw", auth, requireUser, (req, res) => {
     });
   }
 
-  const minAmount = Math.max(
-    Number(settings.minWithdraw) || 0,
-    Number(method.minWithdrawal) || 0
-  );
+  const minW = method.minWithdrawal || settings.minWithdraw;
 
-  if (!Number.isSafeInteger(amount) || amount < minAmount) {
+  if (!Number.isSafeInteger(amount) || amount < minW) {
     return res.status(400).json({
-      error: `Minimum withdrawal is ${minAmount} coins.`
+      error: `Minimum withdrawal is ${minW} coins.`
     });
   }
 
@@ -1681,17 +1218,9 @@ app.post("/api/withdraw", auth, requireUser, (req, res) => {
     });
   }
 
-  const qualified = countQualifiedReferrals(req.user.id);
-
-  if (qualified < settings.referralRequired) {
-    return res.status(400).json({
-      error: `You need ${settings.referralRequired} qualified referral(s). Current: ${qualified}.`
-    });
-  }
-
   const feePercent = Math.max(
     0,
-    Math.min(100, Number(settings.withdrawalFeePercent) || 0)
+    Math.min(100, Number(method.feePercent ?? settings.withdrawalFeePercent) || 0)
   );
 
   const feeAmount = Math.min(
@@ -1701,759 +1230,134 @@ app.post("/api/withdraw", auth, requireUser, (req, res) => {
 
   const netAmount = amount - feeAmount;
 
-  const tx = db.transaction(() => {
-    const changed = db.prepare(`
-      UPDATE users
-      SET balance=balance-?
-      WHERE id=? AND balance>=?
-    `).run(
-      amount,
-      req.user.id,
-      amount
-    );
-
-    if (!changed.changes) {
-      throw new Error("Insufficient balance.");
-    }
-
-    return db.prepare(`
-      INSERT INTO withdrawals(
-        user_id,
-        method,
-        address,
-        amount,
-        fee_percent,
-        fee_amount,
-        net_amount,
-        status,
-        created_at,
-        updated_at
-      )
-      VALUES(?,?,?,?,?,?,?,'pending',?,?)
-    `).run(
-      req.user.id,
-      methodId,
-      address,
-      amount,
-      feePercent,
-      feeAmount,
-      netAmount,
-      now(),
-      now()
-    ).lastInsertRowid;
-  });
-
-  try {
-    const id = tx();
-
-    res.json({
-      ok: true,
-      id,
-      amount,
-      feePercent,
-      feeAmount,
-      netAmount,
-      message: "Request sent for admin review. Payment is not automatic.",
-      user: publicUser(getUserById(req.user.id))
-    });
-  } catch (error) {
-    res.status(400).json({
-      error: error.message
-    });
-  }
-});
-
-/* =========================
-   ADMIN LOGIN CHECK
-========================= */
-
-app.post("/api/admin/login-check", adminAuth, (req, res) => {
-  res.json({ ok: true });
-});
-
-/* =========================
-   ADMIN OVERVIEW
-========================= */
-
-app.get("/api/admin/overview", adminAuth, (req, res) => {
-  const counts = {
-    users: db.prepare(`
-      SELECT COUNT(*) n FROM users
-    `).get().n,
-
-    banned: db.prepare(`
-      SELECT COUNT(*) n FROM users WHERE is_banned=1
-    `).get().n,
-
-    withdrawPending: db.prepare(`
-      SELECT COUNT(*) n
-      FROM withdrawals
-      WHERE status='pending'
-    `).get().n,
-
-    withdrawTotal: db.prepare(`
-      SELECT COALESCE(SUM(amount),0) n
-      FROM withdrawals
-    `).get().n,
-
-    coins: db.prepare(`
-      SELECT COALESCE(SUM(balance),0) n
-      FROM users
-    `).get().n,
-
-    taps: db.prepare(`
-      SELECT COALESCE(SUM(total_taps),0) n
-      FROM users
-    `).get().n
-  };
-
-  const withdrawals = db.prepare(`
-    SELECT
-      w.*,
-      u.name userName,
-      u.tg_id tgId
-    FROM withdrawals w
-    JOIN users u ON u.id=w.user_id
-    ORDER BY w.id DESC
-    LIMIT 100
-  `).all();
-
-  const users = db.prepare(`
-    SELECT
-      id,
-      tg_id,
-      name,
-      username,
-      balance,
-      energy,
-      created_at,
-      is_banned,
-      total_taps
-    FROM users
-    ORDER BY id DESC
-    LIMIT 200
-  `).all();
-
-  counts.spinAvailable = db.prepare(`
-    SELECT COALESCE(SUM(spins_available),0) n
-    FROM users
-  `).get().n;
-
-  counts.commissionToday = db.prepare(`
-    SELECT COALESCE(SUM(amount),0) n
-    FROM commission_payouts
-    WHERE created_at>=? AND created_at<?
-  `).get(
-    dayStartBd(),
-    dayStartBd() + 86400000
-  ).n;
-
-  res.json({
-    counts,
-    settings: getSettings(),
-
-    tasks: db.prepare(`
-      SELECT * FROM tasks ORDER BY id DESC
-    `).all(),
-
-    withdrawals,
-    users
-  });
-});
-
-/* =========================
-   ADMIN SETTINGS
-========================= */
-
-app.put("/api/admin/settings", adminAuth, (req, res) => {
-  const old = getSettings();
-  const incoming = req.body || {};
-  const next = { ...old };
-
-  for (const key of [
-    "appName",
-    "tagline",
-    "loadingTitle",
-    "loadingText",
-    "withdrawalNotice"
-  ]) {
-    if (typeof incoming[key] === "string") {
-      next[key] = cleanText(incoming[key], 500);
-    }
-  }
-
-  if (typeof incoming.withdrawalEnabled === "boolean") {
-    next.withdrawalEnabled = incoming.withdrawalEnabled;
-  }
-
-  for (const key of ["appLogo", "loadingImage"]) {
-    if (typeof incoming[key] === "string") {
-      next[key] = validUrl(incoming[key])
-        ? incoming[key].slice(0, 1000)
-        : "";
-    }
-  }
-
-  if (Number.isFinite(Number(incoming.withdrawalFeePercent))) {
-    next.withdrawalFeePercent = Math.max(
-      0,
-      Math.min(100, Number(incoming.withdrawalFeePercent))
-    );
-  }
-
-  for (const key of [
-    "tapReward",
-    "maxEnergy",
-    "energyPerSecond",
-    "dailyBonus",
-    "minWithdraw",
-    "referralRequired",
-    "referralBonus",
-    "referralsPerSpin"
-  ]) {
-    if (Number.isFinite(Number(incoming[key]))) {
-      next[key] = Math.max(
-        0,
-        Math.min(100000000, Math.floor(Number(incoming[key])))
-      );
-    }
-  }
-
-  for (const key of [
-    "spinEnabled",
-    "commissionEnabled",
-    "maintenance",
-    "sound"
-  ]) {
-    if (typeof incoming[key] === "boolean") {
-      next[key] = incoming[key];
-    }
-  }
-
-  if (Array.isArray(incoming.spinRewards)) {
-    const rewards = incoming.spinRewards
-      .map(Number)
-      .filter(value =>
-        Number.isSafeInteger(value) &&
-        value >= 0 &&
-        value <= 100000000
-      )
-      .slice(0, 20);
-
-    if (rewards.length) {
-      next.spinRewards = rewards;
-    }
-  }
-
-  if (Array.isArray(incoming.commissionRates)) {
-    next.commissionRates = Array.from(
-      { length: 6 },
-      (_, index) =>
-        Math.max(
-          0,
-          Math.min(
-            100,
-            Number(incoming.commissionRates[index]) || 0
-          )
-        )
-    );
-  }
-
-  /* PAYMENT METHODS */
-
-  if (Array.isArray(incoming.paymentMethods)) {
-    next.paymentMethods = incoming.paymentMethods
-      .slice(0, 60)
-      .map(method => {
-        const type = method.type === "crypto"
-          ? "crypto"
-          : "mobile";
-
-        const category =
-          method.category === "network" ||
-          method.category === "crypto" ||
-          type === "crypto"
-            ? "network"
-            : "ewallet";
-
-        const color = /^#[0-9a-fA-F]{6}$/.test(
-          String(method.color || "")
-        )
-          ? String(method.color)
-          : "#45e8ff";
-
-        const animation = [
-          "none",
-          "pulse",
-          "bounce",
-          "glow",
-          "shake",
-          "float"
-        ].includes(method.animation)
-          ? method.animation
-          : "pulse";
-
-        return {
-          id: cleanText(method.id, 40)
-            .replace(/[^a-zA-Z0-9_-]/g, ""),
-
-          name: cleanText(method.name, 60),
-
-          type,
-          category,
-
-          parentId: cleanText(method.parentId || "", 40),
-          hint: cleanText(method.hint || "", 180),
-
-          minWithdrawal: Math.max(
-            0,
-            Math.floor(Number(method.minWithdrawal) || 0)
-          ),
-
-          feePercent: Math.max(
-            0,
-            Math.min(100, Number(method.feePercent) || 0)
-          ),
-
-          color,
-          animation,
-
-          url: validUrl(method.url)
-            ? method.url.slice(0, 1000)
-            : "",
-
-          enabled: !!method.enabled,
-
-          logo: validUrl(method.logo)
-            ? method.logo.slice(0, 1000)
-            : ""
-        };
-      })
-      .filter(method => method.id && method.name);
-  }
-
-  /* CUSTOM BUTTONS */
-
-  if (Array.isArray(incoming.buttons)) {
-    next.buttons = incoming.buttons
-      .slice(0, 100)
-      .map((button, index) => ({
-        id: cleanText(
-          button.id || `button_${index + 1}`,
-          50
-        ).replace(/[^a-zA-Z0-9_-]/g, ""),
-
-        name: cleanText(button.name, 60),
-
-        logo: validUrl(button.logo)
-          ? button.logo.slice(0, 1000)
-          : "",
-
-        color: /^#[0-9a-fA-F]{6}$/.test(
-          String(button.color || "")
-        )
-          ? String(button.color)
-          : "#45e8ff",
-
-        animation: [
-          "none",
-          "pulse",
-          "bounce",
-          "glow",
-          "shake",
-          "float"
-        ].includes(button.animation)
-          ? button.animation
-          : "pulse",
-
-        url: validUrl(button.url)
-          ? button.url.slice(0, 1000)
-          : "",
-
-        enabled: button.enabled !== false
-      }))
-      .filter(button => button.id && button.name);
-  }
-
-  /* USER PANEL TEXT */
-
-  if (
-    incoming.uiText &&
-    typeof incoming.uiText === "object" &&
-    !Array.isArray(incoming.uiText)
-  ) {
-    next.uiText = {
-      ...(old.uiText || {}),
-
-      ...Object.fromEntries(
-        Object.entries(incoming.uiText)
-          .slice(0, 100)
-          .map(([key, value]) => [
-            cleanText(key, 60),
-            cleanText(value, 300)
-          ])
-      )
-    };
-  }
-
-  /* WITHDRAWAL CATEGORY CONFIGURATION */
-
-  if (
-    incoming.withdrawalCategories &&
-    typeof incoming.withdrawalCategories === "object" &&
-    !Array.isArray(incoming.withdrawalCategories)
-  ) {
-    next.withdrawalCategories = {
-      ...(old.withdrawalCategories || {})
-    };
-
-    for (
-      const [key, value] of
-      Object.entries(incoming.withdrawalCategories).slice(0, 20)
-    ) {
-      if (!value || typeof value !== "object") continue;
-
-      const previous = next.withdrawalCategories[key] || {};
-
-      next.withdrawalCategories[key] = {
-        id: cleanText(value.id || key, 40),
-
-        name: cleanText(
-          value.name || previous.name || key,
-          60
-        ),
-
-        logo: validUrl(value.logo)
-          ? value.logo.slice(0, 1000)
-          : "",
-
-        color: /^#[0-9a-fA-F]{6}$/.test(
-          String(value.color || "")
-        )
-          ? value.color
-          : (previous.color || "#45e8ff"),
-
-        animation: [
-          "none",
-          "pulse",
-          "bounce",
-          "glow",
-          "shake",
-          "float"
-        ].includes(value.animation)
-          ? value.animation
-          : "none",
-
-        enabled: value.enabled !== false
-      };
-    }
-  }
-
-  saveSettings(next);
-
-  res.json({
-    settings: next
-  });
-});
-
-/* =========================
-   ADMIN TASK MANAGEMENT
-========================= */
-
-app.post("/api/admin/tasks", adminAuth, (req, res) => {
-  const title = cleanText(req.body?.title, 100);
-  const platform = cleanText(req.body?.platform, 40);
-  const url = cleanText(req.body?.url, 500);
-  const reward = Math.floor(Number(req.body?.reward));
-
-  if (
-    !title ||
-    !platform ||
-    !validUrl(url) ||
-    !Number.isSafeInteger(reward) ||
-    reward < 0 ||
-    reward > 10000000
-  ) {
-    return res.status(400).json({
-      error: "Provide a title, platform, valid http(s) URL and reward."
-    });
-  }
+  db.prepare(`
+    UPDATE users
+    SET balance = balance - ?
+    WHERE id = ?
+  `).run(amount, req.user.id);
 
   const id = db.prepare(`
-    INSERT INTO tasks(
-      title,platform,url,reward,enabled,created_at
+    INSERT INTO withdrawals
+    (
+      user_id,
+      method,
+      address,
+      amount,
+      fee_percent,
+      fee_amount,
+      net_amount,
+      status,
+      created_at,
+      updated_at
     )
-    VALUES(?,?,?,?,1,?)
+    VALUES(?, ?, ?, ?, ?, ?, ?, 'pending', ?, ?)
   `).run(
-    title,
-    platform,
-    url,
-    reward,
+    req.user.id,
+    methodId,
+    address,
+    amount,
+    feePercent,
+    feeAmount,
+    netAmount,
+    now(),
     now()
   ).lastInsertRowid;
+
+  res.json({
+    ok: true,
+    id,
+    amount,
+    feePercent,
+    feeAmount,
+    netAmount,
+    user: publicUser(getUserById(req.user.id))
+  });
+});
+
+// ======================================================
+// ADMIN OVERVIEW & SETTINGS
+// ======================================================
+
+app.get("/api/admin/overview", adminAuth, (req, res) => {
+  res.json({
+    counts: {
+      users: db.prepare("SELECT COUNT(*) AS n FROM users").get().n,
+      withdrawPending: db.prepare("SELECT COUNT(*) AS n FROM withdrawals WHERE status = 'pending'").get().n,
+      withdrawTotal: db.prepare("SELECT COALESCE(SUM(amount), 0) AS n FROM withdrawals").get().n,
+      coins: db.prepare("SELECT COALESCE(SUM(balance), 0) AS n FROM users").get().n
+    },
+    settings: getSettings(),
+    tasks: db.prepare("SELECT * FROM tasks ORDER BY id DESC").all(),
+    withdrawals: db.prepare("SELECT w.*, u.name AS userName FROM withdrawals w JOIN users u ON u.id = w.user_id ORDER BY w.id DESC LIMIT 100").all(),
+    users: db.prepare("SELECT id, tg_id, name, username, balance, energy, created_at, is_banned, total_taps FROM users ORDER BY id DESC LIMIT 200").all()
+  });
+});
+
+app.put("/api/admin/settings", adminAuth, (req, res) => {
+  const oldSettings = getSettings();
+  const incoming = req.body || {};
+  const next = { ...oldSettings, ...incoming };
+  saveSettings(next);
+  res.json({ settings: next });
+});
+
+app.post("/api/admin/tasks", adminAuth, (req, res) => {
+  const { title, platform, url, reward } = req.body;
+  const id = db.prepare(`
+    INSERT INTO tasks(title, platform, url, reward, enabled, created_at)
+    VALUES(?, ?, ?, ?, 1, ?)
+  `).run(title, platform, url, Number(reward), now()).lastInsertRowid;
 
   res.json({ id });
 });
 
 app.patch("/api/admin/tasks/:id", adminAuth, (req, res) => {
-  const task = db.prepare(`
-    SELECT * FROM tasks WHERE id=?
-  `).get(Number(req.params.id));
-
-  if (!task) {
-    return res.status(404).json({
-      error: "Task not found."
-    });
-  }
-
-  const title = cleanText(
-    req.body?.title ?? task.title,
-    100
-  );
-
-  const platform = cleanText(
-    req.body?.platform ?? task.platform,
-    40
-  );
-
-  const url = cleanText(
-    req.body?.url ?? task.url,
-    500
-  );
-
-  const reward = Math.floor(
-    Number(req.body?.reward ?? task.reward)
-  );
-
-  const enabled = req.body?.enabled === undefined
-    ? task.enabled
-    : (req.body.enabled ? 1 : 0);
-
-  if (
-    !title ||
-    !platform ||
-    !validUrl(url) ||
-    !Number.isSafeInteger(reward) ||
-    reward < 0
-  ) {
-    return res.status(400).json({
-      error: "Invalid task data."
-    });
-  }
-
+  const { title, platform, url, reward, enabled } = req.body;
   db.prepare(`
     UPDATE tasks
-    SET title=?,platform=?,url=?,reward=?,enabled=?
-    WHERE id=?
-  `).run(
-    title,
-    platform,
-    url,
-    reward,
-    enabled,
-    task.id
-  );
+    SET title = ?, platform = ?, url = ?, reward = ?, enabled = ?
+    WHERE id = ?
+  `).run(title, platform, url, Number(reward), enabled ? 1 : 0, Number(req.params.id));
 
   res.json({ ok: true });
 });
 
 app.delete("/api/admin/tasks/:id", adminAuth, (req, res) => {
-  db.prepare(`
-    DELETE FROM task_claims WHERE task_id=?
-  `).run(Number(req.params.id));
-
-  db.prepare(`
-    DELETE FROM tasks WHERE id=?
-  `).run(Number(req.params.id));
-
+  db.prepare("DELETE FROM tasks WHERE id = ?").run(Number(req.params.id));
   res.json({ ok: true });
 });
-
-/* =========================
-   ADMIN WITHDRAWAL CONTROL
-========================= */
 
 app.patch("/api/admin/withdrawals/:id", adminAuth, (req, res) => {
-  const status = String(req.body?.status || "");
+  const { status, note } = req.body;
+  const withdrawal = db.prepare("SELECT * FROM withdrawals WHERE id = ?").get(Number(req.params.id));
 
-  if (!["pending", "approved", "paid", "rejected"].includes(status)) {
-    return res.status(400).json({
-      error: "Invalid status."
-    });
+  if (status === "rejected" && withdrawal.status !== "rejected") {
+    db.prepare("UPDATE users SET balance = balance + ? WHERE id = ?").run(withdrawal.amount, withdrawal.user_id);
   }
-
-  const txid = cleanText(req.body?.txid, 160);
-  const note = cleanText(req.body?.note, 250);
-
-  const withdrawal = db.prepare(`
-    SELECT * FROM withdrawals WHERE id=?
-  `).get(Number(req.params.id));
-
-  if (!withdrawal) {
-    return res.status(404).json({
-      error: "Request not found."
-    });
-  }
-
-  const tx = db.transaction(() => {
-    /*
-      Refund only once.
-      This prevents repeated rejection from
-      adding the same amount multiple times.
-    */
-
-    if (
-      status === "rejected" &&
-      !withdrawal.refunded &&
-      withdrawal.status !== "paid"
-    ) {
-      db.prepare(`
-        UPDATE users
-        SET balance=balance+?
-        WHERE id=?
-      `).run(
-        withdrawal.amount,
-        withdrawal.user_id
-      );
-
-      db.prepare(`
-        UPDATE withdrawals
-        SET refunded=1
-        WHERE id=?
-      `).run(withdrawal.id);
-    }
-
-    db.prepare(`
-      UPDATE withdrawals
-      SET
-        status=?,
-        txid=?,
-        note=?,
-        updated_at=?
-      WHERE id=?
-    `).run(
-      status,
-      txid,
-      note,
-      now(),
-      withdrawal.id
-    );
-  });
-
-  tx();
-
-  res.json({ ok: true });
-});
-
-/* =========================
-   ADMIN USER MANAGEMENT
-========================= */
-
-app.patch("/api/admin/users/:id", adminAuth, (req, res) => {
-  const user = getUserById(Number(req.params.id));
-
-  if (!user) {
-    return res.status(404).json({
-      error: "User not found."
-    });
-  }
-
-  const balance = req.body?.balance === undefined
-    ? user.balance
-    : Math.floor(Number(req.body.balance));
-
-  if (
-    !Number.isSafeInteger(balance) ||
-    balance < 0 ||
-    balance > 1e12
-  ) {
-    return res.status(400).json({
-      error: "Invalid balance."
-    });
-  }
-
-  const banned = req.body?.banned === undefined
-    ? user.is_banned
-    : (req.body.banned ? 1 : 0);
 
   db.prepare(`
-    UPDATE users
-    SET balance=?,is_banned=?
-    WHERE id=?
-  `).run(
-    balance,
-    banned,
-    user.id
-  );
+    UPDATE withdrawals
+    SET status = ?, note = ?, updated_at = ?
+    WHERE id = ?
+  `).run(status, note || "", now(), withdrawal.id);
 
   res.json({ ok: true });
 });
 
-/* =========================
-   ADMIN PASSWORD CHANGE
-========================= */
+app.patch("/api/admin/users/:id", adminAuth, (req, res) => {
+  const { balance, blocked } = req.body;
+  db.prepare(`
+    UPDATE users
+    SET balance = ?, is_banned = ?
+    WHERE id = ?
+  `).run(Number(balance), blocked ? 1 : 0, Number(req.params.id));
 
-app.post(
-  "/api/admin/change-password",
-  adminAuth,
-  rateLimit({ windowMs: 15 * 60 * 1000, limit: 5 }),
-  (req, res) => {
-    const current = String(
-      req.body?.currentPassword || ""
-    );
-
-    const next = String(
-      req.body?.newPassword || ""
-    );
-
-    const savedHash =
-      getSetting.get("admin_password_hash")?.value || "";
-
-    const currentValid = savedHash
-      ? verifyPassword(current, savedHash)
-      : (
-          !!ADMIN_PASSWORD &&
-          safeEqual(current, ADMIN_PASSWORD)
-        );
-
-    if (!currentValid) {
-      return res.status(401).json({
-        error: "Current password is incorrect."
-      });
-    }
-
-    if (next.length < 12 || next.length > 200) {
-      return res.status(400).json({
-        error: "New password must be 12–200 characters."
-      });
-    }
-
-    setSetting.run(
-      "admin_password_hash",
-      hashPassword(next)
-    );
-
-    res.json({
-      ok: true,
-      message: "Admin password changed. Keep your new password safe."
-    });
-  }
-);
-
-/* =========================
-   FALLBACK ROUTE
-========================= */
-
-// Express 5 compatible wildcard route.
-app.get(/.*/, (req, res) => {
-  res.sendFile(
-    path.join(__dirname, "public", "index.html")
-  );
+  res.json({ ok: true });
 });
 
-/* =========================
-   SERVER START
-========================= */
+app.get("*", (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "index.html"));
+});
 
 app.listen(PORT, () => {
   console.log(`CoinNova server listening on ${PORT}`);
