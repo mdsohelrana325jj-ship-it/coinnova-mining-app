@@ -157,10 +157,23 @@ label{font-size:12px;color:var(--muted)}
 .level-info b{font-size:12px}
 .level-info small{display:block;color:var(--muted);font-size:10px;margin-top:4px}
 .float-text{position:absolute;color:#fff2a1;font-weight:1000;font-size:20px;pointer-events:none;text-shadow:0 2px 12px #f99c27;animation:rise .8s forwards}
-.wheel-wrap{display:grid;place-items:center;padding:15px 0}
-.wheel{width:230px;height:230px;border-radius:50%;border:7px solid #ffe8a0;box-shadow:0 0 30px #ffd66b30;display:grid;place-items:center;background:conic-gradient(#f5a623 0 60deg,#243754 60deg 120deg,#45e8ff 120deg 180deg,#342858 180deg 240deg,#51f5b7 240deg 300deg,#f5a623 300deg);position:relative;transition:transform 4.2s cubic-bezier(.12,.65,.12,1)}
-.wheel:after{content:"CNV";width:65px;height:65px;border-radius:50%;background:#0c1424;border:3px solid #ffe8a0;display:grid;place-items:center;font-weight:1000;color:var(--gold)}
-.wheel-pointer{color:var(--gold);font-size:25px;text-align:center;margin-bottom:-14px;position:relative;z-index:2}
+
+/* Enhanced Spin Wheel Styling with Rewards visible inside sections */
+.wheel-wrap{display:grid;place-items:center;padding:15px 0;position:relative}
+.wheel{
+ width:250px;height:250px;border-radius:50%;border:8px solid #ffe8a0;
+ box-shadow:0 0 35px #ffd66b40;position:relative;overflow:hidden;
+ transition:transform 4.2s cubic-bezier(.12,.65,.12,1);
+ background:#172139;
+}
+.wheel-slice{
+ position:absolute;width:50%;height:50%;top:0;left:50%;
+ transform-origin:0% 100%;display:flex;align-items:center;justify-content:flex-end;
+ padding-right:25px;font-size:13px;font-weight:900;color:#fff;text-shadow:0 1px 3px #000;
+ pointer-events:none;
+}
+.wheel-pointer{color:var(--gold);font-size:28px;text-align:center;margin-bottom:-14px;position:relative;z-index:2;filter:drop-shadow(0 2px 5px #000)}
+
 .method-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .method-card{
  text-align:left;width:100%;padding:13px;border-radius:17px;background:linear-gradient(135deg,#151f34,#101727);
@@ -196,7 +209,7 @@ label{font-size:12px;color:var(--muted)}
 @keyframes glow{50%{filter:brightness(1.25);box-shadow:0 0 20px currentColor}}
 @keyframes shake{25%{transform:translateX(-2px)}75%{transform:translateX(2px)}}
 .anim-pulse{animation:pulse 2s infinite}.anim-bounce{animation:bounce 1.5s infinite}.anim-glow{animation:glow 2s infinite}.anim-shake{animation:shake .4s infinite}
-@media(max-width:350px){.balance{font-size:29px}.method-grid{grid-template-columns:1fr}.coin{width:140px;height:140px}.wheel{width:205px;height:205px}}
+@media(max-width:350px){.balance{font-size:29px}.method-grid{grid-template-columns:1fr}.coin{width:140px;height:140px}.wheel{width:220px;height:220px}}
 </style>
 </head>
 
@@ -212,16 +225,7 @@ label{font-size:12px;color:var(--muted)}
 <div id="toast" class="toast"></div>
 
 <!-- Network selection popup modal -->
-<div id="networkPopup" class="popup-overlay">
- <div class="popup-box">
-  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
-   <h3 id="popupHeaderTitle">🌐 Select Network</h3>
-   <button onclick="closeNetworkPopup()" style="background:#26334a;border:0;color:white;border-radius:9px;padding:5px 9px;">✕</button>
-  </div>
-  <p class="muted" style="margin-bottom:15px;font-size:12px;">Choose your crypto network or wallet option:</p>
-  <div id="popupNetworkList" class="method-grid" style="grid-template-columns:1fr;"></div>
- </div>
-</div>
+<div id="dynamicNetworkPopup"></div>
 
 <main class="app">
  <header class="header">
@@ -293,8 +297,18 @@ label{font-size:12px;color:var(--muted)}
   <div class="card">
    <div class="wheel-pointer">▼</div>
    <div class="wheel-wrap"><div id="spinWheel" class="wheel"></div></div>
-   <button id="spinBtn" class="primary">✦ SPIN NOW</button>
-   <p class="muted" id="spinRules" style="text-align:center">Invite qualified friends to unlock spins.</p>
+   <button id="spinBtn" class="primary" style="margin-top:15px">✦ SPIN NOW</button>
+   
+   <!-- Detailed Referral Spin Rule List as requested -->
+   <div class="notice" style="margin-top:15px;background:#18253e;border-color:#2a3d60;">
+    <b style="color:var(--gold);display:block;margin-bottom:6px;">🎁 Spin Earning Rules:</b>
+    <div style="font-size:11px;line-height:1.6;color:var(--muted);">
+     • ১ জনকে রেফার করলে পাবেন: <b style="color:var(--text)">১টি Spin</b><br>
+     • ২ জনকে রেফার করলে পাবেন: <b style="color:var(--text)">২টি Spin</b><br>
+     • এইভাবে প্রতিটি সফল রেফারে স্পিন যুক্ত হবে।<br>
+     <span id="spinRules" style="display:block;margin-top:4px;color:var(--cyan);"></span>
+    </div>
+   </div>
   </div>
   <div class="section-title"><h2 id="lblSpinHistoryTitle">Spin History</h2></div>
   <div id="spinHistory"></div>
@@ -333,19 +347,19 @@ label{font-size:12px;color:var(--muted)}
   <div class="section-title"><h2 id="lblWithdrawTitle">Withdraw</h2><span class="reward">Secure payout</span></div>
   <div class="notice" id="withdrawalNoticeText">Select a withdrawal category first. E-Wallet and Crypto Network use separate selection screens. Verify the destination carefully before submitting.</div>
 
-  <!-- Wallet Categories -->
+  <!-- Wallet Categories: Binance Pay / Wallet & E-Wallet -->
   <div id="walletCategories" class="method-grid">
    <button class="method-card" onclick="openWalletCategory('ewallet')">
     <div class="logo" id="ewalletCatLogo"><span class="fallback">৳</span></div>
     <b id="ewalletCatTitle">৳ E-Wallet</b><small id="ewalletCatDesc">bKash · Nagad · Rocket</small>
    </button>
    <button class="method-card" onclick="openWalletCategory('network')">
-    <div class="logo" id="networkCatLogo"><span class="fallback">🌐</span></div>
-    <b id="networkCatTitle">🌐 Select Network</b><small id="networkCatDesc">USDT · TRC20 · BEP20 · Wallets</small>
+    <div class="logo" id="networkCatLogo"><span class="fallback">₿</span></div>
+    <b>Binance Pay / Wallet</b><small>Select wallet & network</small>
    </button>
   </div>
 
-  <!-- Method Selection Page (For E-Wallet or secondary lists) -->
+  <!-- Method Selection Page (For E-Wallet) -->
   <div id="walletMethodPage" class="hidden">
    <button id="walletBackCategory" class="secondary">← Back to Withdraw</button>
    <div class="section-title"><h2 id="walletMethodTitle">Select method</h2><span class="muted" id="walletMethodCount"></span></div>
@@ -354,7 +368,7 @@ label{font-size:12px;color:var(--muted)}
 
   <!-- Withdrawal Form Page -->
   <div id="walletFormPage" class="hidden">
-   <button id="walletBackMethods" class="secondary">← Back to methods</button>
+   <button id="walletBackMethods" class="secondary">← Back</button>
    <div class="section-title"><h2 id="selectedMethodTitle">Withdraw</h2><span class="reward" id="selectedMethodType"></span></div>
 
    <div class="card">
@@ -365,8 +379,8 @@ label{font-size:12px;color:var(--muted)}
    </div>
 
    <form id="withdrawForm">
-    <label id="destinationLabel">Mobile number or wallet address</label>
-    <input id="address" class="field" required minlength="5" maxlength="180" placeholder="Enter destination">
+    <label id="destinationLabel">Wallet Address</label>
+    <input id="address" class="field" required minlength="5" maxlength="180" placeholder="Enter wallet address">
 
     <label>Withdrawal amount (CNV)</label>
     <input id="amount" class="field" required type="number" min="1" step="1" inputmode="numeric" placeholder="Enter amount">
@@ -376,7 +390,7 @@ label{font-size:12px;color:var(--muted)}
      <div class="fee-line"><span>Withdrawal fee (<span id="feePercent">0</span>%)</span><strong id="feeAmount">0 CNV</strong></div>
      <div class="fee-line total"><span>You receive</span><strong id="feeNet">0 CNV</strong></div>
     </div>
-    <button class="primary" type="submit">SUBMIT WITHDRAWAL</button>
+    <button class="primary" type="submit">WITHDRAW</button>
    </form>
   </div>
 
@@ -486,11 +500,38 @@ function applyBranding(settings){
  if(s.txtHomeTitle) $("lblBalanceTitle").textContent = s.txtHomeTitle;
  if(s.txtTapButton) $("lblTapHint").textContent = s.txtTapButton;
  if(s.txtEnergyLabel) $("lblEnergyLabel").textContent = "⚡ " + s.txtEnergyLabel;
- if(s.txtNetworkBtn) $("networkCatTitle").textContent = s.txtNetworkBtn;
  if(s.txtEwalletBtn) $("ewalletCatTitle").textContent = s.txtEwalletBtn;
  if(s.txtReferralTitle) $("lblFriendsTitle").textContent = s.txtReferralTitle;
  if(s.txtNotice) $("homeNotice").textContent = s.txtNotice;
  if(s.withdrawalNotice) $("withdrawalNoticeText").textContent = s.withdrawalNotice;
+}
+
+// Render dynamic Spin wheel slices with rewards
+function renderSpinWheel(rewardsList){
+ const wheel = $("spinWheel");
+ if(!wheel) return;
+ const defaultRewards = [10, 20, 30, 50, 100, 200];
+ const rewards = (rewardsList && rewardsList.length > 0) ? rewardsList : defaultRewards;
+ const count = rewards.length;
+ const angleStep = 360 / count;
+
+ let conicGrad = [];
+ let slicesHtml = "";
+
+ const colors = ["#f5a623", "#243754", "#45e8ff", "#342858", "#51f5b7", "#ff70c7"];
+
+ rewards.forEach((reward, i)=>{
+  const startAngle = i * angleStep;
+  const endAngle = (i + 1) * angleStep;
+  conicGrad.push(`${colors[i % colors.length]} ${startAngle}deg ${endAngle}deg`);
+  
+  // Position reward text inside each slice
+  const rot = startAngle + (angleStep / 2);
+  slicesHtml += `<div class="wheel-slice" style="transform: rotate(${rot}deg);"><span style="transform: rotate(90deg);">${reward}</span></div>`;
+ });
+
+ wheel.style.background = `conic-gradient(${conicGrad.join(", ")})`;
+ wheel.innerHTML = slicesHtml;
 }
 
 function showPage(name){
@@ -574,18 +615,15 @@ function render(){
 
  $("spinAvailable").textContent=fmt(u.spinsAvailable||0);
  $("spinBtn").disabled=!s.spinEnabled||Number(u.spinsAvailable||0)<1;
- $("spinRules").textContent=`Every ${s.referralsPerSpin||1} qualified referral(s) gives 1 spin. Possible rewards: ${(s.spinRewards||[]).join(", ")} CNV.`;
+ $("spinRules").textContent=`রেফারেল নিয়ম: প্রতি ${s.referralsPerSpin||1} জন রেফারে ১টি স্পিন দেওয়া হয়। গিফটসমূহ: ${(s.spinRewards||[]).join(", ")} CNV`;
  $("spinBtn").style.opacity=$("spinBtn").disabled?".5":"1";
 
+ renderSpinWheel(s.spinRewards);
+
  const ewalletMethod = (s.paymentMethods||[]).find(m => m.category === "ewallet" || (!m.category && m.type !== "crypto"));
- const networkMethod = (s.paymentMethods||[]).find(m => m.category === "network" || m.type === "crypto");
  if(ewalletMethod) {
   setImageOrText($("ewalletCatLogo"), ewalletMethod.logo, "৳");
   $("ewalletCatDesc").textContent = ewalletMethod.name + " · Mobile money";
- }
- if(networkMethod) {
-  setImageOrText($("networkCatLogo"), networkMethod.logo, "🌐");
-  $("networkCatDesc").textContent = networkMethod.name + " · Crypto / Network";
  }
 
  $("taskList").innerHTML=(state.tasks||[]).map(t=>`
@@ -708,7 +746,7 @@ $("copyRef").onclick=async()=>{
 $("openCommission").onclick=async()=>{await refresh().catch(()=>{});showPage("commission")};
 
 // ======================================================
-// NEW WITHDRAWAL LOGIC: BINANCE / SELECT NETWORK POPUP FLOW
+// WITHDRAWAL LOGIC: POPUP & SELECT NETWORK FLOW
 // ======================================================
 
 function openWalletCategory(category){
@@ -716,10 +754,8 @@ function openWalletCategory(category){
  selectedMethod = null;
 
  if(category === 'network') {
-  // Binance / Select Network clicked -> Show Network Popup first
   openNetworkPopup();
  } else {
-  // E-Wallet clicked -> Go to standard methods list page
   $("walletCategories").classList.add("hidden");
   $("walletFormPage").classList.add("hidden");
   $("walletMethodPage").classList.remove("hidden");
@@ -736,23 +772,53 @@ function openNetworkPopup() {
  const all = (state.settings.paymentMethods || []).filter(m => m.enabled);
  const networkList = all.filter(m => m.category === "network" || m.category === "crypto" || m.type === "crypto");
  
- $("popupHeaderTitle").textContent = state.settings.txtNetworkBtn || "🌐 Select Network";
- $("popupNetworkList").innerHTML = networkList.map(m => `
-  <button class="method-card ${animationClass(m.animation)}" onclick="selectNetworkAndProceed('${esc(m.id)}')" style="display:flex;align-items:center;gap:12px;padding:12px;">
-   ${logoMarkup(m.logo, m.name, m.color)}
-   <div style="text-align:left;flex:1;">
-    <b>${esc(m.name)}</b>
-    <small>Click to select network & wallet</small>
-   </div>
-   <span style="color:var(--gold)">➔</span>
-  </button>
- `).join("") || '<div class="empty">No network or crypto methods enabled.</div>';
+ const popupHTML = `
+  <div id="networkPopup" class="popup-overlay show">
+   <div class="popup-box">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+     <h3>Select Options</h3>
+     <button onclick="closeNetworkPopup()" style="background:#26334a;border:0;color:white;border-radius:9px;padding:5px 9px;">✕</button>
+    </div>
+    
+    <button class="method-card" onclick="toggleSubNetworks()" style="width:100%;display:flex;align-items:center;gap:12px;padding:14px;margin-bottom:12px;background:#1a2744;border-color:var(--cyan);">
+     <span style="font-size:22px;">🌐</span>
+     <div style="text-align:left;flex:1;">
+      <b>Select Network</b>
+      <small>Click to view networks (USDT TRC20, BEP20 etc)</small>
+     </div>
+     <span style="color:var(--cyan)">▼</span>
+    </button>
 
- $("networkPopup").classList.add("show");
+    <div id="subNetworkContainer" class="hidden" style="max-height:220px;overflow-y:auto;display:flex;flex-direction:column;gap:8px;margin-bottom:12px;">
+     ${networkList.map(m => `
+      <button class="method-card ${animationClass(m.animation)}" onclick="selectNetworkAndProceed('${esc(m.id)}')" style="display:flex;align-items:center;gap:10px;padding:10px;">
+       ${logoMarkup(m.logo, m.name, m.color)}
+       <div style="text-align:left;flex:1;">
+        <b>${esc(m.name)}</b>
+        <small>Select network</small>
+       </div>
+       <span style="color:var(--gold)">➔</span>
+      </button>
+     `).join("")}
+    </div>
+   </div>
+  </div>
+ `;
+
+ let existingPopup = $("dynamicNetworkPopup");
+ if(existingPopup) existingPopup.innerHTML = popupHTML;
+}
+
+function toggleSubNetworks() {
+ const subContainer = document.getElementById("subNetworkContainer");
+ if(subContainer) {
+  subContainer.classList.toggle("hidden");
+ }
 }
 
 function closeNetworkPopup() {
- $("networkPopup").classList.remove("show");
+ const existingPopup = $("dynamicNetworkPopup");
+ if(existingPopup) existingPopup.innerHTML = "";
 }
 
 function selectNetworkAndProceed(methodId) {
@@ -797,9 +863,8 @@ function openWithdrawForm(){
  
  $("selectedMethodTitle").textContent = "Withdraw";
  $("selectedMethodName").textContent = selectedMethod.name;
- $("selectedMethodType").textContent = selectedCategory==="ewallet" ? "E-WALLET" : "SELECT NETWORK";
- $("selectedMethodHint").textContent = selectedCategory==="ewallet" ? "Mobile money destination" : "Enter wallet address for this network";
- $("destinationLabel").textContent = selectedCategory==="ewallet" ? "Mobile number" : "Wallet address";
+ $("selectedMethodType").textContent = selectedCategory==="ewallet" ? "E-WALLET" : selectedMethod.name;
+ $("destinationLabel").textContent = selectedCategory==="ewallet" ? "Mobile number" : "Wallet Address";
  $("address").placeholder = selectedCategory==="ewallet" ? "Enter mobile number" : "Enter wallet address";
  
  setImageOrText($("selectedMethodLogo"), selectedMethod.logo, selectedMethod.name.slice(0,1));
